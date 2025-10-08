@@ -1,0 +1,23 @@
+import SwiftUI
+
+struct TabHome: View {
+    
+    
+    
+    var body: some View {
+        TabView {
+            Tab("Home", systemImage: "house") {
+                
+            }
+            Tab("Workout", systemImage: "dumbbell") {
+                WorkoutHome()
+            }
+            Tab("Explore", systemImage: "safari") {
+                
+            }
+        }
+    }
+    
+    
+    
+}

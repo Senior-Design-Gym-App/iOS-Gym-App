@@ -11,7 +11,7 @@ import SwiftUI
 struct iOS_Gym_AppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabHome()
         }
     }
 }
