@@ -13,7 +13,7 @@ struct TabHome: View {
                 WorkoutHome()
             }
             Tab("Explore", systemImage: "safari") {
-                
+                Text("Walka w kuchni")
             }
         }
     }

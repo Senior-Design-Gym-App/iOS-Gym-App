@@ -11,12 +11,7 @@ struct WorkoutHome: View {
     var body: some View {
         NavigationStack {
             List {
-                if searchText.isEmpty {
-                    MyWorkoutSection()
-                    OthersRoutinesSection()
-                } else {
-                    
-                }
+                MyWorkoutSection()
             }
             .navigationTitle("Workouts")
             .searchable(text: $searchText, prompt: "Search Workouts, Groups and Routines")
@@ -26,44 +21,22 @@ struct WorkoutHome: View {
     private func MyWorkoutSection() -> some View {
         Section {
             NavigationLink {
-                
+                WorkoutListView()
             } label: {
                 Label("Workouts", systemImage: "dumbbell")
             }
             NavigationLink {
-                
+                WorkoutGroupListView()
             } label: {
                 Label("Workout Groups", systemImage: "tag")
             }
             NavigationLink {
-                
+                WorkoutRoutineListView()
             } label: {
                 Label("Workout Routines", systemImage: "folder")
             }
         } header: {
             Label("My Workouts", systemImage: "checklist")
-        }
-    }
-    
-    private func OthersRoutinesSection() -> some View {
-        Section {
-            NavigationLink {
-                
-            } label: {
-                Label("Shared with me", systemImage: "sharedwithyou")
-            }
-            NavigationLink {
-                
-            } label: {
-                Label("Share Routines", systemImage: "square.and.arrow.up")
-            }
-            NavigationLink {
-                
-            } label: {
-                Label("AI Routines & Groups", systemImage: "apple.intelligence")
-            }
-        } header: {
-            Text("Friend Routines")
         }
     }
     
