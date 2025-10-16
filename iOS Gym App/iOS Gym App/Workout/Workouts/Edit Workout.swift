@@ -4,83 +4,63 @@ import SwiftData
 struct EditWorkoutView: View {
     
     @State var workout: Workout
-    @State private var lastTouchedIndex: Int = 0
-    @State private var lastTouchedTextField: String = ""
-    @State var sets: Int
-    @State var reps: [Int] = Array(repeating: 8, count: 10)
+    
     @State var rest: Double
-    @State var weights: [String]
-    @State var exerciseName: String
-    @State var muscleWorked: String
-    @State var sameRepsForAllSets: Bool
-    @State var sameWeightForAllSets: Bool
-    private let WCF = WorkoutConversionFunctions()
+    @State var name: String
+    
+    @State private var showAddSet: Bool = false
+    @State var setData: [SetEntry]
+    @State var selectedMuscle: (any Muscle)?
+    
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     
     var body: some View {
         NavigationStack {
-            Form {
-                WorkoutOptionsView(lastTouchedIndex: $lastTouchedIndex, lastTouchedTextField: $lastTouchedTextField, sets: $sets, reps: $reps, rest: $rest, weights: $weights, exerciseName: $exerciseName, muscleWorked: $muscleWorked, sameRepsForAllSets: $sameRepsForAllSets, sameWeightForAllSets: $sameWeightForAllSets, lastModified: workout.updateData?.updateDates.last ?? nil)
-                SaveOptions()
-                GroupsIn()
+            WorkoutOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) {
+                        SaveExercise()
+                        dismiss()
+                    } label: {
+                        Label("Save", systemImage: "checkmark")
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        dismiss()
+                    } label: {
+                        Label("Exit", systemImage: "xmark")
+                    }
+                }
             }
-            .navigationTitle("Edit Workout")
-        }
-    }
-    
-    private func SaveOptions() -> some View {
-        Section {
-            Button {
-                SaveExercise()
-                dismiss()
-            } label: {
-                Label("Update & Exit", systemImage: "square.and.arrow.down.badge.checkmark")
-            }
-            Button {
-                context.delete(workout)
-                dismiss()
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            .foregroundStyle(.red)
-        } header: {
-            Label("Save Options", systemImage: "square.and.arrow.down.on.square")
-        }
-    }
-    
-    private func GroupsIn() -> some View {
-        Section {
-            ForEach(workout.groups ?? [], id: \.self) { group in
-                Text(group.groupName)
-            }
-        } header: {
-            Label("Grouped in", systemImage: "tag")
+            .environment(\.editMode, .constant(.active))
         }
     }
     
     private func SaveExercise() {
-        let updatedWeights = WCF.ConvertWeightsArray(weightsArrayString: weights, sets: sets, sameWeightForAllSets: sameWeightForAllSets)
-
-        let repsToSave: [Int] = sameRepsForAllSets ? Array(repeating: reps[0], count: sets) : Array(reps.prefix(sets))
+        let newReps = setData.map { $0.reps }
         
-        if (repsToSave != workout.reps) || (updatedWeights != workout.weights) || sets != workout.weights.count {
+        let newWeights = setData.map { $0.weight }
+        
+        if setData != workout.setData {
             if let update = workout.updateData {
-                update.reps.append(repsToSave)
-                update.weights.append(updatedWeights)
+                update.reps.append(newReps)
+                update.weights.append(newWeights)
                 update.updateDates.append(Date())
             } else {
-                let newUpdate = WorkoutUpdate(workout: workout, updateDates: [Date()], reps: [workout.reps, repsToSave], weights: [workout.weights, updatedWeights])
+                let newUpdate = WorkoutUpdate(workout: workout, updateDates: [Date()], reps: [workout.reps, newReps], weights: [workout.weights, newWeights])
                 context.insert(newUpdate)
             }
         }
         
-        workout.name = exerciseName
+        workout.name = name
         workout.rest = Int(rest)
-        workout.muscleWorked = muscleWorked
-        workout.weights = updatedWeights
-        workout.reps = repsToSave
-                
+        workout.muscleWorked = selectedMuscle?.rawValue ?? ""
+        workout.weights = newWeights
+        workout.reps = newReps
+        
         try? context.save()
     }
     

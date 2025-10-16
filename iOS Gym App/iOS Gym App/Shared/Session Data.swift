@@ -13,7 +13,6 @@ final class WorkoutSession {
     
     @Relationship(deleteRule: .cascade)
     var exercises: [WorkoutSessionEntry]? = []
-    var gym: Gym?
     
     init(name: String, started: Date, completed: Date? = nil, workoutDay: WorkoutDay) {
         self.name = name

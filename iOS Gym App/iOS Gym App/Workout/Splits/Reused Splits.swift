@@ -1,119 +1,71 @@
 import SwiftUI
 import PhotosUI
 
-struct RoutineViews {
+struct SplitViews {
     
-    static func CardView(routine: WorkoutRoutine) -> some View {
+    static func CardView(split: WorkoutSplit, size: CGFloat) -> some View {
         VStack {
             GlassEffectContainer {
-                if let image = routine.image {
+                if let image = split.image {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
                         .clipShape(.rect(cornerRadius: 10))
                 } else {
                     RoundedRectangle(cornerRadius: 10)
-                        .foregroundStyle(routine.color)
+                        .foregroundStyle(split.color)
                 }
             }
         }
-        .frame(width: 160, height: 160)
-        .overlay(alignment: .bottom) {
-            Text(routine.name)
-                .font(.title3)
-                .fontWeight(.semibold)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.white)
-                .padding(.bottom)
-        }
+        .frame(width: size, height: size)
     }
     
-    static func Header(routineImage: UIImage?, selectedColor: Color) -> some View {
-        VStack {
-            GlassEffectContainer {
-                if let routineImage {
-                    Image(uiImage: routineImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                        .clipped()
-                } else {
-                    Rectangle()
-                        .foregroundStyle(selectedColor)
-                        .aspectRatio(contentMode: .fill)
-                        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                        .clipped()
-                }
+    static func CardViewOverlay(split: WorkoutSplit) -> some View {
+        CardView(split: split, size: 160)
+            .overlay(alignment: .bottom) {
+                Text(split.name)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white)
+                    .padding(.bottom ,Constants.subtitlePadding)
             }
-        }
-    }
-    
-    static func RoutineGroups(selectedGroups: Binding<[WorkoutGroup]>, allGroups: [WorkoutGroup]) -> some View {
-        Section {
-            ForEach(selectedGroups, id: \.self) { group in
-                Text(group.groupName.wrappedValue)
-            }
-            .onDelete { indices in
-                selectedGroups.wrappedValue.remove(atOffsets: indices)
-            }
-            .onMove { indices, newOffset in
-                selectedGroups.wrappedValue.move(fromOffsets: indices, toOffset: newOffset)
-            }
-        } header: {
-            RoutineViews.AddGroupHeader(selectedGroups: selectedGroups, allGroups: allGroups)
-        }
-    }
-    
-    static private func AddGroupHeader(selectedGroups: Binding<[WorkoutGroup]>, allGroups: [WorkoutGroup]) -> some View {
-        HStack {
-            Label("Groups", systemImage: "tag")
-            Spacer()
-            Menu {
-                ForEach(allGroups.sorted(by: { $0.groupName < $1.groupName })) { group in
-                    Button {
-                        selectedGroups.wrappedValue.append(group)
-                    } label: {
-                        Text(group.groupName)
-                    }
-                }
-            } label: {
-                Label("Add to Routine", systemImage: "plus")
-            }
-        }
     }
     
 }
 
-struct RoutineMenuOptionsView: View {
+struct SplitOptionsView: View {
     
+    let allDays: [WorkoutDay]
     @Binding var pinned: Bool
     @Binding var name: String
-    @Binding var selectedImage: UIImage?
-    
     @Binding var selectedColor: Color
-    @State private var selectedItem: PhotosPickerItem?
+    @Binding var selectedImage: UIImage?
+    @Binding var selectedDays: [WorkoutDay]
     
-    @State private var showColorPicker = false
     @State private var showRename = false
     @State private var changedImage = false
-    @State private var showImageCropper = false
+    @State private var showColorPicker = false
     @State private var showImagePicker = false
+    @State private var showImageCropper = false
+    @State private var selectedItem: PhotosPickerItem?
     
     var body: some View {
-        HStack {
-            RoutinePinToggle()
-            RoutineRename()
-            RoutineOptions()
+        List {
+            GlassEffectContainer {
+                Section {
+                    SplitHeader()
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
+                }
+                SplitDays()
+            }
         }
-        .alert("Change Username", isPresented: $showRename) {
+        .alert("Edit Day Name", isPresented: $showRename) {
             TextField("Enter new username", text: $name)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-            Button("Cancel", role: .cancel) {
-                
-            }
-            Button("Save", role: .confirm) {
-                
+            Button("Ok", role: .confirm) {
             }
         }
         .photosPicker(isPresented: $showImagePicker, selection: $selectedItem, matching: .images)
@@ -134,7 +86,6 @@ struct RoutineMenuOptionsView: View {
                     self.selectedItem = nil
                 }
         }
-        
     }
     
     private func RoutinePinToggle() -> some View {
@@ -157,6 +108,24 @@ struct RoutineMenuOptionsView: View {
             Text("Rename Routine")
                 .foregroundStyle(.white)
         }.buttonStyle(.glass)
+    }
+    
+    private func SplitHeader() -> some View {
+        VStack {
+            Header()
+            Text(name)
+                .font(.title)
+                .bold()
+            let dayCount = selectedDays.count
+            let exerciseCount = selectedDays.compactMap(\.workouts).count
+            Text("\(dayCount) Day\(dayCount == 1 ? "" : "s"), \(exerciseCount) Exercise\(exerciseCount == 1 ? "" : "s")")
+                .font(.subheadline)
+            HStack {
+                RoutinePinToggle()
+                RoutineRename()
+                RoutineOptions()
+            }
+        }
     }
     
     private func RoutineOptions() -> some View {
@@ -195,6 +164,57 @@ struct RoutineMenuOptionsView: View {
                 .foregroundStyle(.white)
         }
         .buttonStyle(.glass)
+    }
+    
+    private func Header() -> some View {
+        Group {
+            GlassEffectContainer {
+                if let selectedImage {
+                    Image(uiImage: selectedImage)
+                        .resizable()
+                } else {
+                    Rectangle()
+                        .foregroundStyle(selectedColor)
+                }
+            }
+        }
+        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+        .aspectRatio(Constants.headerRatio, contentMode: .fit)
+        .clipped()
+    }
+    
+    private func SplitDays() -> some View {
+        Section {
+            ForEach(selectedDays, id: \.self) { day in
+                DayViews.Info(day: day)
+            }
+            .onDelete { indices in
+                $selectedDays.wrappedValue.remove(atOffsets: indices)
+            }
+            .onMove { indices, newOffset in
+                $selectedDays.wrappedValue.move(fromOffsets: indices, toOffset: newOffset)
+            }
+        } header: {
+            AddGroupHeader()
+        }
+    }
+    
+    private func AddGroupHeader() -> some View {
+        HStack {
+            Label("Groups", systemImage: "tag")
+            Spacer()
+            Menu {
+                ForEach(allDays.sorted(by: { $0.name < $1.name })) { day in
+                    Button {
+                        selectedDays.append(day)
+                    } label: {
+                        Text(day.name)
+                    }
+                }
+            } label: {
+                Label("Add to Routine", systemImage: "plus")
+            }
+        }
     }
     
 }

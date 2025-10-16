@@ -14,9 +14,22 @@
 		E4F362AA2E8C32B2000A0DEE /* iOS Gym App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Gym App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		34DE52B62EA084EE000FA509 /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E4F362A92E8C32B2000A0DEE /* iOS Gym App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E4F362AC2E8C32B2000A0DEE /* iOS Gym App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				34DE52B62EA084EE000FA509 /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
+			);
 			path = "iOS Gym App";
 			sourceTree = "<group>";
 		};

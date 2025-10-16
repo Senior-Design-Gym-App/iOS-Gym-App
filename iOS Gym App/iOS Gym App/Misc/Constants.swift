@@ -2,15 +2,13 @@ import SwiftUI
 
 struct Constants {
     
+    // MARK: Padding
+    
     static let cornerRadius: CGFloat = 10
     static let horizontalLabelPaddingh: CGFloat = 5
-//    static let cornerRadius: CGFloat = 15.0
-    static let leadingContentInset: CGFloat = 26.0
-    static let standardPadding: CGFloat = 14.0
-    static let landmarkImagePadding: CGFloat = 14.0
-    static let safeAreaPadding: CGFloat = 30.0
-    static let titleTopPadding: CGFloat = 8.0
-    static let titleBottomPadding: CGFloat = -4.0
+    static let titlePadding: CGFloat = 5
+    static let subtitlePadding: CGFloat = 50
+    static let customLabelPadding: CGFloat = 5
     
     // MARK: Colors
     
@@ -20,14 +18,15 @@ struct Constants {
     static let optionsTheme: Color = .cyan
     static let healthTheme: Color = .pink
     static let calendarTheme: Color = .mint
+    static let buttonTheme: Color = .white
     
-    static func ActivityHeaderView(title: String) -> some View {
-        Text(title)
-            .font(.title2)
-            .bold()
-            .padding(.top, titleTopPadding)
-            .padding(.bottom, titleBottomPadding)
-            .padding(.leading, leadingContentInset)
-    }
+    // MARK: SF Icons
+    
+    static let workout = Image(systemName: "dumbell")
+    static let workoutDay = Image(systemName: "calendar.badge.plus")
+    static let workoutSplit = Image(systemName: "arrow.2.circlepath.circle")
+    
+    // MARK: Size
+    static let headerRatio = 1.0
     
 }
