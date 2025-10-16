@@ -3,7 +3,7 @@ import Foundation
 import Observation
 
 @Model
-final class Workout: Codable {
+final class Workout {
     
     var name: String = ""
     var muscleWorked: String = ""
@@ -11,8 +11,34 @@ final class Workout: Codable {
     var reps: [Int] = []
     var weights: [Double] = []
     
+    var muscleInfo: MuscleInfo? {
+        guard !muscleWorked.isEmpty else { return nil }
+        
+        if let muscle = BackMuscle(rawValue: muscleWorked) {
+            return MuscleInfo(muscle: muscle, group: muscle.group)
+        }
+        
+        if let muscle = ChestMuscle(rawValue: muscleWorked) {
+            return MuscleInfo(muscle: muscle, group: muscle.group)
+        }
+        
+        if let muscle = LegMuscle(rawValue: muscleWorked) {
+            return MuscleInfo(muscle: muscle, group: muscle.group)
+        }
+        
+        return nil
+    }
+    
+    var setData: [SetEntry] {
+        var data: [SetEntry] = []
+        for i in 0..<reps.count {
+            data.append(.init(reps: reps[i], weight: weights[i]))
+        }
+        return data
+    }
+    
     @Relationship(deleteRule: .nullify)
-    var groups: [WorkoutGroup]?
+    var days: [WorkoutDay]?
     @Relationship(deleteRule: .cascade)
     var updateData: WorkoutUpdate?
     @Relationship(deleteRule: .cascade)
@@ -26,27 +52,5 @@ final class Workout: Codable {
         self.reps = reps
         self.updateData = updateData
     }
-    
-    enum CodingKeys: String, CodingKey {
-        case name, other, sets, rest, order, muscleWorked, weights, reps
-    }
-    
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.rest = try container.decode(Int.self, forKey: .rest)
-        self.reps = try container.decode([Int].self, forKey: .reps)
-        self.muscleWorked = try container.decode(String.self, forKey: .muscleWorked)
-        self.weights = try container.decode([Double].self, forKey: .weights)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(rest, forKey: .rest)
-        try container.encode(reps, forKey: .reps)
-        try container.encode(muscleWorked, forKey: .muscleWorked)
-        try container.encode(weights, forKey: .weights)
-    }
-    
+        
 }

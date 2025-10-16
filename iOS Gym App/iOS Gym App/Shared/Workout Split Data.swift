@@ -1,18 +1,17 @@
 import SwiftUI
 import SwiftData
-import FoundationModels
 
 @Model
-final class WorkoutRoutine {
+final class WorkoutSplit {
     
     var name: String = ""
     @Relationship(deleteRule: .nullify)
-    var groups: [WorkoutGroup]? = []
+    var days: [WorkoutDay]? = []
     var created: Date = Date.now
     var modified: Date = Date.now
     var imageData: Data?
-    var pinned: Bool = false
     var colorHex: String?
+    var pinned: Bool = false
     
     var image: UIImage? {
         get {
@@ -29,9 +28,9 @@ final class WorkoutRoutine {
         }
     }
     
-    init(name: String, groups: [WorkoutGroup]? = nil, created: Date, modified: Date, imageData: Data? = nil, pinned: Bool) {
+    init(name: String, days: [WorkoutDay]? = nil, created: Date, modified: Date, imageData: Data? = nil, pinned: Bool) {
         self.name = name
-        self.groups = groups
+        self.days = days
         self.created = created
         self.modified = modified
         self.imageData = imageData
