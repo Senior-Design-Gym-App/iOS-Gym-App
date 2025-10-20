@@ -5,10 +5,12 @@ struct Constants {
     // MARK: Padding
     
     static let cornerRadius: CGFloat = 10
+    static let homeRadius: CGFloat = 20
     static let horizontalLabelPaddingh: CGFloat = 5
     static let titlePadding: CGFloat = 5
     static let subtitlePadding: CGFloat = 50
     static let customLabelPadding: CGFloat = 5
+    static let headerPadding: CGFloat = 70
     
     // MARK: Colors
     
@@ -19,14 +21,18 @@ struct Constants {
     static let healthTheme: Color = .pink
     static let calendarTheme: Color = .mint
     static let buttonTheme: Color = .white
+    static let labelColor = Color(uiColor: .label)
     
     // MARK: SF Icons
     
-    static let workout = Image(systemName: "dumbell")
-    static let workoutDay = Image(systemName: "calendar.badge.plus")
-    static let workoutSplit = Image(systemName: "arrow.2.circlepath.circle")
+    static let workoutIcon = "dumbbell"
+    static let workoutDayIcon = "document"
+    static let workoutSplitIcon = "folder"
+    static let defaultEquipmentIcon = "dumbbell"
     
     // MARK: Size
     static let headerRatio = 1.0
+    static let previewSize: CGFloat = 150
+    static let gaugeScale: CGSize = CGSize(width: 1.0, height: 2.0)
     
 }

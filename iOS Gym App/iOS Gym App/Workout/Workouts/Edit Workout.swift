@@ -5,19 +5,19 @@ struct EditWorkoutView: View {
     
     @State var workout: Workout
     
-    @State var rest: Double
     @State var name: String
     
     @State private var showAddSet: Bool = false
     @State var setData: [SetEntry]
     @State var selectedMuscle: (any Muscle)?
+    @State var selectedEquipment: WorkoutEquipment?
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     
     var body: some View {
         NavigationStack {
-            WorkoutOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle)
+            WorkoutOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
@@ -40,9 +40,12 @@ struct EditWorkoutView: View {
     }
     
     private func SaveExercise() {
+        
         let newReps = setData.map { $0.reps }
         
         let newWeights = setData.map { $0.weight }
+        
+        let rest = setData.map { $0.rest }
         
         if setData != workout.setData {
             if let update = workout.updateData {
@@ -56,10 +59,11 @@ struct EditWorkoutView: View {
         }
         
         workout.name = name
-        workout.rest = Int(rest)
+        workout.rest = rest
         workout.muscleWorked = selectedMuscle?.rawValue ?? ""
         workout.weights = newWeights
         workout.reps = newReps
+        workout.equipment = selectedEquipment?.rawValue
         
         try? context.save()
     }

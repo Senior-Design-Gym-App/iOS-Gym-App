@@ -6,6 +6,8 @@ struct AllWorkoutsView: View {
     @Query private var workout: [Workout]
     @Environment(\.modelContext) private var context
     @State private var showCreateWorkout: Bool = false
+    @State private var selectedWorkout: Workout?
+    @State private var searchText: String = ""
     
     private var groupedWorkouts: [String: [Workout]] {
         Dictionary(grouping: workout) { workout in
@@ -30,19 +32,19 @@ struct AllWorkoutsView: View {
     
     var body: some View {
         List {
-            HeaderView()
-//                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets())
-                VerticalListView()
+            VerticalListView()
         }
-//        .listStyle(.plain)
-//        .ignoresSafeArea(edges: .top)
+        .listStyle(.plain)
         .navigationTitle("My Workouts")
+        .searchable(text: $searchText, prompt: "Search")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 CreateWorkoutButton()
             }
         }
+        .sheet(item: $selectedWorkout, content: { workout in
+            EditWorkoutView(workout: workout, name: workout.name, setData: workout.setData, selectedMuscle: workout.muscleInfo?.muscle, selectedEquipment: workout.workoutEquipment)
+        })
         .sheet(isPresented: $showCreateWorkout) {
             CreateWorkoutView()
         }
@@ -52,7 +54,43 @@ struct AllWorkoutsView: View {
         ForEach(sortedLetters, id: \.self) { letter in
             Section {
                 ForEach((groupedWorkouts[letter] ?? []).sorted(by: { $0.name < $1.name })) { workout in
-                    EditLink(workout: workout)
+                    HStack {
+                        Image(systemName: workout.workoutEquipment?.imageName ?? "dumbbell")
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(workout.name)
+                            Text("\(workout.setData.count) set\(workout.setData.count == 1 ? "" : "s")")
+                                .font(.callout)
+                                .fontWeight(.thin)
+                        }
+                        Spacer()
+                        Menu {
+                            ControlGroup {
+                                Button {
+                                    selectedWorkout = workout
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                Button(role: .destructive) {
+                                    
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                        .tint(.red)
+                                }
+                            }
+                            Button {
+                                
+                            } label: {
+                                Label("Add to Queue", systemImage: "text.badge.plus")
+                            }
+                            Button {
+                                
+                            } label: {
+                                Label("Add to Day", systemImage: "document.badge.plus")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                        }
+                    }
                 }
             } header: {
                 Text(letter)
@@ -61,21 +99,11 @@ struct AllWorkoutsView: View {
         }
     }
     
-    private func HeaderView() -> some View {
-        ReusedViews.HeaderCard(fill: Constants.mainAppTheme)
-            .overlay(alignment: .bottom) {
-                VStack {
-                    ReusedViews.HeaderTitle(title: "Select a workout to edit")
-                        .padding(.bottom, 10)
-                }
-            }
-    }
-    
     private func EditLink(workout: Workout) -> some View {
         NavigationLink {
-            EditWorkoutView(workout: workout, rest: Double(workout.rest), name: workout.name, setData: workout.setData, selectedMuscle: workout.muscleInfo?.muscle)
+            EditWorkoutView(workout: workout, name: workout.name, setData: workout.setData, selectedMuscle: workout.muscleInfo?.muscle, selectedEquipment: workout.workoutEquipment)
         } label: {
-            Text(workout.name)
+            Label(workout.name, systemImage: workout.workoutEquipment?.imageName ?? "dumbbell")
         }
     }
     

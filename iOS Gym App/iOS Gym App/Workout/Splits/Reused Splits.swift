@@ -3,7 +3,7 @@ import PhotosUI
 
 struct SplitViews {
     
-    static func CardView(split: WorkoutSplit, size: CGFloat) -> some View {
+    static func CardView(split: WorkoutSplit) -> some View {
         VStack {
             GlassEffectContainer {
                 if let image = split.image {
@@ -16,20 +16,8 @@ struct SplitViews {
                         .foregroundStyle(split.color)
                 }
             }
-        }
-        .frame(width: size, height: size)
-    }
-    
-    static func CardViewOverlay(split: WorkoutSplit) -> some View {
-        CardView(split: split, size: 160)
-            .overlay(alignment: .bottom) {
-                Text(split.name)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.white)
-                    .padding(.bottom ,Constants.subtitlePadding)
-            }
+        }.aspectRatio(1.0, contentMode: .fit)
+            .frame(minWidth: Constants.previewSize ,maxWidth: 300, minHeight: Constants.previewSize ,maxHeight: 300)
     }
     
 }
@@ -51,8 +39,8 @@ struct SplitOptionsView: View {
     @State private var selectedItem: PhotosPickerItem?
     
     var body: some View {
-        List {
-            GlassEffectContainer {
+        GlassEffectContainer {
+            List {
                 Section {
                     SplitHeader()
                         .listRowBackground(Color.clear)
@@ -61,8 +49,8 @@ struct SplitOptionsView: View {
                 SplitDays()
             }
         }
-        .alert("Edit Day Name", isPresented: $showRename) {
-            TextField("Enter new username", text: $name)
+        .alert("Edit Split Name", isPresented: $showRename) {
+            TextField("Enter split name", text: $name)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
             Button("Ok", role: .confirm) {
@@ -94,10 +82,8 @@ struct SplitOptionsView: View {
                 pinned.toggle()
             }
         } label: {
-            Label(pinned ? "Unpin" : "Pin", systemImage: pinned ? "pin.slash" : "pin")
-                .labelStyle(.iconOnly)
+            CustomLabelView(text: pinned ? "Unpin" : "Pin", image: pinned ? "pin.slash" : "pin")
                 .contentTransition(.symbolEffect(.replace))
-                .foregroundStyle(.white)
         }.buttonStyle(.glass)
     }
     
@@ -105,21 +91,19 @@ struct SplitOptionsView: View {
         Button {
             showRename = true
         } label: {
-            Text("Rename Routine")
-                .foregroundStyle(.white)
+            CustomLabelView(text: "Rename", image: "pencil")
         }.buttonStyle(.glass)
     }
     
     private func SplitHeader() -> some View {
         VStack {
             Header()
-            Text(name)
-                .font(.title)
-                .bold()
+            ReusedViews.HeaderTitle(title: name)
             let dayCount = selectedDays.count
-            let exerciseCount = selectedDays.compactMap(\.workouts).count
-            Text("\(dayCount) Day\(dayCount == 1 ? "" : "s"), \(exerciseCount) Exercise\(exerciseCount == 1 ? "" : "s")")
-                .font(.subheadline)
+            let exerciseCount = selectedDays
+                .flatMap { $0.workouts ?? [] }
+                .count
+            ReusedViews.HeaderSubtitle(subtitle: "\(dayCount) Day\(dayCount == 1 ? "" : "s"), \(exerciseCount) Exercise\(exerciseCount == 1 ? "" : "s")")
             HStack {
                 RoutinePinToggle()
                 RoutineRename()
@@ -159,9 +143,7 @@ struct SplitOptionsView: View {
                 }
             }
         } label: {
-            Label("Routine Theme", systemImage: "paintbrush")
-                .labelStyle(.iconOnly)
-                .foregroundStyle(.white)
+            CustomLabelView(text: "Icon", image: "paintbrush")
         }
         .buttonStyle(.glass)
     }
@@ -186,7 +168,8 @@ struct SplitOptionsView: View {
     private func SplitDays() -> some View {
         Section {
             ForEach(selectedDays, id: \.self) { day in
-                DayViews.Info(day: day)
+                Text(day.name)
+                //DayViews.Info(day: day)
             }
             .onDelete { indices in
                 $selectedDays.wrappedValue.remove(atOffsets: indices)

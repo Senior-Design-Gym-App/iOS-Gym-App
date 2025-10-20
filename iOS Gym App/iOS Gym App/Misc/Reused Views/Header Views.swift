@@ -2,18 +2,11 @@ import SwiftUI
 
 struct ReusedViews {
     
-    static func HeaderCard(fill: Color) -> some View {
-        Rectangle()
-            .aspectRatio(3.0 / 2.0, contentMode: .fit)
-            .foregroundStyle(fill)
-    }
-    
     static func HeaderTitle(title: String) -> some View {
         Text(title)
             .font(.largeTitle)
             .fontWeight(.semibold)
             .multilineTextAlignment(.center)
-            .foregroundColor(.white)
     }
     
     static func HeaderSubtitle(subtitle: String) -> some View {
@@ -21,7 +14,33 @@ struct ReusedViews {
         .font(.subheadline)
         .fontWeight(.medium)
         .multilineTextAlignment(.center)
-        .foregroundColor(.white)
+    }
+    
+    static func HorizontalHeader(text: String, showNavigation: Bool) -> some View {
+        HStack(spacing: 5) {
+            Text(text)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(Constants.labelColor)
+            if showNavigation {
+                Image(systemName: "chevron.right")
+                    .fontWeight(.medium)
+                    .tint(Constants.labelColor.tertiary)
+            }
+            Spacer()
+        }
+    }
+    
+    static func Description(topText: String, bottomText: String) -> some View {
+        VStack(alignment: .leading) {
+            Text(topText)
+                .foregroundStyle(Constants.labelColor)
+                .font(.callout)
+            Text(bottomText)
+                .foregroundStyle(Constants.labelColor)
+                .font(.caption)
+                .fontWeight(.thin)
+        }
     }
     
 }

@@ -1,6 +1,7 @@
 import Observation
 import Foundation
 import ActivityKit
+import SwiftData
 
 @Observable
 class SessionManager {
@@ -12,34 +13,41 @@ class SessionManager {
     var timer: Timer? = nil
     
     // MARK: Session Logic
-    var session: WorkoutSession?
+    
+    var sessionStarted: Bool = false
+    var id: PersistentIdentifier?
+    @ObservationIgnored var session: WorkoutSession?
     var currentWorkout: SessionData?
     var upcomingWorkouts: [SessionData] = []
     var completedWorkouts: [WorkoutSessionEntry] = []
     var reps: Int = 0
     var weight: Double = 0
         
-    func StartTimer(workout: Workout, entry: WorkoutSessionEntry) {
+    func StartTimer(workout: Workout, entry: WorkoutSessionEntry, currentSet: Int) {
         FinishTimer()
+        
+        let currentSetData = workout.setData[currentSet - 1]
+        
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { _ in
-            self.UpdateTimer()
+            self.UpdateTimer(restTime: currentSetData.rest)
             
-            if Int(self.elapsedTime) >= workout.rest {
+            if Int(self.elapsedTime) >= currentSetData.rest {
                 self.FinishTimer()
             }
             
         })
         UpdateLiveActivity(workout: workout, currentSet: entry.weight.count + 1)
-        NotificationManager.instance.ScheduleNotification(seconds: workout.rest)
+        if currentSetData.rest > 0 {
+            NotificationManager.instance.ScheduleNotification(seconds: currentSetData.rest)
+        }
     }
 
-    private func UpdateTimer() {
+    private func UpdateTimer(restTime: Int) {
         guard let currentState = exerciseTimer?.content.state else { return }
         
         self.elapsedTime += 1
         let elapsed = Date.now.timeIntervalSince(currentState.timerStart)
-        let totalDuration = exerciseTimer?.content.state.restTime ?? 60.0
-        progress = Float(min(elapsed / totalDuration, 1.0))
+        progress = Float(min(elapsed / Double(restTime), 1.0))
     }
     
     func FinishTimer() {

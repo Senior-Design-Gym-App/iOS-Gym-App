@@ -6,12 +6,10 @@ struct CustomLabelView: View {
     let image: String
     
     var body: some View {
-        Label(text, systemImage: image)
-//        HStack(spacing: Constants.customLabelPadding) {
-//            Image(systemName: image)
-//            Text(text)
-//        }
-//        .foregroundStyle(.white)
+        HStack(spacing: 5) {
+            Image(systemName: image)
+            Text(text)
+        }
     }
     
 }

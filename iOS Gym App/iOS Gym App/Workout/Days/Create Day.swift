@@ -11,47 +11,29 @@ struct CreateWorkoutDayView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                DayHeader()
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets())
-                DayViews.RoutineGroups(selectedWorkouts: $selectedWorkouts, allWorkouts: allWorkouts)
-            }
-            .ignoresSafeArea(edges: .top)
-            .listStyle(.plain)
+            DayOptionsView(allWorkouts: allWorkouts, name: $name, selectedWorkouts: $selectedWorkouts)
             .environment(\.editMode, .constant(.active))
-        }
-    }
-    
-    private func DayHeader() -> some View {
-        DayViews.Header()
-            .overlay(alignment: .bottom) {
-                VStack {
-                    let tags: [MuscleGroup] = selectedWorkouts.compactMap { $0.muscleInfo?.group }
-
-                    VStack(spacing: 0) {
-                        ReusedViews.HeaderTitle(title: name)
-                        ReusedViews.HeaderSubtitle(subtitle: DayViews.GetTagSubtitle(tags: tags))
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) {
+                        let newGroup = WorkoutDay(groupName: name, workouts: selectedWorkouts)
+                        context.insert(newGroup)
+                        try? context.save()
+                        dismiss()
+                        dismiss()
+                    } label: {
+                        Label("Save", systemImage: "checkmark")
                     }
-                    
-                    SaveButton()
-                    
-                    DayOptionsView(name: $name)
-                    
-                }.padding(.bottom)
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        dismiss()
+                    } label: {
+                        Label("Exit", systemImage: "xmark")
+                    }
+                }
             }
-    }
-    
-    private func SaveButton() -> some View {
-        Button {
-            let newGroup = WorkoutDay(groupName: name, workouts: selectedWorkouts)
-            context.insert(newGroup)
-            try? context.save()
-            dismiss()
-        } label: {
-            Text("Save")
-                .foregroundStyle(.white)
-        }.buttonStyle(.glass)
+        }
     }
     
 }

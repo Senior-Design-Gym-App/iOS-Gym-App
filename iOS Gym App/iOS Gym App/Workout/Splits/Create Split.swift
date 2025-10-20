@@ -9,7 +9,7 @@ struct CreateWorkoutSplitView: View {
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @State private var newSplit = WorkoutSplit(name: "New Routine", days: [], created: Date.now, modified: Date.now, imageData: nil, pinned: false)
+    @State private var newSplit = WorkoutSplit(name: "New Split", days: [], created: Date.now, modified: Date.now, imageData: nil, pinned: false)
     
     @State private var selectedDays: [WorkoutDay] = []
     @State private var selectedColor: Color = .teal

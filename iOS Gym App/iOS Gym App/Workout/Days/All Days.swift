@@ -24,10 +24,8 @@ struct AllWorkoutDaysView: View {
     
     var body: some View {
         ScrollView {
-            HeaderView()
             GridView()
         }
-        .ignoresSafeArea(edges: .top)
         .navigationTitle("My Days")
         .sheet(isPresented: $showCreateDay) {
             CreateWorkoutDayView(allWorkouts: allWorkouts)
@@ -42,14 +40,6 @@ struct AllWorkoutDaysView: View {
         }
     }
     
-    private func HeaderView() -> some View {
-        ReusedViews.HeaderCard(fill: Constants.mainAppTheme)
-            .overlay(alignment: .bottom) {
-                ReusedViews.HeaderTitle(title: "Select a day to edit")
-                    .padding(.bottom, 10)
-            }
-    }
-    
     private func GridView() -> some View {
         GlassEffectContainer {
             LazyVGrid(columns: columns, spacing: 10) {
@@ -62,11 +52,9 @@ struct AllWorkoutDaysView: View {
                             selectedDay: day
                         )
                     } label: {
-                        Text(day.name)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .buttonBorderShape(.roundedRectangle(radius: Constants.cornerRadius))
-                            .buttonStyle(.glass)
-                    }.border(Color.red, width: 1)
+                        ReusedPreviews.GridDayView(day: day)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
             }
             .padding()

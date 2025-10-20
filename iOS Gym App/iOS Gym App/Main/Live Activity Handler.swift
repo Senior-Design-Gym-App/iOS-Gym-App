@@ -7,7 +7,9 @@ extension SessionManager {
     func UpdateLiveActivity(workout: Workout, currentSet: Int) {
         if exerciseTimer?.content.state != nil {
             
-            let updatedState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setCount: workout.weights.count, restTime: Double(workout.rest), workoutName: workout.name)
+            let next = workout.setData[currentSet + 1]
+            
+            let updatedState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: workout.weights.count, workoutName: workout.name)
             
             Task {
                 await exerciseTimer?.update(ActivityContent(state: updatedState, staleDate: nil))
@@ -18,14 +20,16 @@ extension SessionManager {
                         
             let attributes = WorkoutTimer()
             
-            let initialState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setCount: workout.weights.count, restTime: Double(workout.rest), workoutName: workout.name)
-
-            do {
-                exerciseTimer = try Activity.request(attributes: attributes, content: ActivityContent(state: initialState, staleDate: startTime.addingTimeInterval(TimeInterval(60 * 60))))
-            } catch {
-                print("Error starting live activity: \(error)")
+            if let next = workout.setData.first {
+                
+                let initialState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: workout.weights.count, workoutName: workout.name)
+                
+                do {
+                    exerciseTimer = try Activity.request(attributes: attributes, content: ActivityContent(state: initialState, staleDate: startTime.addingTimeInterval(TimeInterval(60 * 60))))
+                } catch {
+                    print("Error starting live activity: \(error)")
+                }
             }
-            
         }
     }
     
@@ -35,8 +39,8 @@ extension SessionManager {
         let finalState = WorkoutTimer.ContentState(
             currentSet: 999,
             timerStart: currentState.timerStart,
+            setEntry: currentState.setEntry,
             setCount: currentState.setCount,
-            restTime: currentState.restTime,
             workoutName: currentState.workoutName
         )
         

@@ -9,10 +9,11 @@ final class WorkoutDay {
     @Relationship(deleteRule: .nullify)
     var workouts: [Workout]? = []
     @Relationship(deleteRule: .nullify)
-    var splits: [WorkoutSplit]? = []
+    var split: WorkoutSplit?
     var colorHex: String?
+    var created: Date = Date()
     
-    var sessions: WorkoutSession?
+    var sessions: [WorkoutSession]? = []
     
     var tags: [MuscleGroup] {
         var allTags: [MuscleGroup] = []

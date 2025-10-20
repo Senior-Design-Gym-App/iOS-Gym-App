@@ -12,47 +12,28 @@ struct EditWorkoutDayView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                DayHeader()
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets())
-                DayViews.RoutineGroups(selectedWorkouts: $selectedWorkouts, allWorkouts: allWorkouts)
-            }
-            .ignoresSafeArea(edges: .top)
-            .listStyle(.plain)
+            DayOptionsView(allWorkouts: allWorkouts, name: $name, selectedWorkouts: $selectedWorkouts)
             .environment(\.editMode, .constant(.active))
-        }
-    }
-    
-    private func DayHeader() -> some View {
-        DayViews.Header()
-            .overlay(alignment: .bottom) {
-                VStack {
-                    let tags: [MuscleGroup] = selectedWorkouts.compactMap { $0.muscleInfo?.group }
-
-                    VStack(spacing: 0) {
-                        ReusedViews.HeaderTitle(title: name)
-                        ReusedViews.HeaderSubtitle(subtitle: DayViews.GetTagSubtitle(tags: tags))
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) {
+                        selectedDay.name = name
+                        selectedDay.workouts = selectedWorkouts
+                        try? context.save()
+                        dismiss()
+                    } label: {
+                        Label("Save", systemImage: "checkmark")
                     }
-
-                    UpdateButton()
-                    
-                    DayOptionsView(name: $name)
-                    
-                }.padding(.bottom)
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        dismiss()
+                    } label: {
+                        Label("Exit", systemImage: "xmark")
+                    }
+                }
             }
-    }
-    
-    private func UpdateButton() -> some View {
-        Button {
-            selectedDay.name = name
-            selectedDay.workouts = selectedWorkouts
-            try? context.save()
-            dismiss()
-        } label: {
-            Text("Update")
-                .foregroundStyle(.white)
-        }.buttonStyle(.glass)
+        }
     }
     
 }

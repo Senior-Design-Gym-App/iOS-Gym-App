@@ -3,19 +3,19 @@ import SwiftData
 
 struct CreateWorkoutView: View {
     
-    @State private var rest: Double = 0.0
     @State private var name: String = "New Workout"
     
     @State private var showAddSet: Bool = false
     @State private var setData: [SetEntry] = []
     @State private var selectedMuscle: (any Muscle)?
+    @State private var selectedEquipment: WorkoutEquipment?
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     
     var body: some View {
         NavigationStack {
-            WorkoutOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle)
+            WorkoutOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
@@ -43,11 +43,13 @@ struct CreateWorkoutView: View {
         
         let weights = setData.map { $0.weight }
         
+        let rest = setData.map { $0.rest }
+        
         let newUpdate = WorkoutUpdate(updateDates: [Date.now], reps: [reps], weights: [weights])
         
         context.insert(newUpdate)
         
-        let exercise = Workout(name: name, rest: Int(rest), order: 0, muscleWorked: selectedMuscle?.rawValue ?? "", weights: weights, reps: reps, updateData: newUpdate)
+        let exercise = Workout(name: name, rest: rest, muscleWorked: selectedMuscle?.rawValue ?? "", weights: weights, reps: reps, updateData: newUpdate, equipment: selectedEquipment?.rawValue)
         
         context.insert(exercise)
         try? context.save()

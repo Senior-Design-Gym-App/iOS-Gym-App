@@ -7,31 +7,25 @@ struct WorkoutHome: View {
     @Query private var days: [WorkoutDay]
     @Query private var splits: [WorkoutSplit]
     
+    var recentItems: [RecentWorkoutItem] {
+        let allItems: [RecentWorkoutItem] =
+            days.map { .day($0) } + splits.map { .split($0) }
+
+        return allItems.sorted { $0.created > $1.created }
+    }
+    
+    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    
     var body: some View {
         NavigationStack {
             List {
-                WorkoutHeader()
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets())
                 MyWorkoutSection()
+                RecentlyAddedSection()
+                    .padding(.top)
+                    .listRowSeparator(.hidden)
             }
-            .ignoresSafeArea(edges: .top)
             .listStyle(.plain)
-            .navigationTitle("Title")
-            .navigationSubtitle("Subtitle 1")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-    
-    private func WorkoutHeader() -> some View {
-        ZStack {
-            ReusedViews.HeaderCard(fill: Constants.mainAppTheme)
-            VStack(spacing: 0) {
-                Spacer()
-                ReusedViews.HeaderTitle(title: "Subtitle 2")
-                ReusedViews.HeaderSubtitle(subtitle: "Subtitle 3")
-                Spacer()
-            }
+            .navigationTitle("Workouts")
         }
     }
     
@@ -40,20 +34,42 @@ struct WorkoutHome: View {
             NavigationLink {
                 AllWorkoutsView()
             } label: {
-                Label("Workouts", systemImage: "dumbbell")
+                Label("Workouts", systemImage: Constants.workoutIcon)
             }
             NavigationLink {
                 AllWorkoutDaysView()
             } label: {
-                Label("Workout Days", systemImage: "tag")
+                Label("Workout Days", systemImage: Constants.workoutDayIcon)
             }
             NavigationLink {
                 AllWorkoutSplitsView()
             } label: {
-                Label("Workout Splits", systemImage: "calendar.day.timeline.left")
+                Label("Workout Splits", systemImage: Constants.workoutSplitIcon)
             }
-        } header: {
-            Label("My Workouts", systemImage: "checklist")
+        }
+    }
+    
+    private func RecentlyAddedSection() -> some View {
+        VStack {
+            ReusedViews.HorizontalHeader(text: "Recently Added", showNavigation: false)
+            LazyVGrid(columns: columns) {
+                ForEach(recentItems, id: \.self) { item in
+                    switch item {
+                    case .day(let day):
+                        NavigationLink {
+                            
+                        } label: {
+                            ReusedPreviews.GridDayView(day: day)
+                        }.navigationLinkIndicatorVisibility(.hidden)
+                    case .split(let split):
+                        NavigationLink {
+                            
+                        } label: {
+                            ReusedPreviews.GridSplitView(split: split)
+                        }.navigationLinkIndicatorVisibility(.hidden)
+                    }
+                }
+            }
         }
     }
     

@@ -1,7 +1,7 @@
 import SwiftUI
 import CropViewController
 import CloudKit
-import TOCropViewController
+internal import TOCropViewController
 
 struct ProfilePictureCropper: UIViewControllerRepresentable {
     @Binding var image: UIImage?
@@ -103,7 +103,7 @@ struct WorkoutPlanImageCropper: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> some UIViewController {
         let img = self.image!
         let vc = CropViewController(croppingStyle: .default, image: img)
-//        vc.customAspectRatio = CGSize(width: 1, height: 1)    // this prob changed
+//        vc.customAspectRatio = CGSize(width: 1, height: 1)
         vc.aspectRatioLockEnabled = true
         vc.rotateButtonsHidden = true
         vc.aspectRatioPickerButtonHidden = true
