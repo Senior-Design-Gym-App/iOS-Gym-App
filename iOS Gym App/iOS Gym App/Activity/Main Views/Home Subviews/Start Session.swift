@@ -37,13 +37,13 @@ struct StartSessionsView: View {
     private func SplitMenu(split: Split) -> some View {
         Menu {
             Section {
-                ForEach(split.workouts ?? [], id: \.self) { workout in
-                    Button {
-                        QueueWorkout(workout: workout)
-                    } label: {
-                        SplitLabel(workout: workout)
-                    }
-                }
+//                ForEach(split.workouts ?? [], id: \.self) { workout in
+//                    Button {
+//                        QueueWorkout(workout: workout)
+//                    } label: {
+//                        SplitLabel(workout: workout)
+//                    }
+//                }
             } header: {
                 Text("Queue Workouts")
             }
