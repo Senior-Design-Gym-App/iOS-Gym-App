@@ -15,7 +15,14 @@ struct TabHome: View {
             Tab("Explore", systemImage: "safari") {
                 Text("Walka w kuchni")
             }
+            Tab("Search", systemImage: "magnifyingglass", role: .search) {
+                SearchHomeView()
+            }
         }
+        .tabViewBottomAccessory {
+            SessionTabViewWrapper()
+        }
+        .tabBarMinimizeBehavior(.onScrollDown)
     }
     
     

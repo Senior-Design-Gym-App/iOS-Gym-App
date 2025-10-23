@@ -4,12 +4,12 @@ import ActivityKit
 
 extension SessionManager {
     
-    func UpdateLiveActivity(workout: Workout, currentSet: Int) {
+    func UpdateLiveActivity(exercise: Exercise, currentSet: Int) {
         if exerciseTimer?.content.state != nil {
             
-            let next = workout.setData[currentSet + 1]
+            let next = exercise.setData.last![currentSet + 1]
             
-            let updatedState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: workout.weights.count, workoutName: workout.name)
+            let updatedState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: exercise.weights.count, exerciseName: exercise.name)
             
             Task {
                 await exerciseTimer?.update(ActivityContent(state: updatedState, staleDate: nil))
@@ -20,9 +20,9 @@ extension SessionManager {
                         
             let attributes = WorkoutTimer()
             
-            if let next = workout.setData.first {
+            if let next = exercise.setData.last?.last {
                 
-                let initialState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: workout.weights.count, workoutName: workout.name)
+                let initialState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: exercise.weights.count, exerciseName: exercise.name)
                 
                 do {
                     exerciseTimer = try Activity.request(attributes: attributes, content: ActivityContent(state: initialState, staleDate: startTime.addingTimeInterval(TimeInterval(60 * 60))))
@@ -41,7 +41,7 @@ extension SessionManager {
             timerStart: currentState.timerStart,
             setEntry: currentState.setEntry,
             setCount: currentState.setCount,
-            workoutName: currentState.workoutName
+            exerciseName: currentState.exerciseName
         )
         
         Task {

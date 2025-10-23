@@ -13,32 +13,62 @@ class SessionManager {
     var timer: Timer? = nil
     
     // MARK: Session Logic
-    
-    var sessionStarted: Bool = false
-    var id: PersistentIdentifier?
-    @ObservationIgnored var session: WorkoutSession?
+    var session: WorkoutSession?
     var currentWorkout: SessionData?
     var upcomingWorkouts: [SessionData] = []
     var completedWorkouts: [WorkoutSessionEntry] = []
     var reps: Int = 0
     var weight: Double = 0
+    
+    var isPaused = false
+    private var remainingRestTime: Int? = nil
+    
+    func PauseTimer() {
+        guard !isPaused else { return }
+        isPaused = true
+        timer?.invalidate()
+        timer = nil
+    }
+
+    func ResumeTimer(exercise: Exercise, currentSet: Int) {
+        guard isPaused else { return }
+        isPaused = false
         
-    func StartTimer(workout: Workout, entry: WorkoutSessionEntry, currentSet: Int) {
+        let restTime = exercise.setData.last?[currentSet - 1].rest ?? 123
+        
+        // Calculate remaining rest time
+        let remaining = restTime - Int(elapsedTime)
+        guard remaining > 0 else {
+            FinishTimer()
+            return
+        }
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { _ in
+            self.UpdateTimer(restTime: restTime)
+            
+            if Int(self.elapsedTime) >= restTime {
+                self.FinishTimer()
+            }
+        })
+    }
+
+        
+    func StartTimer(exercise: Exercise, entry: WorkoutSessionEntry, currentSet: Int) {
         FinishTimer()
         
-        let currentSetData = workout.setData[currentSet - 1]
+        let restTime = exercise.setData.last?[currentSet - 1].rest ?? 123
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { _ in
-            self.UpdateTimer(restTime: currentSetData.rest)
+            self.UpdateTimer(restTime: restTime)
             
-            if Int(self.elapsedTime) >= currentSetData.rest {
+            if Int(self.elapsedTime) >= restTime {
                 self.FinishTimer()
             }
             
         })
-        UpdateLiveActivity(workout: workout, currentSet: entry.weight.count + 1)
-        if currentSetData.rest > 0 {
-            NotificationManager.instance.ScheduleNotification(seconds: currentSetData.rest)
+        UpdateLiveActivity(exercise: exercise, currentSet: entry.weight.count + 1)
+        if restTime > 0 {
+            NotificationManager.instance.ScheduleNotification(seconds: restTime)
         }
     }
 
@@ -55,12 +85,12 @@ class SessionManager {
         timer = nil
     }
     
-    func QueueWorkout(workout: Workout) {
-        let newEntry = WorkoutSessionEntry(reps: [], weight: [], session: nil, originalWorkout: nil)
-        let newQueueItem = SessionData(workout: workout, entry: newEntry)
+    func QueueExercise(exercise: Exercise) {
+        let newEntry = WorkoutSessionEntry(reps: [], weight: [], session: nil, exercise: nil)
+        let newQueueItem = SessionData(exercise: exercise, entry: newEntry)
         if currentWorkout == nil {
-            reps = workout.reps.first!
-            weight = workout.weights.first!
+            reps = exercise.setData.last?.last?.reps ?? 123
+            weight = exercise.setData.last?.last?.weight ?? 123.0
             currentWorkout = newQueueItem
         } else {
             upcomingWorkouts.append(newQueueItem)
@@ -70,31 +100,31 @@ class SessionManager {
     func SessionNextWorkout() {
         if let next = upcomingWorkouts.first, let current = currentWorkout {
             
-            current.entry.originalWorkout = current.workout // add relationship once item is done
+            current.entry.exercise = current.exercise // add relationship once item is done
             completedWorkouts.append(current.entry)
             currentWorkout = next
             upcomingWorkouts.removeFirst()
             
-            reps = next.workout.reps.first!
-            weight = next.workout.weights.first!
+            reps = next.exercise.setData.last?.last?.reps ?? 123
+            weight = next.exercise.setData.last?.last?.weight ?? 123.0
             
         }
     }
     
     func SessionPreviousWorkout() {
         guard let prevEntry = completedWorkouts.last,
-              let prevOriginalWorkout = prevEntry.originalWorkout else {
+              let prevOriginalWorkout = prevEntry.exercise else {
             return
         }
         
         // remove association as it is no longer completed
-        prevEntry.originalWorkout = nil
+        prevEntry.exercise = nil
         prevEntry.session = nil
         if let current = currentWorkout {
-            upcomingWorkouts.insert(SessionData(workout: current.workout, entry: current.entry), at: 0)
+            upcomingWorkouts.insert(SessionData(exercise: current.exercise, entry: current.entry), at: 0)
         }
         
-        currentWorkout = SessionData(workout: prevOriginalWorkout, entry: prevEntry)
+        currentWorkout = SessionData(exercise: prevOriginalWorkout, entry: prevEntry)
         
         completedWorkouts.removeLast()
         
@@ -105,17 +135,17 @@ class SessionManager {
             if lastSetIndex < prevEntry.reps.count {
                 reps = prevEntry.reps[lastSetIndex]
             } else {
-                reps = prevEntry.reps.last ?? prevOriginalWorkout.reps.last ?? 1
+//                reps = prevEntry.reps.last ?? prevOriginalWorkout.reps.last ?? 1
             }
             
             if lastSetIndex < prevEntry.weight.count {
                 weight = prevEntry.weight[lastSetIndex]
             } else {
-                weight = prevEntry.weight.last ?? prevOriginalWorkout.weights.last ?? 0
+//                weight = prevEntry.weight.last ?? prevOriginalWorkout.weights.last ?? 0
             }
         } else {
-            reps = prevOriginalWorkout.reps.first ?? 1
-            weight = prevOriginalWorkout.weights.first ?? 0
+//            reps = prevOriginalWorkout.reps.first ?? 1
+//            weight = prevOriginalWorkout.weights.first ?? 0
         }
     }
     
@@ -127,16 +157,16 @@ class SessionManager {
             
             let nextSetIndex = currentWorkout.entry.weight.count // This is now the index for the NEXT set (0-indexed)
             
-            if nextSetIndex < currentWorkout.workout.reps.count {
-                reps = currentWorkout.workout.reps[nextSetIndex]
+            if nextSetIndex < currentWorkout.exercise.reps.count {
+                reps = currentWorkout.exercise.reps.last![nextSetIndex]
             } else {
-                reps = currentWorkout.workout.reps.last ?? reps         // out of range, default to current value
+                reps = currentWorkout.exercise.reps.last?.last ?? reps        // out of range, default to current value
             }
             
-            if nextSetIndex < currentWorkout.workout.weights.count {
-                weight = currentWorkout.workout.weights[nextSetIndex]
+            if nextSetIndex < currentWorkout.exercise.weights.count {
+                weight = currentWorkout.exercise.weights.last![nextSetIndex]
             } else {
-                weight = currentWorkout.workout.weights.last ?? weight  // out of range, default to current value
+                weight = currentWorkout.exercise.weights.last?.last ?? weight  // out of range, default to current value
             }
         }
     }

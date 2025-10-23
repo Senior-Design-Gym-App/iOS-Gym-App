@@ -1,14 +1,14 @@
 import SwiftUI
 import SwiftData
 
-struct EditWorkoutSplitView: View {
+struct EditSplitView: View {
     
-    let allDays: [WorkoutDay]
+    let allWorkouts: [Workout]
     @State var pinned: Bool
     @State var name: String
     @State var selectedImage: UIImage?
-    @State var split: WorkoutSplit
-    @State var selectedDays: [WorkoutDay]
+    @State var split: Split
+    @State var selectedWorkouts: [Workout]
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -16,7 +16,7 @@ struct EditWorkoutSplitView: View {
     
     var body: some View {
         NavigationStack {
-            SplitOptionsView(allDays: allDays, pinned: $pinned, name: $name, selectedColor: $selectedColor, selectedImage: $selectedImage, selectedDays: $selectedDays)
+            SplitOptionsView(allWorkouts: allWorkouts, pinned: $pinned, name: $name, selectedColor: $selectedColor, selectedImage: $selectedImage, selectedWorkouts: $selectedWorkouts)
             .environment(\.editMode, .constant(.active))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -24,20 +24,13 @@ struct EditWorkoutSplitView: View {
                         
                         split.name = name
                         split.modified = Date.now
-                        split.days = selectedDays
+                        split.workouts = selectedWorkouts
                         split.pinned = pinned
                         try? context.save()
                         
                         dismiss()
                     } label: {
                         Label("Save", systemImage: "checkmark")
-                    }
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
-                        dismiss()
-                    } label: {
-                        Label("Exit", systemImage: "xmark")
                     }
                 }
             }

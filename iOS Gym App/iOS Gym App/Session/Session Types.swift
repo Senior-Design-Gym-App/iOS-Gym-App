@@ -3,8 +3,17 @@ import SwiftUI
 struct SessionData: Identifiable, Hashable, Equatable {
     
     let id = UUID()
-    let workout: Workout
+    let exercise: Exercise
     var entry: WorkoutSessionEntry
+    
+}
+
+enum SessionViewOption: String, CaseIterable, Identifiable {
+    
+    case entry           = "Entry"
+    case queue           = "Queue"
+    
+    var id : String { rawValue }
     
 }
 
@@ -25,14 +34,5 @@ enum WeightChangeType: String, CaseIterable, Identifiable {
         case .twentyFive: return 25
         }
     }
-    
-}
-
-enum SessionViewOption: String, CaseIterable, Identifiable {
-    
-    case entry           = "Entry"
-    case queue           = "Queue"
-    
-    var id : String { rawValue }
     
 }

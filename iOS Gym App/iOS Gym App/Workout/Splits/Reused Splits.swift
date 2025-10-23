@@ -3,33 +3,33 @@ import PhotosUI
 
 struct SplitViews {
     
-    static func CardView(split: WorkoutSplit) -> some View {
-        VStack {
-            GlassEffectContainer {
-                if let image = split.image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(.rect(cornerRadius: 10))
-                } else {
-                    RoundedRectangle(cornerRadius: 10)
-                        .foregroundStyle(split.color)
-                }
+    static func CardView(split: Split, size: CGFloat) -> some View {
+        GlassEffectContainer {
+            if let image = split.image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(.rect(cornerRadius: 10))
+                    .frame(idealWidth: size, idealHeight: size)
+            } else {
+                RoundedRectangle(cornerRadius: 10)
+                    .foregroundStyle(ColorManager.shared.GetColor(key: split.id.hashValue.description))
+                    .frame(idealWidth: size, idealHeight: size)
             }
-        }.aspectRatio(1.0, contentMode: .fit)
-            .frame(minWidth: Constants.previewSize ,maxWidth: 300, minHeight: Constants.previewSize ,maxHeight: 300)
+        }
+        .aspectRatio(1.0, contentMode: .fit)
     }
     
 }
 
 struct SplitOptionsView: View {
     
-    let allDays: [WorkoutDay]
+    let allWorkouts: [Workout]
     @Binding var pinned: Bool
     @Binding var name: String
     @Binding var selectedColor: Color
     @Binding var selectedImage: UIImage?
-    @Binding var selectedDays: [WorkoutDay]
+    @Binding var selectedWorkouts: [Workout]
     
     @State private var showRename = false
     @State private var changedImage = false
@@ -99,11 +99,11 @@ struct SplitOptionsView: View {
         VStack {
             Header()
             ReusedViews.HeaderTitle(title: name)
-            let dayCount = selectedDays.count
-            let exerciseCount = selectedDays
-                .flatMap { $0.workouts ?? [] }
+            let workoutCount = selectedWorkouts.count
+            let exerciseCount = selectedWorkouts
+                .flatMap { $0.exercises ?? [] }
                 .count
-            ReusedViews.HeaderSubtitle(subtitle: "\(dayCount) Day\(dayCount == 1 ? "" : "s"), \(exerciseCount) Exercise\(exerciseCount == 1 ? "" : "s")")
+            ReusedViews.HeaderSubtitle(subtitle: "\(workoutCount) Day\(workoutCount == 1 ? "" : "s"), \(exerciseCount) Exercise\(exerciseCount == 1 ? "" : "s")")
             HStack {
                 RoutinePinToggle()
                 RoutineRename()
@@ -167,15 +167,15 @@ struct SplitOptionsView: View {
     
     private func SplitDays() -> some View {
         Section {
-            ForEach(selectedDays, id: \.self) { day in
-                Text(day.name)
+            ForEach(selectedWorkouts, id: \.self) { workout in
+                Text(workout.name)
                 //DayViews.Info(day: day)
             }
             .onDelete { indices in
-                $selectedDays.wrappedValue.remove(atOffsets: indices)
+                $selectedWorkouts.wrappedValue.remove(atOffsets: indices)
             }
             .onMove { indices, newOffset in
-                $selectedDays.wrappedValue.move(fromOffsets: indices, toOffset: newOffset)
+                $selectedWorkouts.wrappedValue.move(fromOffsets: indices, toOffset: newOffset)
             }
         } header: {
             AddGroupHeader()
@@ -187,11 +187,11 @@ struct SplitOptionsView: View {
             Label("Groups", systemImage: "tag")
             Spacer()
             Menu {
-                ForEach(allDays.sorted(by: { $0.name < $1.name })) { day in
+                ForEach(allWorkouts.sorted(by: { $0.name < $1.name })) { workout in
                     Button {
-                        selectedDays.append(day)
+                        selectedWorkouts.append(workout)
                     } label: {
-                        Text(day.name)
+                        Text(workout.name)
                     }
                 }
             } label: {

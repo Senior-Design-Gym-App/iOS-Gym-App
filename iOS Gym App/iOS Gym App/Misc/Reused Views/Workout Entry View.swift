@@ -6,7 +6,7 @@ struct WorkoutEntryView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text(workout.originalWorkout?.name ?? "Unknown")
+            Text(workout.exercise?.name ?? "Unknown")
             HStack {
                 VStack(alignment: .leading) {
                     Text("Reps:")

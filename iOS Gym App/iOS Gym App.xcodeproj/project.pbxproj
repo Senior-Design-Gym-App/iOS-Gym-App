@@ -25,9 +25,9 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3495795B2EA5C03000E292BB /* Shared */ = {
+		34C3DF452EAA862F00C6C3BD /* Shared 2 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Shared;
+			path = "Shared 2";
 			sourceTree = "<group>";
 		};
 		E4F362AC2E8C32B2000A0DEE /* iOS Gym App */ = {
@@ -55,9 +55,9 @@
 		E4F362A12E8C32B2000A0DEE = {
 			isa = PBXGroup;
 			children = (
+				34C3DF452EAA862F00C6C3BD /* Shared 2 */,
 				E4F362AC2E8C32B2000A0DEE /* iOS Gym App */,
 				E4F362AB2E8C32B2000A0DEE /* Products */,
-				3495795B2EA5C03000E292BB /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -85,7 +85,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				3495795B2EA5C03000E292BB /* Shared */,
+				34C3DF452EAA862F00C6C3BD /* Shared 2 */,
 				E4F362AC2E8C32B2000A0DEE /* iOS Gym App */,
 			);
 			name = "iOS Gym App";
@@ -303,7 +303,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.2;
+				MARKETING_VERSION = 0.21;
 				PRODUCT_BUNDLE_IDENTIFIER = "Senior-Design.iOS-Gym-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -355,7 +355,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.2;
+				MARKETING_VERSION = 0.21;
 				PRODUCT_BUNDLE_IDENTIFIER = "Senior-Design.iOS-Gym-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

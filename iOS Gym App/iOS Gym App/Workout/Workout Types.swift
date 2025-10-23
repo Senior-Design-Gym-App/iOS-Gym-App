@@ -16,9 +16,8 @@ enum WorkoutSortTypes: String, CaseIterable, Identifiable {
 
 enum WorkoutViewTypes: String, CaseIterable, Identifiable {
     
-    case verticalList      = "Vertical List"
     case grid              = "Grid"
-    case horizontalList    = "Horizontal List"
+    case verticalList      = "List"
     
     var id : String { rawValue }
     
@@ -28,8 +27,6 @@ enum WorkoutViewTypes: String, CaseIterable, Identifiable {
             "list.bullet"
         case .grid:
             "square.grid.2x2"
-        case .horizontalList:
-            "rectangle.grid.3x2"
         }
     }
     
@@ -203,24 +200,29 @@ enum WorkoutEquipment: String, CaseIterable, Identifiable {
 
 enum RecentWorkoutItem: Hashable, Identifiable {
     
-    case day(WorkoutDay)
-    case split(WorkoutSplit)
+    case workout(Workout)
+    case split(Split)
+    case exercise(Exercise)
     
     var created: Date {
         switch self {
-        case .day(let day):
+        case .workout(let day):
             return day.created
         case .split(let split):
             return split.created
+        case .exercise(let workout):
+            return workout.created
         }
     }
     
     var id: String {
         switch self {
-        case .day(let day):
+        case .workout(let day):
             return "day-\(day.persistentModelID)"
         case .split(let split):
             return "split-\(split.persistentModelID)"
+        case .exercise(let workout):
+            return "workout-\(workout.persistentModelID)"
         }
     }
     
