@@ -1,30 +1,13 @@
-import SwiftData
 import Foundation
-import FoundationModels
 
-@Model
-final class WorkoutUpdate {
+extension Exercise {
     
-    var workout: Workout?
-    var updateDates: [Date] = []
-    var reps: [[Int]] = []
-    var weights: [[Double]] = []
-    var prDates: [Date] = []
-    var prWeights: [Double] = []
-    
-    init(workout: Workout? = nil, updateDates: [Date], reps: [[Int]], weights: [[Double]]) {
-        self.workout = workout
-        self.updateDates = updateDates
-        self.reps = reps
-        self.weights = weights
-    }
-    
-    var prData: [WeightEntry] {
-        let count = min(prDates.count, prWeights.count)
-        return (0..<count).map { i in
-            WeightEntry(index: i, value: prWeights[i], date: prDates[i])
-        }
-    }
+//    var prData: [WeightEntry] {
+//        let count = min(prDates.count, prWeights.count)
+//        return (0..<count).map { i in
+//            WeightEntry(index: i, value: prWeights[i], date: prDates[i])
+//        }
+//    }
     
     var updateData: [UpdateData] {
         let count = min(updateDates.count, min(reps.count, weights.count))

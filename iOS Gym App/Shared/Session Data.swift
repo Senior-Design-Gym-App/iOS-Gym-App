@@ -9,16 +9,16 @@ final class WorkoutSession {
     var completed: Date?
     var selectedGymID: String?
     
-    var workoutDay: WorkoutDay?
+    var workout: Workout?
     
     @Relationship(deleteRule: .cascade)
     var exercises: [WorkoutSessionEntry]? = []
     
-    init(name: String, started: Date, completed: Date? = nil, workoutDay: WorkoutDay) {
+    init(name: String, started: Date, completed: Date? = nil, workout: Workout) {
         self.name = name
         self.started = started
         self.completed = completed
-        self.workoutDay = workoutDay
+        self.workout = workout
     }
     
 }
@@ -32,13 +32,13 @@ final class WorkoutSessionEntry {
     @Relationship(deleteRule: .nullify)
     var session: WorkoutSession?
     @Relationship(deleteRule: .nullify)
-    var originalWorkout: Workout?
+    var exercise: Exercise?
     
-    init(reps: [Int], weight: [Double], session: WorkoutSession?, originalWorkout: Workout?) {
+    init(reps: [Int], weight: [Double], session: WorkoutSession?, exercise: Exercise?) {
         self.reps = reps
         self.weight = weight
         self.session = session
-        self.originalWorkout = originalWorkout
+        self.exercise = exercise
     }
     
 }

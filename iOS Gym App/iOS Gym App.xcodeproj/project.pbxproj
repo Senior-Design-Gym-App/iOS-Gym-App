@@ -7,19 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E40F095E2EA7E6B100618BB9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E40F09412EA7E68800618BB9 /* WidgetKit.framework */; };
-		E40F095F2EA7E6B100618BB9 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E40F09432EA7E68800618BB9 /* SwiftUI.framework */; };
-		E40F09702EA7E6B100618BB9 /* Live Activity TimerExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E40F095D2EA7E6B100618BB9 /* Live Activity TimerExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E40F0B4A2EAA8ABF00618BB9 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = E40F0B482EAA8AB800618BB9 /* .gitignore */; };
+		E40F0B522EAA8FDA00618BB9 /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
+		E40F0B532EAA8FDA00618BB9 /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
+		E40F0B542EAA8FDA00618BB9 /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
+		E40F0B552EAA8FDA00618BB9 /* Workout Update Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B502EAA8FDA00618BB9 /* Workout Update Data.swift */; };
+		E40F0B562EAA8FDA00618BB9 /* Live Activity Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */; };
+		E40F0B572EAA8FDA00618BB9 /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
+		E40F0B5D2EAA914600618BB9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E40F09412EA7E68800618BB9 /* WidgetKit.framework */; };
+		E40F0B5E2EAA914600618BB9 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E40F09432EA7E68800618BB9 /* SwiftUI.framework */; };
+		E40F0B6F2EAA914800618BB9 /* Live Activity TimerExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E40F0B5C2EAA914600618BB9 /* Live Activity TimerExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E4207BB72E8C34C700061829 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = E4207BB62E8C34C700061829 /* CropViewController */; };
 		E4BCAFBA2EA07766009133F6 /* Rep the Set Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E4BCAFB02EA07765009133F6 /* Rep the Set Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		E40F096E2EA7E6B100618BB9 /* PBXContainerItemProxy */ = {
+		E40F0B6D2EAA914800618BB9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E4F362A22E8C32B2000A0DEE /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = E40F095C2EA7E6B100618BB9;
+			remoteGlobalIDString = E40F0B5B2EAA914600618BB9;
 			remoteInfo = "Live Activity TimerExtension";
 		};
 		E4BCAFB82EA07766009133F6 /* PBXContainerItemProxy */ = {
@@ -38,7 +45,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				E40F09702EA7E6B100618BB9 /* Live Activity TimerExtension.appex in Embed Foundation Extensions */,
+				E40F0B6F2EAA914800618BB9 /* Live Activity TimerExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -59,38 +66,32 @@
 /* Begin PBXFileReference section */
 		E40F09412EA7E68800618BB9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E40F09432EA7E68800618BB9 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		E40F095D2EA7E6B100618BB9 /* Live Activity TimerExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Live Activity TimerExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E40F0B482EAA8AB800618BB9 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Exercise Data.swift"; sourceTree = "<group>"; };
+		E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Live Activity Object.swift"; sourceTree = "<group>"; };
+		E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Session Data.swift"; sourceTree = "<group>"; };
+		E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Split Data.swift"; sourceTree = "<group>"; };
+		E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Workout Data.swift"; sourceTree = "<group>"; };
+		E40F0B502EAA8FDA00618BB9 /* Workout Update Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Workout Update Data.swift"; sourceTree = "<group>"; };
+		E40F0B5C2EAA914600618BB9 /* Live Activity TimerExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Live Activity TimerExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4BCAFB02EA07765009133F6 /* Rep the Set Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rep the Set Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4F362AA2E8C32B2000A0DEE /* iOS Gym App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Gym App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E40F097A2EA7E77C00618BB9 /* Exceptions for "Shared" folder in "Rep the Set Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Session Data.swift",
-				"Workout Data.swift",
-				"Workout Day Data.swift",
-				"Workout Split Data.swift",
-				"Workout Update Data.swift",
-			);
-			target = E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */;
-		};
 		E40F098C2EA7E8A300618BB9 /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Misc/Constants.swift,
-				"Workout/Workout Types.swift",
 			);
 			target = E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */;
 		};
-		E40F098D2EA7E8A300618BB9 /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
+		E40F0B732EAA914800618BB9 /* Exceptions for "Live Activity Timer" folder in "Live Activity TimerExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Misc/Constants.swift,
-				"Workout/Workout Types.swift",
+				Info.plist,
 			);
-			target = E40F095C2EA7E6B100618BB9 /* Live Activity TimerExtension */;
+			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
 		};
 		E4BCAFBF2EA0793D009133F6 /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -102,17 +103,12 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E40F09602EA7E6B100618BB9 /* Live Activity Timer */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Live Activity Timer";
-			sourceTree = "<group>";
-		};
-		E40F09792EA7E77100618BB9 /* Shared */ = {
+		E40F0B5F2EAA914600618BB9 /* Live Activity Timer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E40F097A2EA7E77C00618BB9 /* Exceptions for "Shared" folder in "Rep the Set Watch App" target */,
+				E40F0B732EAA914800618BB9 /* Exceptions for "Live Activity Timer" folder in "Live Activity TimerExtension" target */,
 			);
-			path = Shared;
+			path = "Live Activity Timer";
 			sourceTree = "<group>";
 		};
 		E4BCAFB12EA07765009133F6 /* Rep the Set Watch App */ = {
@@ -125,7 +121,6 @@
 			exceptions = (
 				E4BCAFBF2EA0793D009133F6 /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
 				E40F098C2EA7E8A300618BB9 /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */,
-				E40F098D2EA7E8A300618BB9 /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */,
 			);
 			path = "iOS Gym App";
 			sourceTree = "<group>";
@@ -133,12 +128,12 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		E40F095A2EA7E6B100618BB9 /* Frameworks */ = {
+		E40F0B592EAA914600618BB9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E40F095F2EA7E6B100618BB9 /* SwiftUI.framework in Frameworks */,
-				E40F095E2EA7E6B100618BB9 /* WidgetKit.framework in Frameworks */,
+				E40F0B5E2EAA914600618BB9 /* SwiftUI.framework in Frameworks */,
+				E40F0B5D2EAA914600618BB9 /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -169,13 +164,27 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		E40F0B512EAA8FDA00618BB9 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */,
+				E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */,
+				E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */,
+				E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */,
+				E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */,
+				E40F0B502EAA8FDA00618BB9 /* Workout Update Data.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		E4F362A12E8C32B2000A0DEE = {
 			isa = PBXGroup;
 			children = (
-				E40F09792EA7E77100618BB9 /* Shared */,
+				E40F0B512EAA8FDA00618BB9 /* Shared */,
+				E40F0B482EAA8AB800618BB9 /* .gitignore */,
 				E4F362AC2E8C32B2000A0DEE /* iOS Gym App */,
 				E4BCAFB12EA07765009133F6 /* Rep the Set Watch App */,
-				E40F09602EA7E6B100618BB9 /* Live Activity Timer */,
+				E40F0B5F2EAA914600618BB9 /* Live Activity Timer */,
 				E40F09402EA7E68800618BB9 /* Frameworks */,
 				E4F362AB2E8C32B2000A0DEE /* Products */,
 			);
@@ -186,7 +195,7 @@
 			children = (
 				E4F362AA2E8C32B2000A0DEE /* iOS Gym App.app */,
 				E4BCAFB02EA07765009133F6 /* Rep the Set Watch App.app */,
-				E40F095D2EA7E6B100618BB9 /* Live Activity TimerExtension.appex */,
+				E40F0B5C2EAA914600618BB9 /* Live Activity TimerExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -194,27 +203,26 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E40F095C2EA7E6B100618BB9 /* Live Activity TimerExtension */ = {
+		E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E40F09712EA7E6B100618BB9 /* Build configuration list for PBXNativeTarget "Live Activity TimerExtension" */;
+			buildConfigurationList = E40F0B702EAA914800618BB9 /* Build configuration list for PBXNativeTarget "Live Activity TimerExtension" */;
 			buildPhases = (
-				E40F09592EA7E6B100618BB9 /* Sources */,
-				E40F095A2EA7E6B100618BB9 /* Frameworks */,
-				E40F095B2EA7E6B100618BB9 /* Resources */,
+				E40F0B582EAA914600618BB9 /* Sources */,
+				E40F0B592EAA914600618BB9 /* Frameworks */,
+				E40F0B5A2EAA914600618BB9 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				E40F09602EA7E6B100618BB9 /* Live Activity Timer */,
-				E40F09792EA7E77100618BB9 /* Shared */,
+				E40F0B5F2EAA914600618BB9 /* Live Activity Timer */,
 			);
 			name = "Live Activity TimerExtension";
 			packageProductDependencies = (
 			);
 			productName = "Live Activity TimerExtension";
-			productReference = E40F095D2EA7E6B100618BB9 /* Live Activity TimerExtension.appex */;
+			productReference = E40F0B5C2EAA914600618BB9 /* Live Activity TimerExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */ = {
@@ -253,10 +261,9 @@
 			);
 			dependencies = (
 				E4BCAFB92EA07766009133F6 /* PBXTargetDependency */,
-				E40F096F2EA7E6B100618BB9 /* PBXTargetDependency */,
+				E40F0B6E2EAA914800618BB9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				E40F09792EA7E77100618BB9 /* Shared */,
 				E4F362AC2E8C32B2000A0DEE /* iOS Gym App */,
 			);
 			name = "iOS Gym App";
@@ -277,7 +284,7 @@
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					E40F095C2EA7E6B100618BB9 = {
+					E40F0B5B2EAA914600618BB9 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
 					E4BCAFAF2EA07765009133F6 = {
@@ -308,13 +315,13 @@
 			targets = (
 				E4F362A92E8C32B2000A0DEE /* iOS Gym App */,
 				E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */,
-				E40F095C2EA7E6B100618BB9 /* Live Activity TimerExtension */,
+				E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		E40F095B2EA7E6B100618BB9 /* Resources */ = {
+		E40F0B5A2EAA914600618BB9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -332,13 +339,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E40F0B4A2EAA8ABF00618BB9 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		E40F09592EA7E6B100618BB9 /* Sources */ = {
+		E40F0B582EAA914600618BB9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -356,16 +364,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E40F0B522EAA8FDA00618BB9 /* Exercise Data.swift in Sources */,
+				E40F0B532EAA8FDA00618BB9 /* Split Data.swift in Sources */,
+				E40F0B542EAA8FDA00618BB9 /* Session Data.swift in Sources */,
+				E40F0B552EAA8FDA00618BB9 /* Workout Update Data.swift in Sources */,
+				E40F0B562EAA8FDA00618BB9 /* Live Activity Object.swift in Sources */,
+				E40F0B572EAA8FDA00618BB9 /* Workout Data.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		E40F096F2EA7E6B100618BB9 /* PBXTargetDependency */ = {
+		E40F0B6E2EAA914800618BB9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = E40F095C2EA7E6B100618BB9 /* Live Activity TimerExtension */;
-			targetProxy = E40F096E2EA7E6B100618BB9 /* PBXContainerItemProxy */;
+			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
+			targetProxy = E40F0B6D2EAA914800618BB9 /* PBXContainerItemProxy */;
 		};
 		E4BCAFB92EA07766009133F6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -375,7 +389,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		E40F09722EA7E6B100618BB9 /* Debug */ = {
+		E40F0B712EAA914800618BB9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -407,7 +421,7 @@
 			};
 			name = Debug;
 		};
-		E40F09732EA7E6B100618BB9 /* Release */ = {
+		E40F0B722EAA914800618BB9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -730,11 +744,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E40F09712EA7E6B100618BB9 /* Build configuration list for PBXNativeTarget "Live Activity TimerExtension" */ = {
+		E40F0B702EAA914800618BB9 /* Build configuration list for PBXNativeTarget "Live Activity TimerExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				E40F09722EA7E6B100618BB9 /* Debug */,
-				E40F09732EA7E6B100618BB9 /* Release */,
+				E40F0B712EAA914800618BB9 /* Debug */,
+				E40F0B722EAA914800618BB9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

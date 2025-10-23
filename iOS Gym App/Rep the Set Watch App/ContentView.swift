@@ -8,45 +8,45 @@
 import SwiftUI
 internal import Combine
 
-struct Exercise: Identifiable, Hashable {
+struct Exercise_: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let targetSets: Int
     let targetReps: Int
 }
 
-struct Workout: Identifiable, Hashable {
+struct Workout_: Identifiable, Hashable {
     let id = UUID()
     let name: String
-    let exercises: [Exercise]
+    let exercises: [Exercise_]
 }
 
-extension Workout {
-    static let demo: [Workout] = [
-        Workout(name: "Push", exercises: [
-            Exercise(name: "Bench Press", targetSets: 4, targetReps: 8),
-            Exercise(name: "Incline DB Press", targetSets: 3, targetReps: 10),
-            Exercise(name: "Shoulder Press", targetSets: 3, targetReps: 10),
-            Exercise(name: "Triceps Pushdown", targetSets: 3, targetReps: 12)
+extension Workout_ {
+    static let demo: [Workout_] = [
+        Workout_(name: "Push", exercises: [
+            Exercise_(name: "Bench Press", targetSets: 4, targetReps: 8),
+            Exercise_(name: "Incline DB Press", targetSets: 3, targetReps: 10),
+            Exercise_(name: "Shoulder Press", targetSets: 3, targetReps: 10),
+            Exercise_(name: "Triceps Pushdown", targetSets: 3, targetReps: 12)
         ]),
-        Workout(name: "Pull", exercises: [
-            Exercise(name: "Deadlift", targetSets: 3, targetReps: 5),
-            Exercise(name: "Lat Pulldown", targetSets: 3, targetReps: 10),
-            Exercise(name: "Seated Row", targetSets: 3, targetReps: 10),
-            Exercise(name: "Biceps Curl", targetSets: 3, targetReps: 12)
+        Workout_(name: "Pull", exercises: [
+            Exercise_(name: "Deadlift", targetSets: 3, targetReps: 5),
+            Exercise_(name: "Lat Pulldown", targetSets: 3, targetReps: 10),
+            Exercise_(name: "Seated Row", targetSets: 3, targetReps: 10),
+            Exercise_(name: "Biceps Curl", targetSets: 3, targetReps: 12)
         ]),
-        Workout(name: "Legs", exercises: [
-            Exercise(name: "Squat", targetSets: 5, targetReps: 5),
-            Exercise(name: "Leg Press", targetSets: 3, targetReps: 10),
-            Exercise(name: "Leg Curl", targetSets: 3, targetReps: 12),
-            Exercise(name: "Calf Raise", targetSets: 4, targetReps: 15)
+        Workout_(name: "Legs", exercises: [
+            Exercise_(name: "Squat", targetSets: 5, targetReps: 5),
+            Exercise_(name: "Leg Press", targetSets: 3, targetReps: 10),
+            Exercise_(name: "Leg Curl", targetSets: 3, targetReps: 12),
+            Exercise_(name: "Calf Raise", targetSets: 4, targetReps: 15)
         ])
     ]
 }
 
 
 final class WorkoutSessionModel: ObservableObject {
-    @Published var workout: Workout
+    @Published var workout: Workout_
     @Published var currentExerciseIndex: Int = 0
     @Published var currentSet: Int = 1
     @Published var currentReps: Int = 0
@@ -59,11 +59,11 @@ final class WorkoutSessionModel: ObservableObject {
     private var workoutTimer: Timer?
     private var setTimer: Timer?
 
-    init(workout: Workout) {
+    init(workout: Workout_) {
         self.workout = workout
     }
 
-    var currentExercise: Exercise { workout.exercises[currentExerciseIndex] }
+    var currentExercise: Exercise_ { workout.exercises[currentExerciseIndex] }
 
     func start() {
         isRunning = true
@@ -132,7 +132,7 @@ final class WorkoutSessionModel: ObservableObject {
 struct ContentView: View {
     var body: some View {
         NavigationStack {
-            List(Workout.demo) { workout in
+            List(Workout_.demo) { workout in
                 NavigationLink(workout.name) {
                     WorkoutDetailView(workout: workout)
                 }
@@ -143,7 +143,7 @@ struct ContentView: View {
 }
 
 struct WorkoutDetailView: View {
-    let workout: Workout
+    let workout: Workout_
     @State private var start = false
     @State private var showInfo = false
 

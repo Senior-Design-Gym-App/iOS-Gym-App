@@ -13,7 +13,7 @@ struct WorkoutTimer: ActivityAttributes {
         let setEntry: SetEntry
         
         let setCount: Int
-        let workoutName: String
+        let exerciseName: String
         
     }
     
