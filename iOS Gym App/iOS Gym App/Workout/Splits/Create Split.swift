@@ -1,85 +1,65 @@
 import SwiftUI
 import SwiftData
-import PhotosUI
 
 struct CreateWorkoutSplitView: View {
     
-    @State private var selectedImage: UIImage?
-    @State private var showImagePicker = false
-    @State private var showImageCropper = false
-    @State private var selectedItem: PhotosPickerItem?
+    let allWorkouts: [Workout]
+    let allExercises: [Exercise]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @FocusState private var focusState
-    @State private var newSplit = Split(name: "", workouts: [], created: Date.now, modified: Date.now, imageData: nil, pinned: false)
+    @State private var newSplit = Split(name: "", workouts: [], imageData: nil, active: false)
+    @State private var selectedWorkouts: [Workout] = []
+    @State private var showAddSheet: Bool = false
     
     var body: some View {
         NavigationStack {
-            SplitViews.CardView(split: newSplit, size: Constants.gridSize)
-                .foregroundStyle(.thickMaterial)
-                .padding(.horizontal, Constants.headerPadding * 1.5)
-                .overlay(alignment: .center) {
-                    Button {
-                        showImagePicker = true
-                    } label: {
-                        Image(systemName: "camera.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 75)
+            List {
+                ReusedViews.SplitViews.LargeIconView(split: newSplit)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .overlay {
+                        ReusedViews.SplitViews.ImagePicker(split: $newSplit)
+                            .labelStyle(.iconOnly)
+                            .font(.largeTitle)
+                            .tint(.white)
                     }
-                }
-            TextField("Split Name", text: $newSplit.name)
-                .focused($focusState)
-                .padding(.horizontal)
-                .multilineTextAlignment(.center)
-                .navigationTitle("New Split")
-                .navigationBarTitleDisplayMode(.inline)
-            Divider()
-                .padding(.horizontal)
-
-            Spacer()
-                .onAppear {
-                    focusState = true
-                }
+                ReusedViews.Labels.SingleCardTextField(textFieldName: $newSplit.name, createdDate: newSplit.created, type: .workout)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                SelectedWorkoutsList()
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        context.insert(newSplit)
-                        try? context.save()
-                        dismiss()
-                    } label: {
-                        Label("Save", systemImage: "checkmark")
-                    }.disabled(newSplit.name.isEmpty)
+                    ReusedViews.Buttons.SaveButton(disabled: newSplit.name.isEmpty, save: SaveSplit)
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
-                        dismiss()
-                    } label: {
-                        Label("Exit", systemImage: "xmark")
-                    }
+                    ReusedViews.Buttons.CancelButton(cancel: DismissView)
                 }
             }
-            .photosPicker(isPresented: $showImagePicker, selection: $selectedItem, matching: .images)
-            .onChange(of: selectedItem, initial: false) { _, newItem in
-                if let newItem = newItem {
-                    Task {
-                        if let imageData = try? await newItem.loadTransferable(type: Data.self),
-                           let uiImage = UIImage(data: imageData) {
-                            selectedImage = uiImage
-                            showImageCropper = true
-                        }
-                    }
-                }
-            }
-            .fullScreenCover(isPresented: $showImageCropper) {
-                WorkoutPlanImageCropper(image: $selectedImage, visible: $showImageCropper)
-                    .onDisappear {
-                        self.selectedItem = nil
-                    }
+            .sheet(isPresented: $showAddSheet) {
+                ReusedViews.SplitViews.SplitControls(saveAction: {}, newWorkouts: selectedWorkouts, showAddSheet: $showAddSheet, oldWorkouts: $selectedWorkouts)
             }
         }
     }
     
+    private func SelectedWorkoutsList() -> some View {
+        Section {
+            ForEach(selectedWorkouts, id: \.self) { workout in
+                ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
+            }
+        } header: {
+            ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .split, items: selectedWorkouts)
+        }
+    }
     
+    private func SaveSplit() {
+        context.insert(newSplit)
+        try? context.save()
+        dismiss()
+    }
+    
+    private func DismissView() {
+        dismiss()
+    }
     
 }

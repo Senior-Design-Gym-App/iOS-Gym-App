@@ -3,37 +3,43 @@ import SwiftData
 
 struct CreateExerciseView: View {
     
-    @State private var name: String = "New Workout"
-    
-    @State private var showAddSet: Bool = false
     @State private var setData: [SetEntry] = []
-    @State private var selectedMuscle: (any Muscle)?
+    @State private var selectedMuscle: Muscle?
     @State private var selectedEquipment: WorkoutEquipment?
+    @State private var newExercise = Exercise(name: "", rest: [], muscleWorked: "", weights: [], reps: [], equipment: nil)
+    @State private var showChangeNameAlert: Bool = false
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     
     var body: some View {
         NavigationStack {
-            ExerciseOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
+            List {
+                ReusedViews.ExerciseViews.SingleExerciseCard(exercise: newExercise)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ReusedViews.Labels.SingleCardTextField(textFieldName: $newExercise.name, createdDate: newExercise.created, type: .exercise)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ReusedViews.ExerciseViews.ListHorizontalButtons(selectedEquipment: $selectedEquipment, selectedMuscle: $selectedMuscle)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData)
+            }
+            .onChange(of: selectedMuscle) {
+                newExercise.muscleWorked = selectedMuscle?.rawValue
+            }
+            .onChange(of: selectedEquipment) {
+                newExercise.equipment = selectedEquipment?.rawValue
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        SaveExercise()
-                        dismiss()
-                    } label: {
-                        Label("Save", systemImage: "checkmark")
-                    }
+                    ReusedViews.Buttons.SaveButton(disabled: newExercise.name.isEmpty, save: SaveExercise)
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
-                        dismiss()
-                    } label: {
-                        Label("Exit", systemImage: "xmark")
-                    }
+                    ReusedViews.Buttons.CancelButton(cancel: dismisx)
                 }
             }
-            .environment(\.editMode, .constant(.active))
         }
     }
     
@@ -44,11 +50,20 @@ struct CreateExerciseView: View {
         let weights = setData.map { $0.weight }
         
         let rest = setData.map { $0.rest }
-                
-        let newExercise = Exercise(name: name, rest: [rest], muscleWorked: selectedMuscle?.rawValue ?? "", weights: [weights], reps: [reps], equipment: selectedEquipment?.rawValue)
+        
+        newExercise.reps = [reps]
+        newExercise.weights = [weights]
+        newExercise.rest = [rest]
+        newExercise.muscleWorked = selectedMuscle?.rawValue
+        newExercise.equipment = selectedEquipment?.rawValue
         
         context.insert(newExercise)
         try? context.save()
+        dismiss()
+    }
+    
+    private func dismisx() {
+        dismiss()
     }
     
 }

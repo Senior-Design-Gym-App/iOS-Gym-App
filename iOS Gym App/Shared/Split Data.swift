@@ -10,7 +10,7 @@ final class Split {
     var created: Date = Date.now
     var modified: Date = Date.now
     var imageData: Data?
-    var pinned: Bool = false
+    var active: Bool = false
     
     var image: UIImage? {
         get {
@@ -19,13 +19,11 @@ final class Split {
         }
     }
     
-    init(name: String, workouts: [Workout]? = nil, created: Date, modified: Date, imageData: Data? = nil, pinned: Bool) {
+    init(name: String, workouts: [Workout]? = nil, imageData: Data? = nil, active: Bool) {
         self.name = name
         self.workouts = workouts
-        self.created = created
-        self.modified = modified
         self.imageData = imageData
-        self.pinned = pinned
+        self.active = active
     }
     
 }

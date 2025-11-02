@@ -6,10 +6,15 @@ struct AllExerciseView: View {
     @Query private var allExercises: [Exercise]
     @Environment(\.modelContext) private var context
     @State private var showCreateWorkout: Bool = false
-    @State private var selectedExercise: Exercise?
     @State private var searchText: String = ""
     
-    @AppStorage("workoutSortMethod") private var sortMethod: WorkoutSortTypes = .alphabetical
+    @Namespace private var namespace
+    @AppStorage("workoutSortMethod") private var sortType: WorkoutSortTypes = .alphabetical
+    @AppStorage("exerciseViewType") private var viewType: WorkoutViewTypes = .grid
+    
+    private let columns = [
+        GridItem(.adaptive(minimum: 100), spacing: 10)
+    ]
     
     private var groupedWorkouts: [String: [Exercise]] {
         Dictionary(grouping: allExercises) { exercise in
@@ -32,100 +37,93 @@ struct AllExerciseView: View {
         return hasNonLetters ? letters + ["#"] : letters
     }
     
-    var body: some View {
-        List {
-            VerticalListView()
-        }
-        .listStyle(.plain)
-        .navigationTitle("My Workouts")
-        .searchable(text: $searchText, prompt: "Search")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                CreateWorkoutButton()
-            }
-//            ToolbarItem(placement: .secondaryAction) {
-//                Menu {
-//                    SortPicker()
-//                } label: {
-//                    Image(systemName: "ellipsis")
-//                }
-//            }
-        }
-        .sheet(item: $selectedExercise, content: { exercise in
-            EditExerciseView(exercise: exercise, name: exercise.name, setData: exercise.setData.last ?? [])
-        })
-        .sheet(isPresented: $showCreateWorkout) {
-            CreateExerciseView()
+    private var sortedExercises: [Exercise] {
+        switch sortType {
+        case .alphabetical:
+            allExercises.sorted { $0.name < $1.name }
+        case .created:
+            allExercises.sorted { $0.created > $1.created }
+        case .modified:
+            allExercises.sorted { $0.modified < $1.modified }
         }
     }
     
-    private func VerticalListView() -> some View {
-        ForEach(sortedLetters, id: \.self) { letter in
-            Section {
-                ForEach((groupedWorkouts[letter] ?? []).sorted(by: { $0.name < $1.name })) { exercise in
-                    HStack {
-                        ReusedViews.ExerciseViews.WorkoutInfo(exercise: exercise)
-                        Spacer()
-                        Menu {
-                            WorkoutChangeOptions(exercise: exercise)
-                            WorkoutAddOptions(exercise: exercise)
-                        } label: {
-                            Image(systemName: "ellipsis")
-                                .tint(Constants.labelColor)
-                        }
+    var body: some View {
+        NavigationStack {
+            VStack {
+                switch viewType {
+                case .grid:
+                    GridView()
+                case .verticalList:
+                    if sortType == .alphabetical {
+                        AlphabeticalVerticalListView()
+                    } else {
+                        SortedVerticalListView()
                     }
                 }
-            } header: {
-                Text(letter)
             }
-            .sectionIndexLabel(letter)
-        }
-    }
-    
-    private func WorkoutChangeOptions(exercise: Exercise) -> some View {
-        Section {
-            Button {
-                selectedExercise = exercise
-            } label: {
-                Label("Edit", systemImage: "pencil")
+            .navigationTitle("Exercises")
+//            .searchable(text: $searchText, prompt: "Search")
+            .toolbar {
+                ToolbarItem {
+                    ReusedViews.Buttons.CreateButton(toggleCreateSheet: $showCreateWorkout)
+                }
+                ToolbarItem {
+                    ReusedViews.Pickers.WorkoutMenu(sortType: $sortType, viewType: $viewType)
+                }
             }
-            Button(role: .destructive) {
-                
-            } label: {
-                Label("Delete", systemImage: "trash")
-                    .tint(.red)
+            .sheet(isPresented: $showCreateWorkout) {
+                CreateExerciseView()
             }
         }
     }
     
-    private func WorkoutAddOptions(exercise: Exercise) -> some View {
-        Section {
-            Button {
-                
-            } label: {
-                Label("Add to Queue", systemImage: "text.badge.plus")
-            }
-            Button {
-                
-            } label: {
-                Label("Add to Day", systemImage: "document.badge.plus")
+    private func AlphabeticalVerticalListView() -> some View {
+        List {
+            ForEach(sortedLetters, id: \.self) { letter in
+                Section {
+                    ForEach((groupedWorkouts[letter] ?? []).sorted(by: { $0.name < $1.name })) { exercise in
+                        ExerciseListRow(exercise: exercise)
+                    }
+                } header: {
+                    Text(letter)
+                }
+                .sectionIndexLabel(letter)
             }
         }
     }
     
-    private func CreateWorkoutButton() -> some View {
-        Button {
-            showCreateWorkout = true
+    private func SortedVerticalListView() -> some View {
+        List {
+            ForEach(sortedExercises, id: \.self) { exercise in
+                ExerciseListRow(exercise: exercise)
+            }
+        }
+    }
+    
+    private func ExerciseListRow(exercise: Exercise) -> some View {
+        NavigationLink {
+            EditExerciseView(exercise: exercise, setData: exercise.setData.last ?? [])
         } label: {
-            Label("Add Workout", systemImage: "plus")
+            ReusedViews.ExerciseViews.ExerciseListPreview(exercise: exercise)
         }
     }
     
-    private func SortPicker() -> some View {
-        Picker("Sort Method", selection: $sortMethod) {
-            Text("A-Z")
-            Text("Created")
+    private func GridView() -> some View {
+        ScrollView {
+            LazyVGrid(columns: columns) {
+                ForEach(sortedExercises, id: \.self) { exercise in
+                    NavigationLink {
+                        EditExerciseView(exercise: exercise, setData: exercise.setData.last ?? [])
+                            .navigationTransition(.zoom(sourceID: exercise.id, in: namespace))
+                    } label: {
+                        ReusedViews.ExerciseViews.HorizontalListPreview(exercise: exercise)
+                    }.buttonStyle(.plain)
+                    .matchedTransitionSource(id: exercise.id, in: namespace)
+                }
+            }
         }
+        .padding(.horizontal)
     }
     
 }

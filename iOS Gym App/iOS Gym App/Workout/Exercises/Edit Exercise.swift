@@ -5,11 +5,11 @@ struct EditExerciseView: View {
     
     @State var exercise: Exercise
     
-    @State var name: String
-    
+    @State private var showRename: Bool = false
     @State private var showAddSet: Bool = false
+    @State private var showDeleteConfirmation: Bool = false
     @State var setData: [SetEntry]
-    @State var selectedMuscle: (any Muscle)?
+    @State var selectedMuscle: Muscle?
     @State var selectedEquipment: WorkoutEquipment?
     
     @Environment(\.dismiss) private var dismiss
@@ -17,41 +17,44 @@ struct EditExerciseView: View {
     
     var body: some View {
         NavigationStack {
-            ExerciseOptionsView(name: $name, showAddSet: $showAddSet, setData: $setData, selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
+            List {
+                ReusedViews.ExerciseViews.SingleExerciseCard(exercise: exercise)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ReusedViews.Labels.SingleCardTitle(title: exercise.name, modified: exercise.modified)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ReusedViews.ExerciseViews.SetControls(exercise: exercise, saveAction: SaveExercise, newSetData: setData, oldSetData: $setData)
+                ExerciseWorkouts()
+            }
+            .onChange(of: selectedMuscle) {
+                exercise.muscleWorked = selectedMuscle?.rawValue
+            }
+            .onChange(of: selectedEquipment) {
+                exercise.equipment = selectedEquipment?.rawValue
+            }
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        SaveExercise()
-                        dismiss()
-                    } label: {
-                        Label("Save", systemImage: "checkmark")
-                    }
-                }
-                ToolbarItem(placement: .secondaryAction) {
-                    Section {
-                        Button {
-                            
-                        } label: {
-                            Label("Rename", systemImage: "pencil")
-                        }
-                        Button {
-                            
-                        } label: {
-                            Label("Add Set", systemImage: "plus")
-                        }
-                    }
-                    Section {
-                        EquipmentPicker()
-                        TagSelector()
-                    }
-                    Button(role: .destructive) {
-                        
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
+                ToolbarItemGroup(placement: .secondaryAction) {
+                    ReusedViews.Buttons.RenameButtonAlert(type: .exercise, oldName: $exercise.name)
+                    ReusedViews.Buttons.DeleteButtonConfirmation(type: .exercise, deleteAction: Delete)
+                    MuscleSelector(selectedMuscle: $selectedMuscle)
+                    EquipmentSelector(selectedEquipment: $selectedEquipment)
                 }
             }
-            .environment(\.editMode, .constant(.active))
+        }
+    }
+    
+    private func ExerciseWorkouts() -> some View {
+        Section {
+            ForEach(exercise.workouts ?? [], id: \.self) { workout in
+                NavigationLink {
+                    EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                } label: {
+                    ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
+                }
+            }
+        } header: {
+            Text("Workouts")
         }
     }
     
@@ -70,66 +73,78 @@ struct EditExerciseView: View {
             exercise.updateDates.append(Date())
         }
         
-        exercise.name = name
-        exercise.muscleWorked = selectedMuscle?.rawValue ?? ""
-        exercise.equipment = selectedEquipment?.rawValue
+        exercise.modified = Date()
         
         try? context.save()
     }
     
-    private func EquipmentPicker() -> some View {
-        Picker("Equipment", selection: $selectedEquipment) {
+    private func Delete() {
+        context.delete(exercise)
+        try? context.save()
+        dismiss()
+    }
+    
+    private func EquipmentSelector(selectedEquipment: Binding<WorkoutEquipment?>) -> some View {
+        Picker("Equipment", selection: selectedEquipment) {
+            Label("No Equipment", systemImage: "xmark.circle").tag(nil as WorkoutEquipment?)
             ForEach(WorkoutEquipment.allCases, id: \.self) { equipment in
                 Label(equipment.rawValue, systemImage: equipment.imageName).tag(equipment)
             }
-        }.pickerStyle(.menu)
-    }
-    
-    private func TagSelector() -> some View {
-        Menu {
-            Section {
-                Button {
-                    selectedMuscle = nil
-                } label: {
-                    Text("No Tag")
-                }
-            }
-            Section {
-                
-            } header: {
-                Text("General")
-            }
-            Section {
-                MusclePicker(for: BackMuscle.self, headerText: MuscleGroup.back.rawValue)
-                MusclePicker(for: BicepMuscle.self, headerText: MuscleGroup.biceps.rawValue)
-                MusclePicker(for: ChestMuscle.self, headerText: MuscleGroup.chest.rawValue)
-                MusclePicker(for: CoreMuscle.self, headerText: MuscleGroup.core.rawValue)
-                MusclePicker(for: LegMuscle.self, headerText: MuscleGroup.legs.rawValue)
-                MusclePicker(for: ShoulderMuscle.self, headerText: MuscleGroup.shoulders.rawValue)
-                MusclePicker(for: TricepMuscle.self, headerText: MuscleGroup.triceps.rawValue)
-            } header: {
-                Text("Specific Muscles")
-            }
-        } label: {
-            CustomLabelView(text: "Muscle Tag", image: "tag")
         }
     }
     
-    private func MusclePicker<T: Muscle>(for groupType: T.Type, headerText: String) -> some View {
+    private func MuscleSelector(selectedMuscle: Binding<Muscle?>) -> some View {
         Menu {
-            ForEach(Array(T.allCases), id: \.self) { (muscle: T) in
-                SelectButton(muscle: muscle)
+            Section {
+                MuscleSelect(muscle: nil, selectedMuscle: selectedMuscle)
+                MuscleMenu(
+                    muscles: Muscle.allCases.filter { $0.general == .general },
+                    title: "Groups",
+                    selectedMuscle: selectedMuscle
+                )
+            } header: {
+                Text("General Options")
+            }
+            
+            Section {
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .chest }, title: "Chest", selectedMuscle: selectedMuscle)
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .back }, title: "Back", selectedMuscle: selectedMuscle)
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .legs }, title: "Legs", selectedMuscle: selectedMuscle)
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .shoulders }, title: "Shoulders", selectedMuscle: selectedMuscle)
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .biceps }, title: "Biceps", selectedMuscle: selectedMuscle)
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .triceps }, title: "Triceps", selectedMuscle: selectedMuscle)
+                MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .core }, title: "Core", selectedMuscle: selectedMuscle)
+            } header: {
+                Text("Specific Options")
             }
         } label: {
-            Text(headerText)
+            Label(
+                selectedMuscle.wrappedValue?.rawValue.capitalized ?? "Muscle",
+                systemImage: "figure.arms.open"
+            )
+            .padding()
         }
     }
     
-    private func SelectButton(muscle: any Muscle) -> some View {
+    private func MuscleMenu(muscles: [Muscle], title: String, selectedMuscle: Binding<Muscle?>) -> some View {
+        Menu {
+            ForEach(muscles, id: \.self) { muscle in
+                MuscleSelect(muscle: muscle, selectedMuscle: selectedMuscle)
+            }
+        } label: {
+            Text(title)
+        }
+    }
+    
+    private func MuscleSelect(muscle: Muscle?, selectedMuscle: Binding<Muscle?>) -> some View {
         Button {
-            selectedMuscle = muscle
+            selectedMuscle.wrappedValue = muscle
         } label: {
-            Text(muscle.rawValue)
+            if let muscle {
+                Text(muscle.rawValue.capitalized)
+            } else {
+                Text("None")
+            }
         }
     }
 

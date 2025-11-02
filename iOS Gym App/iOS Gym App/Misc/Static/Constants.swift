@@ -10,6 +10,9 @@ struct Constants {
     static let subtitlePadding: CGFloat = 50
     static let customLabelPadding: CGFloat = 5
     static let headerPadding: CGFloat = 70
+    static let bigImagePadding: CGFloat = 20
+    static let singleCardBottomPadding: CGFloat = 20
+    static let singleCardHorizontalPadding: CGFloat = 75
     
     // MARK: Colors
     
@@ -25,18 +28,18 @@ struct Constants {
     
     // MARK: SF Icons
     
-    static let workoutIcon = "dumbbell"
-    static let workoutDayIcon = "document"
-    static let workoutSplitIcon = "folder"
+    static let exerciseIcon = "dumbbell"
+    static let workoutIcon = "document"
+    static let splitIcon = "folder"
     static let defaultEquipmentIcon = "dumbbell"
+//    static let test: Font = .subheadline
     
     // MARK: Size
     static let cornerRadius: CGFloat = 10
-    static let headerRatio = 1.0
-    static let previewSize: CGFloat = 150
-    static let gridSize: CGFloat = 150
-    static let mediumListSize: CGFloat = 60
-    static let smallListSize: CGFloat = 50
+    static let tinyIconSIze: CGFloat = 25
+    static let smallIconSize: CGFloat = 50
+    static let mediumIconSize: CGFloat = 100
+    static let largeIconSize: CGFloat = 200
     static let smallRadius: CGFloat = 5
     
 }

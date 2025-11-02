@@ -4,12 +4,12 @@ import ActivityKit
 
 extension SessionManager {
     
-    func UpdateLiveActivity(exercise: Exercise, currentSet: Int) {
+    func UpdateLiveActivity(exercise: Exercise) {
+        let set = SetEntry(index: 0, rest: rest, reps: reps, weight: weight)
+
         if exerciseTimer?.content.state != nil {
             
-            let next = exercise.setData.last![currentSet + 1]
-            
-            let updatedState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: exercise.weights.count, exerciseName: exercise.name)
+            let updatedState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: set, setCount: currentSet, exerciseName: exercise.name)
             
             Task {
                 await exerciseTimer?.update(ActivityContent(state: updatedState, staleDate: nil))
@@ -17,19 +17,15 @@ extension SessionManager {
             
         } else {
             let startTime = Date.now
-                        
             let attributes = WorkoutTimer()
-            
-            if let next = exercise.setData.last?.last {
-                
-                let initialState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: next, setCount: exercise.weights.count, exerciseName: exercise.name)
-                
-                do {
-                    exerciseTimer = try Activity.request(attributes: attributes, content: ActivityContent(state: initialState, staleDate: startTime.addingTimeInterval(TimeInterval(60 * 60))))
-                } catch {
-                    print("Error starting live activity: \(error)")
-                }
+
+            let initialState = WorkoutTimer.ContentState(currentSet: currentSet, timerStart: Date.now, setEntry: set, setCount: exercise.weights.count, exerciseName: exercise.name)
+            do {
+                exerciseTimer = try Activity.request(attributes: attributes, content: ActivityContent(state: initialState, staleDate: startTime.addingTimeInterval(TimeInterval(60 * 60))))
+            } catch {
+                print("Error starting live activity: \(error)")
             }
+            
         }
     }
     

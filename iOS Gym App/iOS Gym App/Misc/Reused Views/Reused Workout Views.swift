@@ -1,77 +1,98 @@
 import SwiftUI
+import SwiftData
 
 extension ReusedViews {
     
-    struct ExerciseViews {
-        
-        static func WorkoutInfo(exercise: Exercise) -> some View {
-            HStack {
-                RoundedRectangle(cornerRadius: Constants.smallRadius)
-                    .fill(ColorManager.shared.GetColor(key: exercise.id.hashValue.description))
-                    .frame(width: Constants.smallListSize, height: Constants.smallListSize)
-                    .overlay(alignment: .center) {
-                        Image(systemName: exercise.workoutEquipment?.imageName ?? "dumbbell")
-                            .foregroundStyle(Constants.iconColor)
-                    }
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(exercise.name)
-                    Text("\(exercise.setData.count) set\(exercise.setData.count == 1 ? "" : "s")")
-                        .font(.callout)
-                        .fontWeight(.thin)
-                }
-            }
-        }
-        
-        static func WorkoutGridPreview(exercise: Exercise, bottomText: String) -> some View {
-            VStack(alignment: .leading, spacing: 0) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                        .fill(ColorManager.shared.GetColor(key: exercise.id.hashValue.description))
-                    Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(20)
-                        .clipShape(.rect(cornerRadius: 10))
-                        .foregroundStyle(Constants.iconColor)
-                }
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(minWidth: Constants.previewSize, maxWidth: 300, minHeight: Constants.previewSize, maxHeight: 300)
-                .padding(.bottom, 5)
-                ReusedViews.Description(topText: exercise.name, bottomText: bottomText)
-            }
-            .padding(.bottom)
-        }
-        
-    }
-    
     struct WorkoutViews {
         
-        static func DayGridPreview(workout: Workout, bottomText: String) -> some View {
-            VStack(alignment: .leading, spacing: 0) {
-                RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                    .fill(ColorManager.shared.GetColor(key: workout.id.hashValue.description))
-                    .aspectRatio(1.0, contentMode: .fit)
-                    .padding(.bottom, 5)
-                    .frame(minWidth: Constants.previewSize ,maxWidth: 300, minHeight: Constants.previewSize ,maxHeight: 300)
-                ReusedViews.Description(topText: workout.name, bottomText: bottomText)
+        static func WorkoutListPreview(workout: Workout) -> some View {
+            HStack {
+                Labels.SmallIconSize(key: workout.id.hashValue.description)
+                Labels.ListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout)
             }
-            .padding(.bottom)
+        }
+        
+        static func HorizontalListPreview(workout: Workout) -> some View {
+            VStack(alignment: .leading, spacing: 5) {
+                Labels.MediumIconSize(key: workout.id.hashValue.description)
+                ReusedViews.Labels.MediumTextLabel(title: workout.name)
+            }
+        }
+        
+        struct WorkoutControls: View {
+            
+            @Query private var allExercises: [Exercise]
+            let saveAction: () -> Void
+            @State var newExercises: [Exercise]
+            @Binding var showAddSheet: Bool
+            @Binding var oldExercises: [Exercise]
+            
+            var body: some View {
+                AddSheet()
+            }
+            
+            private func AddSheet() -> some View {
+                NavigationStack {
+                    List {
+                        ForEach(allExercises, id: \.self) { exercise in
+                            HStack {
+                                ExerciseViews.ExerciseListPreview(exercise: exercise)
+                                Spacer()
+                                Button {
+                                    if newExercises.contains(where: { $0 == exercise }) {
+                                        newExercises.removeAll(where: { $0 == exercise })
+                                    } else {
+                                        newExercises.append(exercise)
+                                    }
+                                } label: {
+                                    if newExercises.contains(where: { $0 == exercise }) {
+                                        Image(systemName: "checkmark")
+                                    } else {
+                                        Image(systemName: "plus.circle")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .environment(\.editMode, .constant(.active))
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            ReusedViews.Buttons.CancelButton(cancel: CancelOptions)
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            ReusedViews.Buttons.SaveButton(disabled: newExercises.isEmpty, save: SaveOptions)
+                        }
+                    }
+                    //                .onMove { indices, newOffset in
+                    //                    newSetData.move(fromOffsets: indices, toOffset: newOffset)
+                    //                }
+                    //                .onDelete { indices in
+                    //                    newSetData.remove(atOffsets: indices)
+                    //                }
+                }
+            }
+            
+            private func SaveOptions() {
+                oldExercises = newExercises
+                saveAction()
+                showAddSheet = false
+            }
+            
+            private func CancelOptions() {
+                showAddSheet = false
+            }
+            
+        }
+        
+        static func MostRecentSession(workout: Workout) -> String {
+            if let sessions = workout.sessions,
+               let recent = sessions.compactMap({ $0.completed }).sorted(by: { $0 > $1 }).first {
+                return DateHandler().RelativeTime(from: recent)
+            } else {
+                return "No Sessions"
+            }
         }
         
     }
-    
-    struct SplitViews2 {
-        
-        static func SplitGridPreview(split: Split, bottomText: String) -> some View {
-            VStack(alignment: .leading, spacing: 0) {
-                SplitViews.CardView(split: split, size: Constants.gridSize)
-                    .padding(.bottom, 5)
-                ReusedViews.Description(topText: split.name, bottomText: bottomText)
-            }
-            .padding(.bottom)
-        }
-        
-    }
-    
     
 }

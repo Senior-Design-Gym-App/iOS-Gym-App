@@ -7,45 +7,69 @@ struct WorkoutHome: View {
     @Query private var allExercises: [Exercise]
     @Query private var allSplits: [Split]
     
-    @State private var selectedExercise: Exercise?
-    @State private var selectedWorkout: Workout?
-    @State private var selectedSplit: Split?
-    
     @Namespace private var namespace
-    @AppStorage("workoutSortMethod") private var workoutSortMethod: WorkoutSortTypes = .alphabetical
     
-    var recentItems: [RecentWorkoutItem] {
-        let allItems: [RecentWorkoutItem] =
-        allWorkouts.map { .workout($0) } + allSplits.map { .split($0) } + allExercises.map { .exercise($0) }
-        
-        return Array(allItems.sorted { $0.created > $1.created }.prefix(20))
+    var recentExercises: [Exercise] {
+        Array(allExercises.sorted { $0.modified > $1.modified }.prefix(10))
     }
     
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    var recentWorkouts: [Workout] {
+        Array(allWorkouts.sorted { $0.modified > $1.modified }.prefix(10))
+    }
+    
+    var recentSplits: [Split] {
+        Array(allSplits.sorted { $0.modified > $1.modified }.prefix(10))
+    }
     
     var body: some View {
         NavigationStack {
             List {
-                MyWorkoutSection()
-                RecentlyAddedSection()
-                    .padding(.top)
-                    .listRowSeparator(.hidden)
+                
+                Section {
+                    MyWorkoutSection()
+                }
+                Section {
+                    ScrollView(.horizontal) {
+                        HStack {
+                            ForEach(recentExercises, id: \.self) { exercise in
+                                RecentExercise(exercise: exercise)
+                            }
+                        }
+                    }.scrollIndicators(.hidden)
+                } header: {
+                    ReusedViews.Labels.Header(text: "Recent Exercises")
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
+                Section {
+                    ScrollView(.horizontal) {
+                        HStack {
+                            ForEach(recentWorkouts, id: \.self) { workout in
+                                RecentWorkout(workout: workout)
+                            }
+                        }
+                    }.scrollIndicators(.hidden)
+                } header: {
+                    ReusedViews.Labels.Header(text: "Recent Workouts")
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
+                Section {
+                    ScrollView(.horizontal) {
+                        HStack {
+                            ForEach(recentSplits, id: \.self) { split in
+                                RecentSplit(split: split)
+                            }
+                        }
+                    }.scrollIndicators(.hidden)
+                } header: {
+                    ReusedViews.Labels.Header(text: "Recent Splits")
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
             }
             .toolbarTitleDisplayMode(.inlineLarge)
-            .listStyle(.plain)
             .navigationTitle("Workouts")
-            .navigationDestination(item: $selectedWorkout) { workout in
-                EditWorkoutView(allExercises: allExercises, name: workout.name, selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
-                    .navigationTransition(.zoom(sourceID: workout.id, in: namespace))
-            }
-            .navigationDestination(item: $selectedExercise) { exercise in
-                EditExerciseView(exercise: exercise, name: exercise.name, setData: exercise.setData.last ?? [])
-                    .navigationTransition(.zoom(sourceID: exercise.id, in: namespace))
-            }
-            .navigationDestination(item: $selectedSplit) { split in
-                EditSplitView(allWorkouts: allWorkouts, pinned: split.pinned, name: split.name, split: split, selectedWorkouts: split.workouts ?? [])
-                    .navigationTransition(.zoom(sourceID: split.id, in: namespace))
-            }
         }
     }
     
@@ -54,74 +78,49 @@ struct WorkoutHome: View {
             NavigationLink {
                 AllExerciseView()
             } label: {
-                Label("Workouts", systemImage: Constants.workoutIcon)
+                Label("Exercises", systemImage: Constants.exerciseIcon)
             }
             NavigationLink {
                 AllWorkoutsView()
             } label: {
-                Label("Workout Days", systemImage: Constants.workoutDayIcon)
+                Label("Workouts", systemImage: Constants.workoutIcon)
             }
             NavigationLink {
-                AllWorkoutSplitsView()
+                AllWorkoutSplitsView(allSplits: allSplits, allWorkouts: allWorkouts, allExercises: allExercises)
             } label: {
-                Label("Workout Splits", systemImage: Constants.workoutSplitIcon)
-            }
-        }
-    }
-    
-    private func RecentlyAddedSection() -> some View {
-        VStack {
-            ReusedViews.HorizontalHeader(text: "Recently Added", showNavigation: false)
-            LazyVGrid(columns: columns) {
-                ForEach(recentItems, id: \.self) { item in
-                    switch item {
-                    case .exercise(let exercise):
-                        RecentExercise(exercise: exercise)
-                    case .split(let split):
-                        RecentSplit(split: split)
-                    case .workout(let workout):
-                        RecentWorkout(workout: workout)
-                    }
-                }
+                Label("Splits", systemImage: Constants.splitIcon)
             }
         }
     }
     
     private func RecentExercise(exercise: Exercise) -> some View {
-        Button {
-            selectedExercise = exercise
+        NavigationLink {
+            EditExerciseView(exercise: exercise, setData: exercise.setData.last ?? [])
+                .navigationTransition(.zoom(sourceID: exercise.id, in: namespace))
         } label: {
-            ReusedViews.ExerciseViews.WorkoutGridPreview(exercise: exercise, bottomText: "Workout")
+            ReusedViews.ExerciseViews.HorizontalListPreview(exercise: exercise)
         }.buttonStyle(.plain)
         .matchedTransitionSource(id: exercise.id, in: namespace)
     }
     
     private func RecentWorkout(workout: Workout) -> some View {
-        Button {
-            selectedWorkout = workout
+        NavigationLink {
+            EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                .navigationTransition(.zoom(sourceID: workout.id, in: namespace))
         } label: {
-            ReusedViews.WorkoutViews.DayGridPreview(workout: workout, bottomText: "Workout")
+            ReusedViews.WorkoutViews.HorizontalListPreview(workout: workout)
         }.buttonStyle(.plain)
         .matchedTransitionSource(id: workout.id, in: namespace)
     }
     
     private func RecentSplit(split: Split) -> some View {
-        Button {
-            selectedSplit = split
+        NavigationLink {
+            EditSplitView(selectedSplit: split, selectedWorkouts: split.workouts ?? [])
+                .navigationTransition(.zoom(sourceID: split.id, in: namespace))
         } label: {
-            ReusedViews.SplitViews2.SplitGridPreview(split: split, bottomText: "Split")
+            ReusedViews.SplitViews.HorizontalListPreview(split: split)
         }.buttonStyle(.plain)
         .matchedTransitionSource(id: split.id, in: namespace)
-    }
-    
-    private func SortPicker() -> some View {
-        Picker("Sort Method", selection: $workoutSortMethod) {
-            Group {
-                Text("Alphabetical")
-                Text("A-Z")
-            }.tag(WorkoutSortTypes.alphabetical)
-            Text("Created").tag(WorkoutSortTypes.created)
-        }
     }
     
 }

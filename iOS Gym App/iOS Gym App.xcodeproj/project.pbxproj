@@ -56,7 +56,7 @@
 		34C3E5622EAACE9500C6C3BD /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Misc/Constants.swift,
+				Misc/Static/Constants.swift,
 				"Workout/Workout Types.swift",
 			);
 			target = 34C3E5232EAACCBE00C6C3BD /* Live Activity TimerExtension */;
@@ -71,7 +71,7 @@
 		34C3E5762EAAD0F200C6C3BD /* Exceptions for "iOS Gym App" folder in "Watch App Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Misc/Constants.swift,
+				Misc/Static/Constants.swift,
 			);
 			target = 34C3E5432EAACD2800C6C3BD /* Watch App Watch App */;
 		};
@@ -643,7 +643,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.22;
+				MARKETING_VERSION = "0.22\\3";
 				PRODUCT_BUNDLE_IDENTIFIER = "Senior-Design.iOS-Gym-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -695,7 +695,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.22;
+				MARKETING_VERSION = "0.22\\3";
 				PRODUCT_BUNDLE_IDENTIFIER = "Senior-Design.iOS-Gym-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

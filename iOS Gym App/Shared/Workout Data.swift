@@ -11,21 +11,22 @@ final class Workout {
     @Relationship(deleteRule: .nullify)
     var split: Split?
     var created: Date = Date()
+    var modified: Date = Date()
     
     var sessions: [WorkoutSession]? = []
     
     var tags: [MuscleGroup] {
         var allTags: [MuscleGroup] = []
         for exercise in exercises ?? [] {
-            if let tag = exercise.muscleInfo?.group, allTags.contains(where: { $0.id == tag.id }) == false {
+            if let tag = exercise.muscleInfo, allTags.contains(where: { $0.id == tag.id }) == false {
                 allTags.append(tag)
             }
         }
         return allTags
     }
     
-    init(groupName: String, exercises: [Exercise]) {
-        self.name = groupName
+    init(name: String, exercises: [Exercise]) {
+        self.name = name
         self.exercises = exercises
     }
     

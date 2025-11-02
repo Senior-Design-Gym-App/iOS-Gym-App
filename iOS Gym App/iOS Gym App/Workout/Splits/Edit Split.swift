@@ -3,38 +3,64 @@ import SwiftData
 
 struct EditSplitView: View {
     
-    let allWorkouts: [Workout]
-    @State var pinned: Bool
-    @State var name: String
     @State var selectedImage: UIImage?
-    @State var split: Split
+    @State var selectedSplit: Split
     @State var selectedWorkouts: [Workout]
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @State private var selectedColor: Color = .teal
+    
+    @State private var showRename: Bool = false
+    @State private var showAddSheet: Bool = false
+    @State private var showDeleteConfirmation: Bool = false
     
     var body: some View {
         NavigationStack {
-            SplitOptionsView(allWorkouts: allWorkouts, pinned: $pinned, name: $name, selectedColor: $selectedColor, selectedImage: $selectedImage, selectedWorkouts: $selectedWorkouts)
-            .environment(\.editMode, .constant(.active))
+            List {
+                ReusedViews.SplitViews.LargeIconView(split: selectedSplit)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ReusedViews.Labels.SingleCardTitle(title: selectedSplit.name, modified: selectedSplit.modified)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                SelectedWorkoutsList()
+            }
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        
-                        split.name = name
-                        split.modified = Date.now
-                        split.workouts = selectedWorkouts
-                        split.pinned = pinned
-                        try? context.save()
-                        
-                        dismiss()
-                    } label: {
-                        Label("Save", systemImage: "checkmark")
-                    }
+                ToolbarItemGroup(placement: .secondaryAction) {
+                    ReusedViews.Buttons.RenameButtonAlert(type: .split, oldName: $selectedSplit.name)
+                    ReusedViews.Buttons.DeleteButtonConfirmation(type: .split, deleteAction: Delete)
+                    ReusedViews.SplitViews.ImagePicker(split: $selectedSplit)
                 }
             }
+            .sheet(isPresented: $showAddSheet) {
+                ReusedViews.SplitViews.SplitControls(saveAction: SaveSplit, newWorkouts: selectedWorkouts, showAddSheet: $showAddSheet, oldWorkouts: $selectedWorkouts)
+            }
         }
+    }
+    
+    private func SelectedWorkoutsList() -> some View {
+        Section {
+            ForEach(selectedWorkouts, id: \.self) { workout in
+                NavigationLink {
+                    EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                } label: {
+                    ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
+                }
+            }
+        } header: {
+            ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .split, items: selectedWorkouts)
+        }
+    }
+    
+    private func SaveSplit() {
+        selectedSplit.workouts = selectedWorkouts
+        try? context.save()
+    }
+    
+    private func Delete() {
+        context.delete(selectedSplit)
+        try? context.save()
+        dismiss()
     }
     
 }

@@ -6,75 +6,78 @@ struct AllWorkoutsView: View {
     @Query private var allExercises: [Exercise]
     @Query private var allWorkouts: [Workout]
     
+    @Namespace private var namespace
     @State private var showCreateDay: Bool = false
-    @AppStorage("daySortMethod") private var daySortMethod: WorkoutSortTypes = .alphabetical
-    @AppStorage("dayViewType") private var dayViewType: WorkoutViewTypes = .grid
+    @AppStorage("daySortMethod") private var sortType: WorkoutSortTypes = .alphabetical
+    @AppStorage("dayViewType") private var viewType: WorkoutViewTypes = .grid
 
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    private let columns = [
+        GridItem(.adaptive(minimum: 100), spacing: 10)
+    ]
     
-    private var sortedGroups: [Workout] {
-        switch daySortMethod {
+    private var sortedWorkouts: [Workout] {
+        switch sortType {
         case .alphabetical:
             allWorkouts.sorted { $0.name < $1.name }
-        case .tags, .created, .pinned:
-            allWorkouts
-        case .modified, .muscleGroups:
-            allWorkouts
+        case .created:
+            allWorkouts.sorted { $0.created > $1.created }
+        case .modified:
+            allWorkouts.sorted { $0.modified < $1.modified }
         }
     }
     
     var body: some View {
-        ScrollView {
-            GridView()
-        }
-        .navigationTitle("My Days")
-        .sheet(isPresented: $showCreateDay) {
-            CreateWorkoutView(allExercises: allExercises)
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                CreateDayButton()
-            }
-            ToolbarItemGroup(placement: .secondaryAction) {
-                Section {
-                    ReusedPickers.ViewTypePicker(viewType: $dayViewType)
+        NavigationStack {
+            VStack {
+                switch viewType {
+                case .grid:
+                    GridView()
+                case .verticalList:
+                    ListView()
                 }
-                Section {
-                    SortPicker()
+            }
+            .navigationTitle("Workouts")
+            .sheet(isPresented: $showCreateDay) {
+                CreateWorkoutView(allExercises: allExercises)
+            }
+            .toolbar {
+                ToolbarItem {
+                    ReusedViews.Buttons.CreateButton(toggleCreateSheet: $showCreateDay)
+                }
+                ToolbarItem {
+                    ReusedViews.Pickers.WorkoutMenu(sortType: $sortType, viewType: $viewType)
+                }
+            }
+        }
+    }
+    
+    private func ListView() -> some View {
+        List {
+            ForEach(sortedWorkouts, id: \.self) { workout in
+                NavigationLink {
+                    EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                } label: {
+                    ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
                 }
             }
         }
     }
     
     private func GridView() -> some View {
-        GlassEffectContainer {
+        ScrollView {
             LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(allWorkouts, id: \.self) { workout in
+                ForEach(sortedWorkouts, id: \.self) { workout in
                     NavigationLink {
-                        EditWorkoutView(allExercises: allExercises, name: workout.name, selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                        EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                            .navigationTransition(.zoom(sourceID: workout.id, in: namespace))
                     } label: {
-                        ReusedViews.WorkoutViews.DayGridPreview(workout: workout, bottomText: "\(workout.exercises?.count ?? 0) Workout\(workout.exercises?.count == 1 ? "" : "s")")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        ReusedViews.WorkoutViews.HorizontalListPreview(workout: workout)
                     }
+                    .matchedTransitionSource(id: workout.id, in: namespace)
                 }
             }
-            .padding()
         }
-    }
-    
-    private func SortPicker() -> some View {
-        Picker("Sort & Filter", selection: $daySortMethod) {
-            Text(WorkoutSortTypes.alphabetical.rawValue).tag(WorkoutSortTypes.alphabetical)
-            Text(WorkoutSortTypes.modified.rawValue).tag(WorkoutSortTypes.modified)
-        }
-    }
-    
-    private func CreateDayButton() -> some View {
-        Button {
-            showCreateDay = true
-        } label: {
-            Label("Add Workout", systemImage: "plus")
-        }
+        .padding(.horizontal)
     }
     
 }

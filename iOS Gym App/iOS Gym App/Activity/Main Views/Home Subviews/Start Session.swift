@@ -1,75 +1,78 @@
 import SwiftUI
 import SwiftData
 
-struct StartSessionsView: View {
+struct QuickStartSessionView: View {
     
     let allSplits: [Split]
+    let allWorkouts: [Workout]
     @Environment(SessionManager.self) private var sm: SessionManager
     @Environment(\.modelContext) private var context
     @State private var showAlert: Bool = false
     
     var pinnedSplits: [Split] {
-        allSplits.filter({ $0.pinned })
+        allSplits.filter({ $0.active })
     }
+    
+    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
     
     var body: some View {
-        VStack(spacing: 10) {
-            ReusedViews.HorizontalHeader(text: "Quick Start", showNavigation: false)
-            PinnedRoutineSection()
-        }
-        .alert("Session Error", isPresented: $showAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Please end your current session before starting another.")
-        }
-    }
-    
-    private func PinnedRoutineSection() -> some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(pinnedSplits, id: \.self) { split in
-                    SplitMenu(split: split)
+        if sm.session == nil {
+            GroupBox {
+                NavigationLink {
+                    StartSessionView(allWorkouts: allWorkouts)
+                } label: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ReusedViews.Labels.HeaderWithArrow(title: "Start Session")
+                        ReusedViews.Labels.Subheader(title: "Active Split")
+                    }
+                }
+                if let activeSplit = pinnedSplits.first {
+                    ActiveSplit(split: activeSplit)
+                } else {
+                    Text("Set a split as active to be quick start a workout. Only one split can be active at a time.")
+                        .font(.callout)
+                        .padding(.top, 5)
                 }
             }
-        }.scrollIndicators(.hidden)
-    }
-    
-    private func SplitMenu(split: Split) -> some View {
-        Menu {
-            Section {
-//                ForEach(split.workouts ?? [], id: \.self) { workout in
-//                    Button {
-//                        QueueWorkout(workout: workout)
-//                    } label: {
-//                        SplitLabel(workout: workout)
-//                    }
-//                }
-            } header: {
-                Text("Queue Workouts")
+            .alert("Session Error", isPresented: $showAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Please end your current session before starting another.")
             }
-            SplitPinSection(split: split)
-        } label: {
-            ReusedViews.SplitViews2.SplitGridPreview(split: split, bottomText: "Split")
         }
     }
     
-    private func SplitLabel(workout: Workout) -> some View {
-        Group {
-            Text(workout.name)
-            let count = workout.exercises?.count ?? 0
-            Text("\(count) Workout\(count == 1 ? "" : "s")")
+    private func ActiveSplit(split: Split) -> some View {
+        LazyVGrid(columns: columns) {
+            ForEach(split.workouts ?? [], id: \.self) { workout in
+                Button {
+                    QueueWorkout(workout: workout)
+                } label: {
+                    ActiveSplitWorkouts(workout: workout)
+                }.buttonStyle(.plain)
+            }
         }
     }
     
-    private func SplitPinSection(split: Split) -> some View {
-        Section {
-            Button {
-                split.pinned.toggle()
-            } label: {
-                Label(split.pinned ? "Unpin" : "Pin", systemImage: split.pinned ? "pin.slash" : "pin")
+    private func ActiveSplitWorkouts(workout: Workout) -> some View {
+        VStack(alignment: .leading) {
+            HStack {
+                ReusedViews.Labels.TinyIconSize(key: workout.id.hashValue.description)
+                    .overlay {
+                        Image(systemName: "play.fill")
+                            .foregroundStyle(.white)
+                    }
+                VStack(alignment: .leading) {
+                    Text(workout.name)
+                        .font(.callout)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(ReusedViews.WorkoutViews.MostRecentSession(workout: workout))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
-        } header: {
-            Text("Options")
+            Divider()
         }
     }
     

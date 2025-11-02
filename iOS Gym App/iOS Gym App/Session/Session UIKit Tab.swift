@@ -129,12 +129,13 @@ class SessionTabUIView: UIView {
         self.currentData = currentExercise
         self.session = session
         
+        // Always show if there's a session
+        isHidden = (session == nil)
+        
         guard let currentWorkout = currentData else {
-            isHidden = true
+            // Show placeholder or last known state
             return
         }
-        
-        isHidden = false
         
         let imageName = currentWorkout.exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon
         equipmentImageView.image = UIImage(systemName: imageName)

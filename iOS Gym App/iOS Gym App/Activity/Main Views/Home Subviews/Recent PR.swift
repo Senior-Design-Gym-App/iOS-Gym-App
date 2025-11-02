@@ -1,7 +1,7 @@
 import SwiftUI
 import Charts
 
-struct RecentUpdatesView: View {
+struct RecentPRView: View {
     
     let allExercises: [Exercise]
     
@@ -15,7 +15,7 @@ struct RecentUpdatesView: View {
                 UpdatesListView(allExercises: allExercises)
             } label: {
                 VStack(alignment: .leading, spacing: 0) {
-                    ReusedViews.Labels.HeaderWithArrow(title: "Recent Progress")
+                    ReusedViews.Labels.HeaderWithArrow(title: "Recent PR")
                     ReusedViews.Labels.Subheader(title: recentExercise?.name ?? "No recent exercise.")
                 }
             }

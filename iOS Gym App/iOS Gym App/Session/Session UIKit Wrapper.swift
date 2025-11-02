@@ -1,18 +1,25 @@
 import SwiftUI
 
 struct SessionTabViewWrapper: View {
+    
     @Environment(SessionManager.self) private var sessionManager: SessionManager
     @State private var currentSession: WorkoutSession?
     
     var body: some View {
-        if sessionManager.currentWorkout != nil {
+        if sessionManager.session != nil {
             SessionTabUIKitView(currentSession: $currentSession)
+//                .fullScreenSheet(item: $currentSession) { session, safeArea in
+//                    SessionView(workoutSession: session)
+//                        .foregroundStyle(.primary)
+//                } background: {
+//                    Color.primary
+//                }
                 .fullScreenCover(item: $currentSession) { session in
-                    SessionView(workoutSession: session)
-                        .foregroundStyle(.primary)
+                    SessionCover(session: session)
                 }
         } else {
-            EmptyView()
+            Text("No session")
         }
     }
+    
 }

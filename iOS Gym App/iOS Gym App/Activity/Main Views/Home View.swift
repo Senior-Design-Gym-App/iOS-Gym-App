@@ -3,6 +3,7 @@ import SwiftData
 
 struct HomeView: View {
     
+    let title: String
     @Query private var session: [WorkoutSession]
     @Environment(SessionManager.self) private var sm: SessionManager
     @Query private var allSplits: [Split]
@@ -10,29 +11,41 @@ struct HomeView: View {
     @Query private var allWorkouts: [Workout]
     @Query private var allExercises: [Exercise]
     
+    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 30) {
-                    InspirationalTextView(title: ActivityLabels.RandomGymGreeting(), subtitle: ActivityLabels.getRandomGymPun())
-                    StartSessionsView(allSplits: allSplits)
-                    IncompleteSessionsView(allSessions: allSessions)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
+                InspirationalTextView(title: title, allWorkouts: allWorkouts)
+                QuickStartSessionView(allSplits: allSplits, allWorkouts: allWorkouts)
+                IncompleteSessionsView(allSessions: allSessions)
+                LazyVGrid(columns: columns) {
                     RecentUpdatesView(allExercises: allExercises)
-                    RecentSessionsView(allSessions: allSessions)
+                    RecentPRView(allExercises: allExercises)
+                    RecentBodyweight()
+                    RecentBodyfat()
                 }
+                RecentMonthActivity(allExercises: allExercises, allSessions: allSessions)
+                Divider().padding(.vertical)
+                GroupBox {
+                    NavigationLink {
+                        HomeViewList(allWorkouts: allWorkouts, allExercises: allExercises, allSessions: allSessions)
+                    } label: {
+                        Text("See All")
+                            .frame(idealWidth: .infinity, maxWidth: .infinity)
+                    }.navigationLinkIndicatorVisibility(.hidden)
+                }.clipShape(.capsule)
+                Spacer(minLength: 40)
             }
             .padding(.horizontal, 20)
-
             .navigationTitle("Home")
             .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        
+                    NavigationLink {
+                        Text("Not my job to do")
                     } label: {
-                        Image(systemName: "clipboard")
+                        Image(systemName: "gearshape")
                     }
                 }
             }

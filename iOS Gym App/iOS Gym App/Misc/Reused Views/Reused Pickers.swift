@@ -1,13 +1,26 @@
 import SwiftUI
 
-struct ReusedPickers {
+extension ReusedViews {
     
-    static func ViewTypePicker(viewType: Binding<WorkoutViewTypes>) -> some View {
-        Picker("View Type", selection: viewType) {
-            ForEach(WorkoutViewTypes.allCases, id: \.self) { type in
-                Label(type.rawValue, systemImage: type.imageName).tag(type)
+    struct Pickers {
+        
+        static func WorkoutMenu(sortType: Binding<WorkoutSortTypes>, viewType: Binding<WorkoutViewTypes>) -> some View {
+            Menu {
+                Picker("View Type", selection: viewType) {
+                    ForEach(WorkoutViewTypes.allCases, id: \.self) { type in
+                        Label(type.rawValue, systemImage: type.imageName).tag(type)
+                    }
+                }
+                Picker("Sort Method", selection: sortType) {
+                    Text("A-Z").tag(WorkoutSortTypes.alphabetical)
+                    Text("Created").tag(WorkoutSortTypes.created)
+                    Text("Modified").tag(WorkoutSortTypes.modified)
+                }
+            } label: {
+                Label("Options", systemImage: "ellipsis")
             }
         }
+        
     }
     
 }

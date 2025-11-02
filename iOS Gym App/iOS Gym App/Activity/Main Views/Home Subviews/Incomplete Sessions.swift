@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct IncompleteSessionsView: View {
     
@@ -12,10 +13,34 @@ struct IncompleteSessionsView: View {
     }
     
     var body: some View {
-        if incompleteSessions.isEmpty == false {
-            VStack(alignment: .leading, spacing: 10) {
-                ReusedViews.HorizontalHeader(text: "Incomplete Sessions", showNavigation: false)
-                IncompleteSectionSession()
+        if let incomplete = incompleteSessions.first, incomplete != sm.session {
+            GroupBox {
+                NavigationLink {
+                    SessionsListView(allSessions: incompleteSessions)
+                } label: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ReusedViews.Labels.HeaderWithArrow(title: "Incomplete Session")
+                        ReusedViews.Labels.Subheader(title: "Continue working....")
+                    }
+                }
+                Button {
+                    if let workout = incomplete.workout {
+                        
+                        for exercise in workout.exercises ?? [] {
+                            let hasEntry = incomplete.exercises?.contains(where: { entry in
+                                entry.exercise == exercise
+                            }) ?? false
+                            
+                            if !hasEntry {
+                                sm.QueueExercise(exercise: exercise)
+                            }
+                        }
+                    }
+                    sm.session = incomplete
+                    
+                } label: {
+                    IncompleteSession(session: incomplete)
+                }
             }
             .alert("Session Error", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
@@ -24,66 +49,30 @@ struct IncompleteSessionsView: View {
             }
         }
     }
-        
-    private func IncompleteSectionSession() -> some View {
-        ScrollView(.horizontal) {
-            HStack {
-                ForEach(incompleteSessions, id: \.self) { session in
-                    Button {
-                        if sm.session != nil {
-                            showAlert = true
-                            return
-                        }
-                        if let workout = session.workout {
-                            
-                            for exercise in workout.exercises ?? [] {
-                                // Check if this workout has a session entry
-                                let hasEntry = session.exercises?.contains(where: { entry in
-                                    entry.exercise == exercise
-                                }) ?? false
-                                
-                                if !hasEntry {
-                                    sm.QueueExercise(exercise: exercise)
+    
+    private func IncompleteSession(session: WorkoutSession) -> some View {
+        HStack {
+            VStack(alignment: .leading) {
+                ReusedViews.Labels.MediumIconSize(key: session.workout?.id.hashValue.description ?? session.id.hashValue.description)
+                ReusedViews.Labels.MediumTextLabel(title: session.name)
+            }
+            VStack(alignment: .leading) {
+                if let exercises = session.exercises, exercises.isEmpty == false {
+                    ForEach(session.exercises ?? [], id: \.self) { sessionData in
+                        HStack {
+                            if let exercise = sessionData.exercise {
+                                ReusedViews.Labels.SmallIconSize(key: exercise.id.hashValue.description)
+                                VStack {
+                                    Text(exercise.name)
+                                    Text("\(sessionData.weight.count) sets")
                                 }
                             }
                         }
-                        sm.session = session
-                    } label: {
-                        IncompleteSessionView(session: session)
                     }
+                } else {
+                    Text("No exercises completed.")
                 }
             }
-        }.scrollIndicators(.hidden)
-    }
-    
-    private func SessionButtonView(session: WorkoutSession) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("\(session.name)")
-                .font(.body)
-                .tint(.primary)
-            HStack {
-                Text("\(session.started, formatter: DateHandler().dateFormatter())")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-                if session == sm.session {
-                    Image(systemName: "waveform.mid")
-                        .animation(.default, value: true)
-                }
-            }
-        }
-    }
-    
-    private func IncompleteSessionView(session: WorkoutSession) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                .fill(ColorManager.shared.GetColor(key: session.id.hashValue.description))
-                .scaledToFit()
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(minWidth: Constants.previewSize, maxWidth: 300, minHeight: Constants.previewSize, maxHeight: 300)
-                .padding(.bottom, 5)
-                .frame(minWidth: Constants.previewSize ,maxWidth: 300, minHeight: Constants.previewSize ,maxHeight: 300)
-            ReusedViews.Description(topText: session.name, bottomText: "\(session.exercises?.count ?? 0) completed")
         }
     }
     
