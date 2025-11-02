@@ -1,0 +1,110 @@
+//
+//  AIAskView.swift
+//  iOS Gym App
+//
+//  Created by 鄭承典 on 11/4/25.
+//
+
+import SwiftUI
+
+struct AIAskView: View {
+    @State private var prompt: String = ""
+    private let suggestions: [String] = [
+        "Build me a 4-day push/pull split",
+        "How to improve bench press?",
+        "Recommend a mobility routine",
+        "What should I do for fat loss?"
+    ]
+    var body: some View {
+        VStack(spacing: 0) {
+            // Suggestions chips
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(suggestions, id: \.self) { item in
+                        Button(action: { prompt = item }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "sparkles")
+                                    .font(.footnote)
+                                Text(item)
+                                    .font(.footnote)
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.systemGray6)))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color(.separator)))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+            }
+
+            Divider()
+
+            // Messages placeholder area
+            ScrollView {
+                VStack(spacing: 12) {
+                    ChatBubble(text: "Ask me anything about training, programming, or nutrition.", isUser: false)
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+            }
+
+            // Input bar
+            HStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(.secondary)
+                    TextField("Ask anything…", text: $prompt, axis: .vertical)
+                        .textInputAutocapitalization(.sentences)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(.systemGray6)))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color(.separator)))
+
+                Button(action: { /* TODO: send */ }) {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(Color.accentColor))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
+        }
+        .navigationTitle("Ask AI")
+        .toolbarTitleDisplayMode(.inline)
+    }
+}
+
+private struct ChatBubble: View {
+    let text: String
+    let isUser: Bool
+    var body: some View {
+        HStack(alignment: .bottom) {
+            if isUser { Spacer(minLength: 40) }
+            Text(text)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(isUser ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color(.separator))
+                )
+                .frame(maxWidth: 320, alignment: .leading)
+            if !isUser { Spacer(minLength: 40) }
+        }
+    }
+}
+
+#Preview{
+    AIAskView()
+}
