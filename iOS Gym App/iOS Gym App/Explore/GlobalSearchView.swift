@@ -154,3 +154,4 @@ private let sampleSessions: [ShareItem] = [
 private let sampleGyms = ["Anytime Fitness", "Gold's Gym", "Powerhouse"]
 
 
+

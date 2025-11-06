@@ -4,15 +4,21 @@
 //
 //  Created by 鄭承典 on 11/4/25.
 //
-
 import SwiftUI
+import UIKit
 
 struct UserProfileView: View {
-    let username: String
-    var isCurrentUser: Bool = false
-    @State private var isFollowing: Bool = false
-    private let bio: String = "Love training and tracking progress."
-    private let location: String = "San Francisco, CA"
+    @State private var username: String = "Demo User"
+    @State private var displayName: String = "demo_user"
+    @State private var coverImage: UIImage? = nil
+    @State private var profileImage: UIImage? = nil
+    @State private var bio: String = "Love training and tracking progress."
+    @State private var location: String = "San Francisco, CA"
+    
+    init(username: String = "Demo User", displayName: String = "demo_user") {
+        _username = State(initialValue: username)
+        _displayName = State(initialValue: displayName)
+    }
     private let stats: [(String, String)] = [("Workouts", "124"), ("Followers", "1.2k"), ("Following", "180")]
     private let recentWorkouts: [String] = ["Push Day A", "Legs A", "Upper Power"]
 
@@ -26,37 +32,82 @@ struct UserProfileView: View {
                     .padding(.top, 16)
             }
         }
-        .navigationTitle("@\(username)")
+        .navigationTitle("@\(displayName)")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink {
+                    AccountEditView(
+                        coverImage: $coverImage,
+                        profileImage: $profileImage,
+                        username: $username,
+                        displayName: $displayName,
+                        bio: $bio,
+                        location: $location
+                    )
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+            }
+        }
     }
 
     // MARK: - Sections
     private var cover: some View {
         ZStack(alignment: .bottomLeading) {
-            LinearGradient(colors: [.black.opacity(0.2), .black.opacity(0.05)], startPoint: .top, endPoint: .bottom)
-                .background(
+            ZStack {
+                if let coverImage = coverImage {
+                    Image(uiImage: coverImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 140)
+                        .clipped()
+                } else {
                     Rectangle()
                         .fill(Color(.systemGray5))
-                )
-                .frame(height: 140)
+                        .frame(height: 140)
+                }
+                LinearGradient(colors: [.black.opacity(0.2), .black.opacity(0.05)], startPoint: .top, endPoint: .bottom)
+            }
+            .frame(height: 140)
             HStack(alignment: .bottom, spacing: 16) {
-                Circle()
-                    .fill(Color(.systemGray6))
-                    .frame(width: 96, height: 96)
-                    .overlay {
+                ZStack {
+                    if let profileImage = profileImage {
+                        Image(uiImage: profileImage)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Circle()
+                            .fill(Color(.systemGray6))
+                    }
+                }
+                .frame(width: 96, height: 96)
+                .clipShape(Circle())
+                .overlay {
+                    if profileImage == nil {
                         Image(systemName: "person.fill")
                             .font(.system(size: 44))
                             .foregroundStyle(.secondary)
                     }
-                    .offset(y: 48)
+                }
+                .offset(y: 48)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(username)
                         .font(.title2.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                     Text(bio)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.9))
+                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.7)
+                )
                 Spacer()
             }
             .padding(.horizontal)
@@ -76,13 +127,8 @@ struct UserProfileView: View {
                 Spacer()
             }
 
-            if !isCurrentUser {
-                HStack(spacing: 12) {
-                    Button(isFollowing ? "Following" : "Follow") { withAnimation(.spring()) { isFollowing.toggle() } }
-                        .buttonStyle(.borderedProminent)
-                    Spacer()
-                }
-            }
+            // Follow button only shown when viewing other users' profiles
+            // Removed for now - can be added back when implementing social features
 
             HStack(spacing: 12) {
                 ForEach(stats, id: \.0) { label, value in
@@ -131,3 +177,4 @@ struct UserProfileView: View {
         }
     }
 }
+

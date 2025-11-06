@@ -80,3 +80,4 @@ struct ChatView: View {
 private struct Message: Identifiable, Hashable { let id: UUID; let text: String; let isMe: Bool }
 
 
+

@@ -53,6 +53,3 @@ struct AccountCreateView: View {
         .navigationTitle("Create Account")
     }
 }
-
-
-

@@ -105,6 +105,4 @@ private struct ChatBubble: View {
     }
 }
 
-#Preview{
-    AIAskView()
-}
+
