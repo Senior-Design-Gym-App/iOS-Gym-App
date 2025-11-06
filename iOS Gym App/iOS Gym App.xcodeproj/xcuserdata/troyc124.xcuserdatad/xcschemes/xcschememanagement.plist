@@ -6,6 +6,8 @@
 	<dict>
 		<key>Live Activity TimerExtension.xcscheme_^#shared#^_</key>
 		<dict>
+			<key>isShown</key>
+			<true/>
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
@@ -23,6 +25,11 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>E40F095C2EA7E6B100618BB9</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>E40F0B5B2EAA914600618BB9</key>
 		<dict>
 			<key>primary</key>
 			<true/>

@@ -12,5 +12,6 @@ import SwiftUI
 struct Live_Activity_TimerBundle: WidgetBundle {
     var body: some Widget {
         WorkoutTimerLiveActivity()
+        WorkoutWidget()
     }
 }

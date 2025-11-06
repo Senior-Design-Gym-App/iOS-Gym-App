@@ -12,11 +12,13 @@ import SwiftData
 struct iOS_Gym_AppApp: App {
     
     @State private var sessionManager = SessionManager()
+    @State private var pm = ProgressManager()
     
     var body: some Scene {
         WindowGroup {
             TabHome()
                 .tint(Constants.mainAppTheme)
+                .environment(pm)
                 .environment(sessionManager)
         }.modelContainer(for: [Exercise.self, Workout.self, Split.self, WorkoutSession.self, WorkoutSessionEntry.self])
     }

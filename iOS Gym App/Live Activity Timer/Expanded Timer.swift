@@ -31,7 +31,7 @@ func SetGauge(context: ActivityViewContext<WorkoutTimer>) -> some View {
             .font(.callout)
         Gauge(value: Float(min(context.state.currentSet, context.state.setCount)), in: 0...Float(context.state.setCount)) {
         }.gaugeStyle(.accessoryLinearCapacity)
-            .tint(Constants.mainAppTheme)
+            .tint(.accentColor)
     }
 }
 
