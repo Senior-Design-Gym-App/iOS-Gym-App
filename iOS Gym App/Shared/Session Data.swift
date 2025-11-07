@@ -1,8 +1,12 @@
 import SwiftData
+import SwiftUI
 import Foundation
 
 @Model
 final class WorkoutSession {
+    
+    @Transient
+    var id = UUID()
     
     var name: String = ""
     var started: Date = Date()
@@ -10,6 +14,9 @@ final class WorkoutSession {
     var selectedGymID: String?
     
     var workout: Workout?
+    var color: Color {
+        Constants.mainAppTheme
+    }
     
     @Relationship(deleteRule: .cascade)
     var exercises: [WorkoutSessionEntry]? = []
@@ -28,6 +35,15 @@ final class WorkoutSessionEntry {
     
     var reps: [Int] = []
     var weight: [Double] = []
+    var setEntry: [SetData] {
+        let count = min(reps.count, weight.count)
+        var all: [SetData] = []
+        for i in 0..<count {
+            let new = SetData(rest: i, reps: reps[i], weight: weight[i])
+            all.append(new)
+        }
+        return all
+    }
     
     @Relationship(deleteRule: .nullify)
     var session: WorkoutSession?

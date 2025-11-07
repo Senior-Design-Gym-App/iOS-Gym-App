@@ -103,7 +103,7 @@ struct AllExerciseView: View {
     
     private func ExerciseListRow(exercise: Exercise) -> some View {
         NavigationLink {
-            EditExerciseView(exercise: exercise, setData: exercise.setData.last ?? [])
+            EditExerciseView(exercise: exercise, setData: exercise.recentSetData.setData, selectedMuscle: exercise.muscle, selectedEquipment: exercise.workoutEquipment)
         } label: {
             ReusedViews.ExerciseViews.ExerciseListPreview(exercise: exercise)
         }
@@ -114,7 +114,7 @@ struct AllExerciseView: View {
             LazyVGrid(columns: columns) {
                 ForEach(sortedExercises, id: \.self) { exercise in
                     NavigationLink {
-                        EditExerciseView(exercise: exercise, setData: exercise.setData.last ?? [])
+                        EditExerciseView(exercise: exercise, setData: exercise.recentSetData.setData, selectedMuscle: exercise.muscle, selectedEquipment: exercise.workoutEquipment)
                             .navigationTransition(.zoom(sourceID: exercise.id, in: namespace))
                     } label: {
                         ReusedViews.ExerciseViews.HorizontalListPreview(exercise: exercise)

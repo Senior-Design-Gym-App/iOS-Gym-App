@@ -6,35 +6,14 @@ struct SessionSetControlView: View {
     let deleteAction: () -> Void
     let sessionManager: SessionManager
     
-    @State private var lockControls: Bool = true
     @AppStorage("weightChangeType") private var weightChangeType: WeightChangeType = .ten
+    @AppStorage("timerType") private var timerType: TimerType = .liveActivities
     
     var body: some View {
         @Bindable var sessionManager = sessionManager
         Divider()
         StepControl(reps: $sessionManager.reps, weight: $sessionManager.weight)
-        WeightChangeSelector()
-        HStack {
-            GroupBox {
-                LockButton()
-            }.clipShape(.capsule)
-            GroupBox {
-                Button(role: .confirm) {
-                    endAction()
-                } label: {
-                    Label("End", systemImage: "stop")
-                        .frame(idealWidth: .infinity ,maxWidth: .infinity)
-                }.disabled(lockControls)
-            }.clipShape(.capsule)
-            GroupBox {
-                Button {
-                    deleteAction()
-                } label: {
-                    Label("Discard", systemImage: "trash")
-                        .frame(idealWidth: .infinity ,maxWidth: .infinity)
-                }.disabled(lockControls)
-            }.clipShape(.capsule)
-        }.frame(idealWidth: .infinity ,maxWidth: .infinity)
+        BottomControls()
     }
     
     private func StepControl(reps: Binding<Int>, weight: Binding<Double>) -> some View {
@@ -51,17 +30,45 @@ struct SessionSetControlView: View {
             ForEach(WeightChangeType.allCases, id: \.self) { type in
                 Text(type.rawValue).tag(type)
             }
-        }.pickerStyle(.segmented)
+        }
     }
     
-    private func LockButton() -> some View {
-        Button {
-            lockControls.toggle()
-        } label: {
-            Label("Lock Controls", systemImage: lockControls ? "lock.fill" : "lock.slash.fill")
-                .labelStyle(.iconOnly)
-                .contentTransition(.symbolEffect(.replace))
-        }
+    private func BottomControls() -> some View {
+        HStack {
+            GroupBox {
+                Menu {
+                    Button(role: .confirm) {
+                        endAction()
+                    } label: {
+                        Label("End", systemImage: "stop")
+                            .frame(idealWidth: .infinity ,maxWidth: .infinity)
+                    }
+                    Button(role: .destructive) {
+                        deleteAction()
+                    } label: {
+                        Label("Discard", systemImage: "trash")
+                            .frame(idealWidth: .infinity ,maxWidth: .infinity)
+                    }
+                } label: {
+                    Label("Options", systemImage: "list.bullet.circle")
+                        .labelStyle(.iconOnly)
+                }
+            }.clipShape(.circle)
+            Spacer()
+            GroupBox {
+                Menu {
+                    Picker("Timer Type", selection: $timerType) {
+                        ForEach(TimerType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    WeightChangeSelector()
+                } label: {
+                    Label("Settings", systemImage: "gearshape.circle")
+                        .labelStyle(.iconOnly)
+                }
+            }.clipShape(.circle)
+        }.frame(idealWidth: .infinity ,maxWidth: .infinity)
     }
     
 }

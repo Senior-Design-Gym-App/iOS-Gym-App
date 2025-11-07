@@ -8,10 +8,11 @@ struct SessionData: Identifiable, Hashable, Equatable {
     
 }
 
-enum SessionViewOption: String, CaseIterable, Identifiable {
+enum TimerType: String, CaseIterable, Identifiable {
     
-    case entry           = "Entry"
-    case queue           = "Queue"
+    case liveActivities = "Live Activities"
+    case notifications  = "Notifications"
+    case timer          = "Timer"
     
     var id : String { rawValue }
     

@@ -53,6 +53,7 @@ struct CreateWorkoutSplitView: View {
     }
     
     private func SaveSplit() {
+        newSplit.workouts = selectedWorkouts
         context.insert(newSplit)
         try? context.save()
         dismiss()

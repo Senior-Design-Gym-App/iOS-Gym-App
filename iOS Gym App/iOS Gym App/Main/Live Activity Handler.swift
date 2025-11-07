@@ -5,7 +5,7 @@ import ActivityKit
 extension SessionManager {
     
     func UpdateLiveActivity(exercise: Exercise) {
-        let set = SetEntry(index: 0, rest: rest, reps: reps, weight: weight)
+        let set = SetData(rest: rest, reps: reps, weight: weight)
 
         if exerciseTimer?.content.state != nil {
             

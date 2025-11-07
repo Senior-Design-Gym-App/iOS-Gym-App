@@ -5,18 +5,30 @@ extension ReusedViews {
     
     struct Charts {
         
-        static func ExerciseChart(update: Exercise) -> some View {
+        static func BarChart(data: [WeightEntry], color: Color) -> some View {
             Chart {
-                ForEach(update.updateData, id: \.self) { progress in
-                    BarMark(
-                        x: .value("Date", progress.updateDate, unit: .day),
-                        y: .value("Weight", progress.averageVolumePerSet),
+                ForEach(data, id: \.self) { progress in
+                    PointMark(
+                        x: .value("Date", progress.date),
+                        y: .value("Weight", progress.value),
                     )
                 }
-            }
+            }.foregroundStyle(color)
+        }
+        
+        static func BarChartMonth(data: [WeightEntry], color: Color) -> some View {
+            Chart {
+                ForEach(data, id: \.self) { progress in
+                    PointMark(
+                        x: .value("Date", progress.date, unit: .day),
+                        y: .value("Weight", progress.value),
+                    )
+                }
+            }.foregroundStyle(color)
         }
         
     }
+        
     
     struct ProgressChartView: View {
         

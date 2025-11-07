@@ -26,7 +26,7 @@ class SessionManager {
     }
     
     var totalSets: Int {
-        currentWorkout?.exercise.recentSetData.count ?? 1
+        max(currentWorkout?.exercise.recentSetData.setData.count ?? 1, currentSet)
     }
     
     init() {
@@ -66,7 +66,7 @@ class SessionManager {
         let newEntry = WorkoutSessionEntry(reps: [], weight: [], session: nil, exercise: nil)
         let newQueueItem = SessionData(exercise: exercise, entry: newEntry)
         if currentWorkout == nil {
-            if let first = exercise.recentSetData.first {
+            if let first = exercise.recentSetData.setData.first {
                 reps = first.reps
                 weight = first.weight
                 rest = first.rest
@@ -79,12 +79,15 @@ class SessionManager {
     }
     
     func NextWorkout() {
+        
+        if let current = currentWorkout {
+            current.entry.exercise = current.exercise
+            current.entry.session = session
+            completedWorkouts.append(current.entry)
+            self.currentWorkout = nil
+        }
+        
         if let next = upcomingWorkouts.first {
-            
-            if let current = currentWorkout {
-                current.entry.exercise = current.exercise
-                completedWorkouts.append(current.entry)
-            }
             
             QueueExercise(exercise: next.exercise)
             upcomingWorkouts.removeFirst()
@@ -119,16 +122,16 @@ class SessionManager {
             
             let nextSetIndex = currentWorkout.entry.weight.count // This is now the index for the NEXT set (0-indexed)
             
-            if nextSetIndex < currentWorkout.exercise.recentSetData.count {
-                reps = currentWorkout.exercise.recentSetData[nextSetIndex].reps
+            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
+                reps = currentWorkout.exercise.recentSetData.setData[nextSetIndex].reps
             }
             
-            if nextSetIndex < currentWorkout.exercise.recentSetData.count {
-                weight = currentWorkout.exercise.recentSetData[nextSetIndex].weight
+            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
+                weight = currentWorkout.exercise.recentSetData.setData[nextSetIndex].weight
             }
             
-            if nextSetIndex < currentWorkout.exercise.recentSetData.count {
-                rest = currentWorkout.exercise.recentSetData[nextSetIndex].rest
+            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
+                rest = currentWorkout.exercise.recentSetData.setData[nextSetIndex].rest
             }
             
             StartTimer(exercise: currentWorkout.exercise, entry: currentWorkout.entry)
@@ -147,8 +150,8 @@ class SessionManager {
         if let currentWorkout {
             
             let nextSetIndex = currentWorkout.entry.weight.count // This is now the index for the NEXT set (0-indexed)
-            if nextSetIndex < currentWorkout.exercise.recentSetData.count {
-                rest = currentWorkout.exercise.recentSetData[nextSetIndex].rest
+            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
+                rest = currentWorkout.exercise.recentSetData.setData[nextSetIndex].rest
             }
             StartTimer(exercise: currentWorkout.exercise, entry: currentWorkout.entry)
         }

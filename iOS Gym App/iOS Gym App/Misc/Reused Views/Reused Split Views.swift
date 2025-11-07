@@ -15,7 +15,7 @@ extension ReusedViews {
                     Spacer()
                 }
             } else {
-                Labels.LargeIconSize(key: split.id.hashValue.description)
+                Labels.LargeIconSize(color: split.color)
             }
         }
         
@@ -24,7 +24,7 @@ extension ReusedViews {
             if let image = split.image {
                 SplitPreview(splitImage: image, size: Constants.mediumIconSize)
             } else {
-                Labels.MediumIconSize(key: split.id.hashValue.description)
+                Labels.MediumIconSize(color: Constants.mainAppTheme)
             }
         }
         
@@ -33,7 +33,7 @@ extension ReusedViews {
             if let image = split.image {
                 SplitPreview(splitImage: image, size: Constants.smallIconSize)
             } else {
-                Labels.SmallIconSize(key: split.id.hashValue.description)
+                Labels.SmallIconSize(color: split.color)
             }
         }
         
@@ -45,11 +45,11 @@ extension ReusedViews {
         }
         
         static func SplitPreview(splitImage: UIImage, size: CGFloat) -> some View {
-                Image(uiImage: splitImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: size, height: size)
-                    .clipShape(.rect(cornerRadius: Constants.cornerRadius))
+            Image(uiImage: splitImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(.rect(cornerRadius: Constants.cornerRadius))
         }
         
         static func ListPreview(split: Split) -> some View {
@@ -57,9 +57,9 @@ extension ReusedViews {
                 if let image = split.image {
                     SplitPreview(splitImage: image, size: Constants.smallIconSize)
                 } else {
-                    Labels.SmallIconSize(key: split.id.hashValue.description)
+                    Labels.SmallIconSize(color: split.color)
                 }
-                Labels.ListDescription(name: split.name, items: split.workouts ?? [], type: .split)
+                Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split)
             }
         }
         
@@ -72,39 +72,38 @@ extension ReusedViews {
             @Binding var oldWorkouts: [Workout]
             
             var body: some View {
-                AddSheet()
-            }
-            
-            private func AddSheet() -> some View {
                 NavigationStack {
                     List {
-                        ForEach(allWorkouts
-                            .filter{ $0.split == nil }
-                            .sorted { $0.name < $1.name }
-                                , id: \.self) { workout in
-                            HStack {
-                                ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
-                                Spacer()
-                                Button {
-                                    if newWorkouts.contains(where: { $0 == workout }) {
-                                        withAnimation {
-                                            newWorkouts.removeAll(where: { $0 == workout })
-                                        }
-                                    } else {
-                                        withAnimation {
-                                            newWorkouts.append(workout)
-                                        }
-                                    }
-                                } label: {
-                                    if newWorkouts.contains(where: { $0 == workout }) {
-                                        Image(systemName: "checkmark")
-                                            .contentTransition(.symbolEffect(.replace))
-                                    } else {
+                        Section {
+                            ForEach(newWorkouts, id: \.self) { workout in
+                                WorkoutViews.WorkoutListPreview(workout: workout)
+                            }
+                            .onMove { indices, newOffset in
+                                newWorkouts.move(fromOffsets: indices, toOffset: newOffset)
+                            }
+                            .onDelete { indices in
+                                newWorkouts.remove(atOffsets: indices)
+                            }
+                        } header: {
+                            Text("Selected Workouts")
+                        }
+                        Section {
+                            ForEach(allWorkouts
+                                .filter{ $0.split == nil && !newWorkouts.contains($0) }
+                                .sorted { $0.name < $1.name }
+                                    , id: \.self) { workout in
+                                HStack {
+                                    ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
+                                    Spacer()
+                                    Button {
+                                        newWorkouts.append(workout)
+                                    } label: {
                                         Image(systemName: "plus")
-                                            .contentTransition(.symbolEffect(.replace))
                                     }
                                 }
                             }
+                        } header: {
+                            Text("Available Workouts")
                         }
                     }
                     .environment(\.editMode, .constant(.active))
@@ -116,12 +115,6 @@ extension ReusedViews {
                             ReusedViews.Buttons.SaveButton(disabled: newWorkouts.isEmpty, save: SaveOptions)
                         }
                     }
-                    //                .onMove { indices, newOffset in
-                    //                    newSetData.move(fromOffsets: indices, toOffset: newOffset)
-                    //                }
-                    //                .onDelete { indices in
-                    //                    newSetData.remove(atOffsets: indices)
-                    //                }
                 }
             }
             

@@ -13,15 +13,15 @@ struct ExerciseChanges: View {
 //        guard let sessionEntries = originalWorkout.sessionEntries else {
 //            return []
 //        }
-//        
+//
 //        // Get non-nil sessions
 //        let allSessions = sessionEntries.compactMap { $0.session }
-//        
+//
 //        // Sort by started descending (most recent first)
 //        let sortedByDate = allSessions.sorted { lhs, rhs in
 //            lhs.started > rhs.started
 //        }
-//        
+//
 //        // Return up to the 5 most recent
 //        return Array(sortedByDate.prefix(5))
 //    }
@@ -30,6 +30,7 @@ struct ExerciseChanges: View {
     var body: some View {
         NavigationStack {
             List {
+                Text("Found stuff \(exercise.sessionEntries?.count ?? 0)")
 //                Section {
 //                    if workout.prData.isEmpty == false {
 //                        ProgressChartView(color: Constants.mainAppTheme, unit: "lbs", data: workout.prData)
@@ -81,42 +82,42 @@ struct ExerciseChanges: View {
         }
     }
     
-    private func BarGraphLabel(data: UpdateData) -> some View {
-        Chart {
-            BarMark(x: .value("Avg", "bird"),
-                    y: .value("Date?", 1))
-        }
-    }
+//    private func BarGraphLabel(data: UpdateData) -> some View {
+//        Chart {
+//            BarMark(x: .value("Avg", "bird"),
+//                    y: .value("Date?", 1))
+//        }
+//    }
+//
+//    private func AverageGraph(data: [UpdateData]) -> some View {
+//        Chart {
+//            ForEach(data, id: \.self) { point in
+//                BarMark(x: .value("Order", point.updateDate, unit: .day),
+//                        y: .value("Avg", point.averageVolumePerSet))
+//            }
+//        }
+//    }
     
-    private func AverageGraph(data: [UpdateData]) -> some View {
-        Chart {
-            ForEach(data, id: \.self) { point in
-                BarMark(x: .value("Order", point.updateDate, unit: .day),
-                        y: .value("Avg", point.averageVolumePerSet))
-            }
-        }
-    }
-    
-    private func UpdateDataHistory(data: UpdateData) -> some View {
-        VStack(alignment: .leading) {
-            Text("\(UpdateDate(date: data.updateDate))")
-                .font(.headline)
-            Group {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Reps")
-                        Text("Weight")
-                    }
-                    ForEach(0..<data.sets, id: \.self) { set in
-                        VStack(alignment: .leading) {
-                            Text("\(data.reps[set])")
-                            Text("\(data.weights[set], specifier: "%.1f")")
-                        }
-                    }
-                }
-            }.font(.subheadline)
-        }
-    }
+//    private func UpdateDataHistory(data: UpdateData) -> some View {
+//        VStack(alignment: .leading) {
+//            Text("\(UpdateDate(date: data.updateDate))")
+//                .font(.headline)
+//            Group {
+//                HStack {
+//                    VStack(alignment: .leading) {
+//                        Text("Reps")
+//                        Text("Weight")
+//                    }
+//                    ForEach(0..<data.sets, id: \.self) { set in
+//                        VStack(alignment: .leading) {
+//                            Text("\(data.reps[set])")
+//                            Text("\(data.weights[set], specifier: "%.1f")")
+//                        }
+//                    }
+//                }
+//            }.font(.subheadline)
+//        }
+//    }
     
     private func UpdateDate(date: Date) -> String {
         let formatter = DateFormatter()

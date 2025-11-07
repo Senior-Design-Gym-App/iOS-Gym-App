@@ -27,6 +27,7 @@ struct EditSplitView: View {
             }
             .toolbar {
                 ToolbarItemGroup(placement: .secondaryAction) {
+                    ToggleFavorite()
                     ReusedViews.Buttons.RenameButtonAlert(type: .split, oldName: $selectedSplit.name)
                     ReusedViews.Buttons.DeleteButtonConfirmation(type: .split, deleteAction: Delete)
                     ReusedViews.SplitViews.ImagePicker(split: $selectedSplit)
@@ -49,6 +50,12 @@ struct EditSplitView: View {
             }
         } header: {
             ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .split, items: selectedWorkouts)
+        }
+    }
+    
+    private func ToggleFavorite() -> some View {
+        Toggle(isOn: $selectedSplit.active) {
+            Label("Pin", systemImage: "pin")
         }
     }
     

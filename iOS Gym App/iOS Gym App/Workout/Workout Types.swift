@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 enum WorkoutSortTypes: String, CaseIterable, Identifiable {
     
@@ -28,13 +29,20 @@ enum WorkoutViewTypes: String, CaseIterable, Identifiable {
     
 }
 
-struct SetEntry: Identifiable, Hashable, Codable {
+struct SetData: Identifiable, Hashable, Codable {
     
     var id = UUID()
-    var index: Int
-    var rest: Int
-    var reps: Int
-    var weight: Double
+    let rest: Int
+    let reps: Int
+    let weight: Double
+    
+}
+
+struct SetChangeData: Identifiable, Hashable {
+    
+    let id = UUID()
+    let changeDate: Date
+    let setData: [SetData]
     
 }
 
@@ -47,9 +55,37 @@ enum MuscleGroup: String, CaseIterable, Identifiable {
     case biceps          = "Biceps"
     case triceps         = "Triceps"
     case core            = "Core"
+    case forearm         = "Forearm"
     case general         = "General"
+    case unknown         = "Unknown"
 
     var id: String { rawValue }
+    
+    var colorPalette: Color {
+        switch self {
+        case .chest:
+            MuscleGroupColor.rose.color
+        case .back:
+            MuscleGroupColor.fandago.color
+        case .legs:
+            MuscleGroupColor.grape.color
+        case .shoulders:
+            MuscleGroupColor.chryslerBlue.color
+        case .biceps:
+            MuscleGroupColor.darkBlue.color
+        case .triceps:
+            MuscleGroupColor.zaffe.color
+        case .core:
+            MuscleGroupColor.palatinateBlue.color
+        case .forearm:
+            MuscleGroupColor.neonBlue.color
+        case .general:
+            Color.white
+        case .unknown:
+            Color.white
+        }
+    }
+    
 }
 
 enum Muscle: String, CaseIterable, Identifiable, Hashable {
@@ -81,7 +117,7 @@ enum Muscle: String, CaseIterable, Identifiable, Hashable {
     case hipFlexors         = "Hip Flexors"
     case tibialisAnterior   = "Tibialis Anterior"
     
-    // Shoulder
+    // Shoulders
     case shoulder           = "Shoulders"
     case anteriorDeltoid    = "Anterior Deltoid"
     case lateralDeltoid     = "Lateral Deltoid"
@@ -90,13 +126,13 @@ enum Muscle: String, CaseIterable, Identifiable, Hashable {
     case supraspinatus      = "Supraspinatus"
     case subscapularis      = "Subscapularis"
     
-    // Bicep
+    // Biceps
     case bicep              = "Biceps"
     case bicepsBrachii      = "Biceps Brachii"
     case brachialis         = "Brachialis"
     case brachioradialis    = "Brachioradialis"
     
-    // Tricep
+    // Triceps
     case tripcep            = "Triceps"
     case tricepsLongHead    = "Long Head"
     case tricepsLateralHead = "Lateral Head"
@@ -110,63 +146,104 @@ enum Muscle: String, CaseIterable, Identifiable, Hashable {
     case lowerBack          = "Lower Back"
     case pelvicFloor        = "Pelvic Floor"
     
+    // Forearm
+    case forearm                = "Forearm"
+    case flexorCarpiRadialis    = "Flexor Carpi Radialis"
+    case flexorCarpiUlnaris     = "Flexor Carpi Ulnaris"
+    case palmarisLongus         = "Palmaris Longus"
+    case flexorDigitorumSuperficialis = "Flexor Digitorum Superficialis"
+    case flexorDigitorumProfundus      = "Flexor Digitorum Profundus"
+    case extensorCarpiRadialisLongus   = "Extensor Carpi Radialis Longus"
+    case extensorCarpiUlnaris          = "Extensor Carpi Ulnaris"
+    case extensorDigitorum             = "Extensor Digitorum"
+    case extensorPollicisLongus        = "Extensor Pollicis Longus"
+    case pronatorTeres                 = "Pronator Teres"
+    case supinator                     = "Supinator"
+    
     var id: String { rawValue }
     
     var general: MuscleGroup {
         switch self {
         case .pectoralisMajor, .pectoralisMinor, .serratusAnterior:
-                .chest
+            .chest
         case .lats, .traps, .rhomboids, .erectorSpinae, .teresMajor, .teresMinor, .infraspinatus:
-                .back
+            .back
         case .quadriceps, .hamstrings, .glutes, .calves, .adductors, .abductors, .hipFlexors, .tibialisAnterior:
-                .legs
+            .legs
         case .anteriorDeltoid, .lateralDeltoid, .posteriorDeltoid, .rotatorCuff, .supraspinatus, .subscapularis:
-                .shoulders
+            .shoulders
         case .bicepsBrachii, .brachialis, .brachioradialis:
-                .biceps
+            .biceps
         case .tricepsLongHead, .tricepsLateralHead, .tricepsMedialHead:
-                .triceps
+            .triceps
         case .rectusAbdominis, .obliques, .transverseAbdominis, .lowerBack, .pelvicFloor:
-                .core
-        case .chest, .back, .legs, .shoulder, .bicep, .tripcep, .core:
-                .general
+            .core
+        case .flexorCarpiRadialis, .flexorCarpiUlnaris, .palmarisLongus,
+             .flexorDigitorumSuperficialis, .flexorDigitorumProfundus,
+             .extensorCarpiRadialisLongus, .extensorCarpiUlnaris, .extensorDigitorum,
+             .extensorPollicisLongus, .pronatorTeres, .supinator:
+            .forearm
+        case .chest, .back, .legs, .shoulder, .bicep, .tripcep, .core, .forearm:
+            .general
         }
     }
     
     var specific: MuscleGroup {
         switch self {
-        case  .chest, .pectoralisMajor, .pectoralisMinor, .serratusAnterior:
-                .chest
+        case .chest, .pectoralisMajor, .pectoralisMinor, .serratusAnterior:
+            .chest
         case .back, .lats, .traps, .rhomboids, .erectorSpinae, .teresMajor, .teresMinor, .infraspinatus:
-                .back
+            .back
         case .legs, .quadriceps, .hamstrings, .glutes, .calves, .adductors, .abductors, .hipFlexors, .tibialisAnterior:
-                .legs
+            .legs
         case .shoulder, .anteriorDeltoid, .lateralDeltoid, .posteriorDeltoid, .rotatorCuff, .supraspinatus, .subscapularis:
-                .shoulders
+            .shoulders
         case .bicep, .bicepsBrachii, .brachialis, .brachioradialis:
-                .biceps
+            .biceps
         case .tripcep, .tricepsLongHead, .tricepsLateralHead, .tricepsMedialHead:
-                .triceps
+            .triceps
         case .core, .rectusAbdominis, .obliques, .transverseAbdominis, .lowerBack, .pelvicFloor:
-                .core
+            .core
+        case .forearm,
+             .flexorCarpiRadialis, .flexorCarpiUlnaris, .palmarisLongus,
+             .flexorDigitorumSuperficialis, .flexorDigitorumProfundus,
+             .extensorCarpiRadialisLongus, .extensorCarpiUlnaris, .extensorDigitorum,
+             .extensorPollicisLongus, .pronatorTeres, .supinator:
+            .forearm
         }
     }
-    
 }
 
 enum WorkoutEquipment: String, CaseIterable, Identifiable {
     
+    // MARK: - Bodyweight
     case bodyWeight      = "Body Weight"
-    case dumbbells      = "Dumbbells"
-    case barbell        = "Barbell"
+    case weightedVest    = "Weighted Vest"
+    case pullupBar       = "Pullup Bar"
+    
+    // MARK: - Free Weights
+    case dumbbells       = "Dumbbells"
+    case barbell         = "Barbell"
     case kettlebell      = "Kettlebell"
     case resistanceBands = "Resistance Bands"
     case medicineBall    = "Medicine Ball"
-    case machine         = "Machine"
-    case sled            = "Sled"
-    case weightedVest    = "Weighted Vest"
-    case pullupBar       = "Pullup Bar"
-    case cable           = "Cable"
+    case trapBar         = "Trap Bar"
+    case ezBar           = "EZ Bar"
+    
+    // MARK: - Machines
+    case plateLoadedMachine = "Plate-Loaded Machine"
+    case pinLoadedMachine   = "Pin-Loaded Machine"
+    case smithMachine       = "Smith Machine"
+    case sled               = "Sled"
+    
+    // MARK: - Cable Attachments
+    case cable          = "Cable Tower"
+    case ropeAttachment = "Rope Attachment"
+    case dGrip          = "D-Grip"
+    case dualDGrip      = "Dual D-Grip"
+    case vBar           = "V-Bar"
+    case ankleStrap     = "Ankle Strap"
+    case straightBar    = "Straight Bar"
     
     var id: String { rawValue }
     
@@ -184,8 +261,8 @@ enum WorkoutEquipment: String, CaseIterable, Identifiable {
             "figure.strengthtraining.functional"
         case .medicineBall:
             "rotate.3d"
-        case .machine:
-            "server.rack"
+        case .pinLoadedMachine:
+            "slider.horizontal.3"
         case .sled:
             "figure.highintensity.intervaltraining"
         case .weightedVest:
@@ -194,9 +271,50 @@ enum WorkoutEquipment: String, CaseIterable, Identifiable {
             "figure.play"
         case .cable:
             "cable.coaxial"
+        case .trapBar:
+            "hexagon"
+        case .ezBar:
+            "w.circle"
+        case .plateLoadedMachine:
+            "ring.circle"
+        case .smithMachine:
+            "rectangle.split.3x3"
+        case .ropeAttachment:
+            "scribble"
+        case .dGrip:
+            "d.circle"
+        case .dualDGrip:
+            "circle.grid.2x1"
+        case .vBar:
+            "chevron.up"
+        case .ankleStrap:
+            "shoe"
+        case .straightBar:
+            "minus"
         }
     }
     
+    var category: EquipmentCategory {
+        switch self {
+        case .bodyWeight, .weightedVest, .pullupBar:
+            .bodyweight
+        case .dumbbells, .barbell, .kettlebell, .resistanceBands, .medicineBall, .trapBar, .ezBar:
+            .freeWeight
+        case .plateLoadedMachine, .pinLoadedMachine, .smithMachine, .sled:
+            .machine
+        case .cable, .ropeAttachment, .dGrip, .dualDGrip, .vBar, .ankleStrap, .straightBar:
+            .cableAttachment
+        }
+    }
+    
+}
+
+enum EquipmentCategory: String, CaseIterable {
+    case bodyweight      = "Bodyweight"
+    case freeWeight      = "Free Weight"
+    case machine         = "Machine"
+    case cableAttachment = "Cable Attachment"
+    case accessory       = "Accessory"
 }
 
 enum WorkoutItemType: String {

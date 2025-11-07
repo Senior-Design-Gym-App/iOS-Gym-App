@@ -17,9 +17,8 @@ struct SessionCurrentExerciseView: View {
             }.clipShape(.circle)
             Spacer()
             VStack {
-                Spacer()
                 CurrentExerciseInfo()
-                Spacer()
+                    .padding(.bottom)
                 HStack {
                     Spacer()
                     PreviousSetButton()
@@ -27,7 +26,6 @@ struct SessionCurrentExerciseView: View {
                     NextSetButton()
                     Spacer()
                 }
-                Spacer()
             }
             Spacer()
             GroupBox {
@@ -40,15 +38,16 @@ struct SessionCurrentExerciseView: View {
     private func PreviousSetButton() -> some View {
         Menu {
             Button {
-                sessionManager.PreviousSet()
-            } label: {
-                Text("Previous Set")
-            }.disabled(sessionManager.currentWorkout == nil || sessionManager.currentSet != 0)
-            Button {
                 sessionManager.PreviousWorkout()
             } label: {
                 Text("Previous Workout")
             }.disabled(sessionManager.completedWorkouts.isEmpty)
+            Divider()
+            Button {
+                sessionManager.PreviousSet()
+            } label: {
+                Text("Previous Set")
+            }.disabled(sessionManager.currentWorkout == nil || sessionManager.currentSet == 0)
         } label: {
             Label("Previous Set", systemImage: "backward.fill")
                 .labelStyle(.iconOnly)
@@ -61,17 +60,16 @@ struct SessionCurrentExerciseView: View {
         Menu {
             Button(role: .confirm) {
                 sessionManager.NextSet()
-            } label: {
-                Label("Next Set", systemImage: "forward")
-            }.disabled(sessionManager.currentWorkout == nil)
-            Divider()
-            Button(role: .confirm) {
-                sessionManager.NextSet()
                 sessionManager.NextWorkout()
             } label: {
                 Label("Next Workout", systemImage: "forward.end")
-                Text("End Current Set")
             }.disabled(sessionManager.upcomingWorkouts.isEmpty)
+            Divider()
+            Button(role: .confirm) {
+                sessionManager.NextSet()
+            } label: {
+                Label("Next Set", systemImage: "forward")
+            }.disabled(sessionManager.currentWorkout == nil)
         } label: {
             Label("Next Set", systemImage: "forward.fill")
                 .labelStyle(.iconOnly)
@@ -89,6 +87,7 @@ struct SessionCurrentExerciseView: View {
             } label: {
                 Label("Restart Timer", systemImage: "restart")
             }.disabled(sessionManager.currentWorkout == nil)
+            Text("\(sessionManager.rest)s Rest")
         } label: {
             Gauge(value: sessionManager.progress, in: 0...1.0) {
             } currentValueLabel: {
@@ -117,7 +116,7 @@ struct SessionCurrentExerciseView: View {
             if let currentExercise = sessionManager.currentWorkout?.exercise {
                 Text("Updated \(DateHandler().RelativeTime(from: currentExercise.modified))")
                 Text(currentExercise.workoutEquipment?.rawValue ?? "Unknown Equipment")
-                if let currentExerciseMuscleInfo = currentExercise.muscleInfo {
+                if let currentExerciseMuscleInfo = currentExercise.muscle {
                     Text("\(currentExerciseMuscleInfo.rawValue)")
                 }
             } else {
@@ -135,11 +134,6 @@ struct SessionCurrentExerciseView: View {
             }
         }
         .buttonStyle(.borderless)
-        //        .popover(isPresented: .constant(true), attachmentAnchor: .rect(.bounds)) {
-        //            Text("Test")
-        //                .presentationCompactAdaptation(.popover)
-        //        }
-        //                .padding(4) // keeps the gauge inside the circle
     }
     
     private func CurrentExerciseInfo() -> some View {

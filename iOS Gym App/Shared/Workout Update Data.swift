@@ -8,63 +8,25 @@ extension Exercise {
 //            WeightEntry(index: i, value: prWeights[i], date: prDates[i])
 //        }
 //    }
-    
-    var setData: [[SetEntry]] {
-        guard !reps.isEmpty else { return [] }
-        
-        var allSessions: [[SetEntry]] = []
-        
-        for sessionIndex in 0..<reps.count {
-            var sessionSets: [SetEntry] = []
-            let sessionReps = reps[sessionIndex]
-            let sessionRest = rest[sessionIndex]
-            let sessionWeights = weights[sessionIndex]
-            
-            for setIndex in 0..<sessionReps.count {
-                sessionSets.append(SetEntry(
-                    index: setIndex,
-                    rest: sessionRest[setIndex],
-                    reps: sessionReps[setIndex],
-                    weight: sessionWeights[setIndex]
-                ))
-            }
-            allSessions.append(sessionSets)
-        }
-        
-        return allSessions
-    }
-    
-    var updateData: [UpdateData] {
-        let count = min(updateDates.count, min(reps.count, weights.count))
-        return (0..<count).map { i in
-            UpdateData(index: i, weights: weights[i], reps: reps[i], updateDate: updateDates[i])
-        }
-    }
-    
-    var recentSetData: [SetEntry] {
-        setData.last ?? []
-    }
-    
-}
 
-struct UpdateData: Identifiable, Hashable {
     
-    let id = UUID()
-    let index: Int
-    let weights: [Double]
-    let reps: [Int]
-    let updateDate: Date
-    
-    var averageVolumePerSet: Double {
-        var avgWeight: Double = 0
-        for set in 0..<sets {
-            avgWeight += weights[set] * Double(reps[set])
+    var updateData: [SetChangeData] {
+        let outerCount = min(updateDates.count, min(reps.count, weights.count))
+        var allUpdates: [SetChangeData] = []
+        
+        for i in 0..<outerCount {
+            var sessionSets: [SetData] = []
+            let innerCount = min(weights[i].count, reps[i].count)
+            for j in 0..<innerCount {
+                sessionSets.append(SetData(rest: rest[i][j], reps: reps[i][j], weight: weights[i][j]))
+            }
+            allUpdates.append(SetChangeData(changeDate: updateDates[i], setData: sessionSets))
         }
-        return avgWeight / Double(sets)
+        return allUpdates
     }
     
-    var sets: Int {
-        return weights.count
+    var recentSetData: SetChangeData {
+        updateData.last ?? SetChangeData(changeDate: Date.distantPast, setData: [])
     }
     
 }

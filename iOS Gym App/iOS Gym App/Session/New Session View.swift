@@ -10,6 +10,8 @@ struct SessionCover: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            Capsule()
+                .frame(width: 65, height: 5)
             TabView {
                 Tab("Current", systemImage: "circle") {
                     Text("Time and heart rate here")
@@ -19,18 +21,18 @@ struct SessionCover: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
+            Spacer()
             GroupBox {
                 SessionCurrentExerciseView(sessionManager: sessionManager)
                 SessionSetControlView(endAction: EndSession, deleteAction: DeleteSession, sessionManager: sessionManager)
             }.frame(idealWidth: .infinity)
         }
-        .onChange(of: sessionManager.completedWorkouts) {
-            session.exercises = sessionManager.completedWorkouts
-            try? context.save()
-        }
+        .ignoresSafeArea(edges: .bottom)
     }
     
     private func EndSession() -> Void {
+        sessionManager.NextSet()
+        sessionManager.NextWorkout()
         session.completed = Date()
         try? context.save()
         ClearCurrentData()

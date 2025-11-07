@@ -6,7 +6,8 @@ struct RecentUpdatesView: View {
     let allExercises: [Exercise]
     
     var recentExercise: Exercise? {
-        allExercises.max(by: { $0.modified < $1.modified })
+        let candidates = allExercises.filter { $0.updateData.count == 2 }
+        return candidates.max(by: { $0.modified < $1.modified })
     }
     
     var body: some View {
@@ -23,10 +24,11 @@ struct RecentUpdatesView: View {
                 NavigationLink {
                     ExerciseChanges(exercise: recentExercise)
                 } label: {
-                    ReusedViews.Charts.ExerciseChart(update: recentExercise)
+//                    ReusedViews.Charts.ExerciseChart(update: recentExercise)
                 }
             } else {
-                Text("Here will be your most recent exercise update.")
+                EmptyView()
+//                Text("Here will be your most recent exercise update.")
             }
         }
         .frame(idealWidth: .infinity, maxWidth: .infinity)

@@ -4,6 +4,13 @@ struct ReusedViews {
     
     struct Labels {
         
+        static private func Icon(size: CGFloat, cornerRadius: CGFloat, color: Color) -> some View {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(color)
+                .aspectRatio(1.0, contentMode: .fit)
+                .frame(width: size, height: size)
+        }
+        
         static func MediumTextLabel(title: String) -> some View {
             Text(title)
                 .lineLimit(1)
@@ -13,33 +20,22 @@ struct ReusedViews {
                 .frame(width: Constants.mediumIconSize)
         }
         
-        static func MediumIconSize(key: String) -> some View {
-            RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                .fill(ColorManager.shared.GetColor(key: key))
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
+        static func MediumIconSize(color: Color) -> some View {
+            Icon(size: Constants.mediumIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
         
-        static func SmallIconSize(key: String) -> some View {
-            RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                .fill(ColorManager.shared.GetColor(key: key))
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(width: Constants.smallIconSize, height: Constants.smallIconSize)
+        static func SmallIconSize(color: Color) -> some View {
+            Icon(size: Constants.smallIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
         
-        static func TinyIconSize(key: String) -> some View {
-            RoundedRectangle(cornerRadius: Constants.smallRadius)
-                .fill(ColorManager.shared.GetColor(key: key))
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
-        }
+//        static func TinyIconSize(Color: String) -> some View {
+//            Icon(size: Constants.tinyIconSIze, cornerRadius: Constants.smallRadius, color: ColorManager.shared.GetColor(key: Color))
+//        }
         
-        static func LargeIconSize(key: String) -> some View {
+        static func LargeIconSize(color: Color) -> some View {
             HStack {
                 Spacer()
-                RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                    .fill(ColorManager.shared.GetColor(key: key))
-                    .frame(width: Constants.largeIconSize, height: Constants.largeIconSize)
+                Icon(size: Constants.largeIconSize, cornerRadius: Constants.cornerRadius, color: color)
                 Spacer()
             }
         }
@@ -75,13 +71,8 @@ struct ReusedViews {
             }
         }
         
-        static func ListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType) -> some View {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(name)
-                Text("\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")")
-                    .font(.callout)
-                    .fontWeight(.thin)
-            }
+        static func TypeListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType) -> some View {
+            ListDescription(title: name, subtitle: "\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")")
         }
         
         static func HeaderWithArrow(title: String) -> some View {
@@ -90,6 +81,15 @@ struct ReusedViews {
                 Spacer()
                 Image(systemName: "chevron.forward.circle.fill")
                     .tint(.gray)
+            }
+        }
+        
+        static func ListDescription(title: String, subtitle: String) -> some View {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                Text(subtitle)
+                    .font(.callout)
+                    .fontWeight(.thin)
             }
         }
         

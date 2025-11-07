@@ -30,22 +30,25 @@ struct SessionWorkoutQueueView: View {
     private func CurrentWorkoutView(currentExercise: SessionData) -> some View {
         HStack {
             Image(systemName: currentExercise.exercise.workoutEquipment?.imageName ?? "dumbbell")
-            Text(currentExercise.exercise.name)
-            Text("\(currentExercise.entry.weight.count + 1) Sets")
+            VStack {
+                Text(currentExercise.exercise.name)
+                Text("\(currentExercise.entry.weight.count + 1) Sets")
+            }
         }
     }
     
     private func PreviousWorkouts(workouts: [WorkoutSessionEntry]) -> some View {
         ForEach(workouts, id: \.self) { workout in
-            NotCurrentWorkoutView(imageName: workout.exercise?.workoutEquipment?.imageName, workoutName: workout.exercise?.name ?? "Unknown Workout", setCount: workout.weight.count + 1)
+            NotCurrentWorkoutView(imageName: workout.exercise?.workoutEquipment?.imageName, workoutName: workout.exercise?.name ?? "Unknown Workout", setCount: workout.weight.count)
         }
     }
     
     private func UpcomingExercises(queuedExercises: [SessionData]) -> some View {
         ForEach(queuedExercises, id: \.self) { workout in
-            NotCurrentWorkoutView(imageName: workout.exercise.workoutEquipment?.imageName, workoutName: workout.exercise.name, setCount: workout.entry.weight.count + 1)
+            NotCurrentWorkoutView(imageName: workout.exercise.workoutEquipment?.imageName, workoutName: workout.exercise.name, setCount: workout.exercise.recentSetData.setData.count)
         }
         .onMove { indices, newOffset in
+            sessionManager.upcomingWorkouts.move(fromOffsets: indices, toOffset: newOffset)
         }
     }
     

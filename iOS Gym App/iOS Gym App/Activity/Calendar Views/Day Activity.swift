@@ -6,6 +6,7 @@ struct DayActivity: View {
     let dayProgress: Date
     let session: [WorkoutSession]
     let allExercises: [Exercise]
+    @Environment(ProgressManager.self) private var hkm
     @AppStorage("useLBs") private var useLBs = true
     private let calendar = Calendar.current
     private let formatter = DateFormatter()
@@ -13,12 +14,12 @@ struct DayActivity: View {
     
     var body: some View {
         Section {
-//            ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
-//                BodyWeightData(data: data)
-//            }
-//            ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
-//                BodyFatData(data: data)
-//            }
+            ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
+                BodyWeightData(data: data)
+            }
+            ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
+                BodyFatData(data: data)
+            }
 //            ForEach(updates.filter { $0.updateData.contains { calendar.isDate($0.updateDate, inSameDayAs: dayProgress) } }) { update in
 //                PRList(update: update)
 //            }
@@ -52,7 +53,7 @@ struct DayActivity: View {
 //            }
 //        }
 //    }
-//    
+//
 //    private func UpdateList(update: WorkoutUpdate) -> some View {
 //        ForEach(update.updateData.filter { calendar.isDate($0.updateDate, inSameDayAs: dayProgress) } ) { set in
 //            NavigationLink {
@@ -70,7 +71,7 @@ struct DayActivity: View {
     
     private func SessionLink(session: WorkoutSession) -> some View {
         NavigationLink {
-            SessionRecap(session: session, sessionName: session.name)
+            SessionRecap(session: session)
         } label: {
             Label {
                 Text(session.name)
@@ -81,39 +82,39 @@ struct DayActivity: View {
         }
     }
     
-//    private func BodyFatData(data: WeightEntry) -> some View {
-//        NavigationLink {
-//            HealthData(type: .bodyFat)
-//        } label: {
-//            Label {
-//                if data.index != 0 {
-//                    Text(ActivityLabels().BodyFatLabel(currentValue: data.value, previousValue: hkm.bodyFatData[data.index - 1].value))
-//                } else {
-//                    Text(ActivityLabels().BodyFatLabel(currentValue: data.value, previousValue: nil))
-//                }
-//            } icon: {
-//                Image(systemName: "heart.text.clipboard")
-//                    .foregroundStyle(Constants.healthTheme)
-//            }
-//        }
-//    }
-//    
-//    private func BodyWeightData(data: WeightEntry) -> some View {
-//        NavigationLink {
-//            HealthData(type: .bodyWeight)
-//        } label: {
-//            Label {
-//                if data.index != 0 {
-//                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: hkm.bodyWeightData[data.index - 1].value, unit: WLabel(useLBs: useLBs)))
-//                } else {
-//                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: nil, unit: WLabel(useLBs: useLBs)))
-//                }
-//            } icon: {
-//                Image(systemName: "heart.text.clipboard")
-//                    .foregroundStyle(Constants.healthTheme)
-//            }
-//        }
-//    }
+    private func BodyFatData(data: WeightEntry) -> some View {
+        NavigationLink {
+            HealthData(type: .bodyFat)
+        } label: {
+            Label {
+                if data.index != 0 {
+                    Text(ActivityLabels().BodyFatLabel(currentValue: data.value, previousValue: hkm.bodyFatData[data.index - 1].value))
+                } else {
+                    Text(ActivityLabels().BodyFatLabel(currentValue: data.value, previousValue: nil))
+                }
+            } icon: {
+                Image(systemName: "heart.text.clipboard")
+                    .foregroundStyle(Constants.bodyFatTheme)
+            }
+        }
+    }
+    
+    private func BodyWeightData(data: WeightEntry) -> some View {
+        NavigationLink {
+            HealthData(type: .bodyWeight)
+        } label: {
+            Label {
+                if data.index != 0 {
+                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: hkm.bodyWeightData[data.index - 1].value, unit: WLabel(useLBs: useLBs)))
+                } else {
+                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: nil, unit: WLabel(useLBs: useLBs)))
+                }
+            } icon: {
+                Image(systemName: "heart.text.clipboard")
+                    .foregroundStyle(Constants.bodyWeightTheme)
+            }
+        }
+    }
     
     private func HeaderDateFormatter() -> String {
         formatter.dateFormat = "MM/dd/yy"

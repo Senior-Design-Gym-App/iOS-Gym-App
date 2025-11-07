@@ -17,8 +17,7 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 InspirationalTextView(title: title, allWorkouts: allWorkouts)
-                QuickStartSessionView(allSplits: allSplits, allWorkouts: allWorkouts)
-                IncompleteSessionsView(allSessions: allSessions)
+                RecentSessionsView(allSessions: allSessions)
                 LazyVGrid(columns: columns) {
                     RecentUpdatesView(allExercises: allExercises)
                     RecentPRView(allExercises: allExercises)
@@ -43,7 +42,7 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
-                        Text("Not my job to do")
+                        Text("Generic Settings")
                     } label: {
                         Image(systemName: "gearshape")
                     }

@@ -23,7 +23,6 @@ struct HomeViewList: View {
                     IncompleteSessionLink()
                 }
                 CompletedSessionsLink()
-                StartSessionLink()
                 AllUpdatesLink()
             }.navigationTitle("All Links")
         }
@@ -58,14 +57,6 @@ struct HomeViewList: View {
             SessionsListView(allSessions: completedSessions)
         } label: {
             Label("Completed Sessions", systemImage: "timer")
-        }
-    }
-    
-    private func StartSessionLink() -> some View {
-        NavigationLink {
-            StartSessionView(allWorkouts: allWorkouts)
-        } label: {
-            Label("Start Session", systemImage: "gauge.with.needle")
         }
     }
     

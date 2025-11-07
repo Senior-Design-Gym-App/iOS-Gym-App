@@ -13,7 +13,7 @@ struct CreateWorkoutView: View {
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.Labels.LargeIconSize(key: newWorkout.id.hashValue.description)
+                ReusedViews.Labels.LargeIconSize(color: newWorkout.color)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
                 ReusedViews.Labels.SingleCardTextField(textFieldName: $newWorkout.name, createdDate: newWorkout.created, type: .workout)

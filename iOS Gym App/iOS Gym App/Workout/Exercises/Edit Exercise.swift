@@ -6,9 +6,9 @@ struct EditExerciseView: View {
     @State var exercise: Exercise
     
     @State private var showRename: Bool = false
-    @State private var showAddSet: Bool = false
+    @State private var showAddSheet: Bool = false
     @State private var showDeleteConfirmation: Bool = false
-    @State var setData: [SetEntry]
+    @State var setData: [SetData]
     @State var selectedMuscle: Muscle?
     @State var selectedEquipment: WorkoutEquipment?
     
@@ -24,7 +24,7 @@ struct EditExerciseView: View {
                 ReusedViews.Labels.SingleCardTitle(title: exercise.name, modified: exercise.modified)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
-                ReusedViews.ExerciseViews.SetControls(exercise: exercise, saveAction: SaveExercise, newSetData: setData, oldSetData: $setData)
+                ReusedViews.ExerciseViews.SetDataInfo(setData: setData, exericse: exercise, showAddSheet: $showAddSheet)
                 ExerciseWorkouts()
             }
             .onChange(of: selectedMuscle) {
@@ -40,6 +40,9 @@ struct EditExerciseView: View {
                     MuscleSelector(selectedMuscle: $selectedMuscle)
                     EquipmentSelector(selectedEquipment: $selectedEquipment)
                 }
+            }
+            .sheet(isPresented: $showAddSheet) {
+                ReusedViews.ExerciseViews.SetControls(exercise: exercise, saveAction: SaveExercise, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet)
             }
         }
     }
@@ -66,7 +69,7 @@ struct EditExerciseView: View {
         
         let rest = setData.map { $0.rest }
         
-        if setData != exercise.setData.last {
+        if setData != exercise.recentSetData.setData {
             exercise.reps.append(newReps)
             exercise.weights.append(newWeights)
             exercise.rest.append(rest)
@@ -85,10 +88,14 @@ struct EditExerciseView: View {
     }
     
     private func EquipmentSelector(selectedEquipment: Binding<WorkoutEquipment?>) -> some View {
-        Picker("Equipment", selection: selectedEquipment) {
-            Label("No Equipment", systemImage: "xmark.circle").tag(nil as WorkoutEquipment?)
-            ForEach(WorkoutEquipment.allCases, id: \.self) { equipment in
-                Label(equipment.rawValue, systemImage: equipment.imageName).tag(equipment)
+        Picker("Equipment", selection: $selectedEquipment) {
+            Label("No Equipment", systemImage: "circle.badge.xmark").tag(nil as WorkoutEquipment?)
+            ForEach(EquipmentCategory.allCases, id: \.self) { category in
+                Section(header: Text(category.rawValue)) {
+                    ForEach(WorkoutEquipment.allCases.filter { $0.category == category }) { equipment in
+                        Label(equipment.rawValue, systemImage: equipment.imageName).tag(equipment)
+                    }
+                }
             }
         }
     }
@@ -120,7 +127,7 @@ struct EditExerciseView: View {
         } label: {
             Label(
                 selectedMuscle.wrappedValue?.rawValue.capitalized ?? "Muscle",
-                systemImage: "figure.arms.open"
+                systemImage: "scope"
             )
             .padding()
         }

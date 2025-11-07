@@ -10,7 +10,7 @@ struct WorkoutTimer: ActivityAttributes {
         let currentSet: Int
         let timerStart: Date
         
-        let setEntry: SetEntry
+        let setEntry: SetData
         
         let setCount: Int
         let exerciseName: String
