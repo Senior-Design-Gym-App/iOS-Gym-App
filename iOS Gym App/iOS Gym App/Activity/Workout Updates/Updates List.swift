@@ -35,9 +35,9 @@ struct UpdatesListView: View {
                     Section {
                         ForEach(sortedUpdates, id: \.self) { update in
                             NavigationLink {
-//                                WorkoutUpdateView(workout: update)
+                                ExerciseChanges(exercise: update)
                             } label: {
-                                Text(update.name)
+                                ReusedViews.ExerciseViews.ExerciseListPreview(exercise: update)
                             }
                         }
                     } header: {

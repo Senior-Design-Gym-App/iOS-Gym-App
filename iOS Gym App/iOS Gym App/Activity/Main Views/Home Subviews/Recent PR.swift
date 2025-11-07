@@ -23,7 +23,7 @@ struct RecentPRView: View {
                 NavigationLink {
                     ExerciseChanges(exercise: recentExercise)
                 } label: {
-                    ReusedViews.Charts.ExerciseChart(update: recentExercise)
+//                    ReusedViews.Charts.ExerciseChart(update: recentExercise)
                 }
             } else {
                 Text("Here will be your most recent exercise update.")

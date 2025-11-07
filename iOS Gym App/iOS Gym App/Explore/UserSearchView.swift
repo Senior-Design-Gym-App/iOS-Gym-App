@@ -9,7 +9,7 @@ import SwiftUI
 
 struct UserSearchView: View {
     @State private var query: String = ""
-    private let mockUsers: [String] = ["aaron", "matthew", "troy", "alex", "sam", "jordan", "taylor", "casey"]
+    private let mockUsers: [String] = ["aaron", "matthew", "troy", "zach"]
     var filteredUsers: [String] {
         guard !query.isEmpty else { return mockUsers }
         return mockUsers.filter { $0.localizedCaseInsensitiveContains(query) }
@@ -18,7 +18,7 @@ struct UserSearchView: View {
         List {
             ForEach(filteredUsers, id: \.self) { user in
                 NavigationLink {
-                    UserProfileView(username: user)
+                    UserProfileView(profile: UserProfileContent(username: user.capitalized, displayName: user))
                 } label: {
                     HStack(spacing: 12) {
                         Circle()
@@ -43,5 +43,6 @@ struct UserSearchView: View {
         .searchable(text: $query, prompt: "Username")
     }
 }
+
 
 

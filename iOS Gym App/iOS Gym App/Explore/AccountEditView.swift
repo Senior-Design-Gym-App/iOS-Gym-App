@@ -8,22 +8,10 @@ import SwiftUI
 import UIKit
 
 struct AccountEditView: View {
-    @Binding var coverImage: UIImage?
-    @Binding var profileImage: UIImage?
-    @Binding var username: String
-    @Binding var displayName: String
-    @Binding var bio: String
-    @Binding var location: String
-    
-    // Temporary editing values
-    @State private var editingUsername: String = ""
-    @State private var editingDisplayName: String = ""
-    @State private var editingBio: String = ""
-    @State private var editingLocation: String = ""
-    @State private var editingCoverImage: UIImage?
-    @State private var editingProfileImage: UIImage?
-    
-    @State private var isPrivate: Bool = false
+    @Binding var profile: UserProfileContent
+
+    @State private var editingProfile: UserProfileContent = .empty
+    @State private var didLoadInitialState = false
     @State private var showImageOptions: Bool = false
     @State private var showImagePicker: Bool = false
     @State private var pickerSource: UIImagePickerController.SourceType = .photoLibrary
@@ -33,102 +21,12 @@ struct AccountEditView: View {
     @State private var coverPickerSource: UIImagePickerController.SourceType = .photoLibrary
     
     @Environment(\.dismiss) private var dismiss
-    
-    init(
-        coverImage: Binding<UIImage?>? = nil,
-        profileImage: Binding<UIImage?>? = nil,
-        username: Binding<String>? = nil,
-        displayName: Binding<String>? = nil,
-        bio: Binding<String>? = nil,
-        location: Binding<String>? = nil
-    ) {
-        if let coverImage = coverImage {
-            self._coverImage = coverImage
-        } else {
-            self._coverImage = Binding(
-                get: { nil },
-                set: { _ in }
-            )
-        }
-        if let profileImage = profileImage {
-            self._profileImage = profileImage
-        } else {
-            self._profileImage = Binding(
-                get: { nil },
-                set: { _ in }
-            )
-        }
-        if let username = username {
-            self._username = username
-        } else {
-            self._username = Binding(
-                get: { "" },
-                set: { _ in }
-            )
-        }
-        if let displayName = displayName {
-            self._displayName = displayName
-        } else {
-            self._displayName = Binding(
-                get: { "" },
-                set: { _ in }
-            )
-        }
-        if let bio = bio {
-            self._bio = bio
-        } else {
-            self._bio = Binding(
-                get: { "" },
-                set: { _ in }
-            )
-        }
-        if let location = location {
-            self._location = location
-        } else {
-            self._location = Binding(
-                get: { "" },
-                set: { _ in }
-            )
-        }
-        
-        // Initialize editing values from bindings
-        if let username = username {
-            _editingUsername = State(initialValue: username.wrappedValue)
-        } else {
-            _editingUsername = State(initialValue: "")
-        }
-        if let displayName = displayName {
-            _editingDisplayName = State(initialValue: displayName.wrappedValue)
-        } else {
-            _editingDisplayName = State(initialValue: "")
-        }
-        if let bio = bio {
-            _editingBio = State(initialValue: bio.wrappedValue)
-        } else {
-            _editingBio = State(initialValue: "")
-        }
-        if let location = location {
-            _editingLocation = State(initialValue: location.wrappedValue)
-        } else {
-            _editingLocation = State(initialValue: "")
-        }
-        if let coverImage = coverImage {
-            _editingCoverImage = State(initialValue: coverImage.wrappedValue)
-        } else {
-            _editingCoverImage = State(initialValue: nil)
-        }
-        if let profileImage = profileImage {
-            _editingProfileImage = State(initialValue: profileImage.wrappedValue)
-        } else {
-            _editingProfileImage = State(initialValue: nil)
-        }
-    }
     var body: some View {
         Form {
             Section(header: Text("Cover Photo")) {
                 VStack(spacing: 10) {
                     ZStack {
-                        if let coverImage = editingCoverImage {
+                        if let coverImage = editingProfile.coverImage {
                             Image(uiImage: coverImage)
                                 .resizable()
                                 .scaledToFill()
@@ -159,7 +57,7 @@ struct AccountEditView: View {
             Section(header: Text("Profile")) {
                 VStack(spacing: 10) {
                     ZStack {
-                        if let uiImage = editingProfileImage {
+                        if let uiImage = editingProfile.profileImage {
                             Image(uiImage: uiImage)
                                 .resizable()
                                 .scaledToFill()
@@ -176,7 +74,7 @@ struct AccountEditView: View {
                     .frame(width: 96, height: 96)
                     .contentShape(Circle())
                     .onTapGesture { showImageOptions = true }
-                    .onLongPressGesture { if editingProfileImage != nil { showPreview = true } }
+                    .onLongPressGesture { if editingProfile.profileImage != nil { showPreview = true } }
                     Text("Profile Photo")
                         .font(.subheadline)
                     Text("Tap to change")
@@ -187,20 +85,19 @@ struct AccountEditView: View {
                 .padding(.vertical, 6)
                 .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 .alignmentGuide(.listRowSeparatorTrailing) { _ in 0 }
-                TextField("Name", text: $editingUsername)
+                TextField("Name", text: $editingProfile.username)
                 HStack {
                     Text("@")
                         .foregroundStyle(.secondary)
-                    TextField("Username", text: $editingDisplayName)
+                    TextField("Username", text: $editingProfile.displayName)
                 }
-                TextField("Location", text: $editingLocation)
-                TextField("Bio", text: $editingBio, axis: .vertical)
+                TextField("Location", text: $editingProfile.location)
+                TextField("Bio", text: $editingProfile.bio, axis: .vertical)
                     .lineLimit(3, reservesSpace: true)
             }
-// Privacy account button
-//            Section(header: Text("Privacy")) {
-//                Toggle("Private Account", isOn: $isPrivate)
-//            }
+            Section(header: Text("Privacy")) {
+                Toggle("Private Account", isOn: $editingProfile.isPrivate)
+            }
             Section {
                 Button("Save Changes") {
                     saveChanges()
@@ -247,9 +144,9 @@ struct AccountEditView: View {
                                     .background(Color.secondary.opacity(0.12))
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                             }
-                            if editingCoverImage != nil {
+                            if editingProfile.coverImage != nil {
                                 Button(role: .destructive, action: {
-                                    editingCoverImage = nil
+                                    editingProfile.coverImage = nil
                                     showCoverImageOptions = false
                                 }) {
                                     Text("Remove Photo")
@@ -313,9 +210,9 @@ struct AccountEditView: View {
                                     .background(Color.secondary.opacity(0.12))
                                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                             }
-                            if editingProfileImage != nil {
+                            if editingProfile.profileImage != nil {
                                 Button(role: .destructive, action: {
-                                    editingProfileImage = nil
+                                    editingProfile.profileImage = nil
                                     showImageOptions = false
                                 }) {
                                     Text("Remove Photo")
@@ -343,15 +240,15 @@ struct AccountEditView: View {
             }
         }
         .sheet(isPresented: $showImagePicker) {
-            ImagePicker(sourceType: pickerSource, selectedImage: $editingProfileImage)
+            ImagePicker(sourceType: pickerSource, selectedImage: $editingProfile.profileImage)
         }
         .sheet(isPresented: $showCoverImagePicker) {
-            ImagePicker(sourceType: coverPickerSource, selectedImage: $editingCoverImage)
+            ImagePicker(sourceType: coverPickerSource, selectedImage: $editingProfile.coverImage)
         }
         .fullScreenCover(isPresented: $showPreview) {
             ZStack {
                 Color.black.ignoresSafeArea()
-                if let ui = editingProfileImage {
+                if let ui = editingProfile.profileImage {
                     Image(uiImage: ui)
                         .resizable()
                         .scaledToFit()
@@ -373,19 +270,21 @@ struct AccountEditView: View {
             }
         }
         .navigationTitle("Edit Account")
+        .onAppear(perform: loadInitialState)
+        .onChange(of: profile) { _, newValue in
+            editingProfile = newValue
+        }
     }
     
     private func saveChanges() {
-        // Update bindings directly (they are already @Binding, not optional Binding)
-        username = editingUsername
-        displayName = editingDisplayName
-        bio = editingBio
-        location = editingLocation
-        coverImage = editingCoverImage
-        profileImage = editingProfileImage
-        
-        // Dismiss the view to return to profile page
+        profile = editingProfile
         dismiss()
+    }
+
+    private func loadInitialState() {
+        guard !didLoadInitialState else { return }
+        editingProfile = profile
+        didLoadInitialState = true
     }
 }
 

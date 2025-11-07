@@ -41,10 +41,11 @@ private struct SectionHeader: View {
 }
 
 private struct ExploreGrid: View {
+    @State private var demoProfile = UserProfileContent.demo
     private let columns = [GridItem(.flexible(), spacing: 16)]
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            NavigationLink(destination: { UserProfileView(username: "Demo User", displayName: "demo_user") }, label: {
+            NavigationLink(destination: { UserProfileView(profile: demoProfile) }, label: {
                 ExploreCard(title: "View Profile", subtitle: "Sample profile", systemImage: "person.crop.circle")
             })
             NavigationLink(destination: { UserSearchView() }, label: {

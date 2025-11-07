@@ -13,7 +13,7 @@ struct EditWorkoutView: View {
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.Labels.LargeIconSize(key: selectedWorkout.id.hashValue.description)
+                ReusedViews.Labels.LargeIconSize(color: selectedWorkout.color)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
                 ReusedViews.Labels.SingleCardTitle(title: selectedWorkout.name, modified: selectedWorkout.modified)
@@ -37,7 +37,7 @@ struct EditWorkoutView: View {
         Section {
             ForEach(selectedExercises, id: \.self) { exercise in
                 NavigationLink {
-                    EditExerciseView(exercise: exercise, setData: exercise.setData.last ?? [])
+                    EditExerciseView(exercise: exercise, setData: exercise.recentSetData.setData, selectedMuscle: exercise.muscle, selectedEquipment: exercise.workoutEquipment)
                 } label: {
                     ReusedViews.ExerciseViews.ExerciseListPreview(exercise: exercise)
                 }

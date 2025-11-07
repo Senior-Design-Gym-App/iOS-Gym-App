@@ -6,12 +6,12 @@ extension ReusedViews {
         
         static func ExerciseListPreview(exercise: Exercise) -> some View {
             HStack {
-                Labels.SmallIconSize(key: exercise.id.hashValue.description)
+                Labels.SmallIconSize(color: exercise.color)
                     .overlay(alignment: .center) {
                         Image(systemName: exercise.workoutEquipment?.imageName ?? "dumbbell")
                             .foregroundStyle(Constants.iconColor)
                     }
-                Labels.ListDescription(name: exercise.name, items: exercise.setData.last ?? [], type: .exercise)
+                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise)
             }
         }
         
@@ -19,7 +19,7 @@ extension ReusedViews {
             HStack {
                 Spacer()
                 ZStack {
-                    Labels.LargeIconSize(key: exercise.id.hashValue.description)
+                    Labels.LargeIconSize(color: exercise.color)
                     Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                         .resizable()
                         .scaledToFit()
@@ -36,7 +36,8 @@ extension ReusedViews {
         static func HorizontalListPreview(exercise: Exercise) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 ZStack {
-                    ReusedViews.Labels.MediumIconSize(key: exercise.id.hashValue.description)
+//                    ReusedViews.Labels.MediumIconSize(color: exercise.id.hashValue.description)
+                    ReusedViews.Labels.MediumIconSize(color: exercise.color)
                     Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                         .resizable()
                         .scaledToFit()
@@ -50,10 +51,10 @@ extension ReusedViews {
             }
         }
         
-        static func IndiidualSetInfo(setData: SetEntry, colorKey: String) -> some View {
+        static func IndiidualSetInfo(setData: SetData, colorKey: String, index: Int) -> some View {
             HStack {
-                if setData.index < 50 {
-                    Image(systemName: "\(setData.index + 1).circle")
+                if index < 50 {
+                    Image(systemName: "\(index + 1).circle")
                         .foregroundStyle(ColorManager.shared.GetColor(key: colorKey))
                 } else {
                     Image(systemName: "circle")
@@ -61,6 +62,16 @@ extension ReusedViews {
                 }
                 Text("\(setData.weight, specifier: "%.1f") lbs, \(setData.reps) reps, \(setData.rest)s")
                 Spacer()
+            }
+        }
+        
+        static func SetDataInfo(setData: [SetData], exericse: Exercise, showAddSheet: Binding<Bool>) -> some View {
+            Section {
+                ForEach(setData, id: \.self) { entry in
+                    IndiidualSetInfo(setData: entry, colorKey: exericse.id.hashValue.description, index: setData.firstIndex(of: entry)!)
+                }
+            } header: {
+                Buttons.EditHeaderButton(toggleEdit: showAddSheet, type: .exercise, items: setData)
             }
         }
         
@@ -87,13 +98,13 @@ extension ReusedViews {
                     .padding(.trailing)
                     .buttonBorderShape(.capsule)
                     .buttonStyle(.borderless)
-//                    .background(.regularMaterial, in: Capsule())
+                //                    .background(.regularMaterial, in: Capsule())
                     .frame(maxWidth: .infinity)
                 MuscleMenuButton(selectedMuscle: selectedMuscle)
                     .padding(.leading)
                     .buttonBorderShape(.capsule)
                     .buttonStyle(.borderedProminent)
-//                    .background(.regularMaterial, in: Capsule())
+                //                    .background(.regularMaterial, in: Capsule())
                     .frame(maxWidth: .infinity)
                 Spacer()
             }
@@ -103,34 +114,22 @@ extension ReusedViews {
             
             let exercise: Exercise
             let saveAction: () -> Void
-            @State var newSetData: [SetEntry]
-            @Binding var oldSetData: [SetEntry]
+            @State var newSetData: [SetData]
+            @Binding var oldSetData: [SetData]
+            @Binding var showAddSheet: Bool
             
-            @State private var repString: String = ""
-            @State private var restString: String = ""
+            @State private var restTime: Int = 60
+            @State private var reps: Int = 8
+            
             @State private var weightString: String = ""
-            @State private var showAddSheet: Bool = false
             @AppStorage("useLBs") private var useLBs = true
-                        
-            var body: some View {
-                Section {
-                    ForEach(oldSetData, id: \.self) { data in
-                        IndiidualSetInfo(setData: data, colorKey: exercise.id.hashValue.description)
-                    }
-                } header: {
-                    Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .exercise, items: oldSetData)
-                }
-                .sheet(isPresented: $showAddSheet) {
-                    AddSheet()
-                }
-            }
             
-            private func AddSheet() -> some View {
+            var body: some View {
                 NavigationStack {
                     List {
                         Section {
                             ForEach(newSetData, id: \.self) { set in
-                                IndiidualSetInfo(setData: set, colorKey: exercise.id.hashValue.description)
+                                IndiidualSetInfo(setData: set, colorKey: exercise.id.hashValue.description, index: newSetData.firstIndex(of: set)!)
                             }
                             .onMove { indices, newOffset in
                                 newSetData.move(fromOffsets: indices, toOffset: newOffset)
@@ -161,23 +160,12 @@ extension ReusedViews {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .keyboardType(.decimalPad)
-                    TextField("Ideal Reps", text: $repString)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.numberPad)
-                    TextField("Rest (s)", text: $restString)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.numberPad)
-                        Button("Cancel", role: .cancel) {
-                            repString = ""
-                            weightString = ""
-                            restString = ""
-                        }
-                        Button("Ok", role: .confirm) {
-                            let newData = SetEntry(index: newSetData.count, rest: Int(restString) ?? 0, reps: Int(repString) ?? 0, weight: Double(weightString) ?? 0.0)
-                            newSetData.append(newData)
-                        }
+                    Stepper("Ideal Reps \(reps)", value: $reps, in: 0...40, step: 1)
+                    Stepper("Rest \(formatSeconds(totalSeconds: restTime))", value: $restTime, in: 0...600, step: 5)
+                    Button("Add Set", role: .confirm) {
+                        let newData = SetData(rest: restTime, reps: reps, weight: Double(weightString) ?? 0)
+                        newSetData.append(newData)
+                    }
                 }
             }
             
@@ -189,6 +177,12 @@ extension ReusedViews {
                 oldSetData = newSetData
                 saveAction()
                 showAddSheet = false
+            }
+            
+            private func formatSeconds(totalSeconds: Int) -> String {
+                let minutes = totalSeconds / 60
+                let seconds = totalSeconds % 60
+                return String(format: "%d:%02d", minutes, seconds)
             }
             
         }

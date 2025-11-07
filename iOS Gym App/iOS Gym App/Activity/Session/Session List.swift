@@ -9,7 +9,7 @@ struct SessionsListView: View {
             List {
                 ForEach(allSessions, id: \.self) { session in
                     NavigationLink {
-                        SessionRecap(session: session, sessionName: session.name)
+                        SessionRecap(session: session)
                     } label: {
                         Text(session.name)
                     }

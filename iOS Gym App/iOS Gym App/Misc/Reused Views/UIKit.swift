@@ -79,7 +79,7 @@ struct MuscleMenuButton: UIViewRepresentable {
         button.menu = context.coordinator.createMenu()
         
         var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: "figure.arms.open")
+        config.image = UIImage(systemName: "scope")
         config.imagePlacement = .leading
         config.imagePadding = 8
         config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)

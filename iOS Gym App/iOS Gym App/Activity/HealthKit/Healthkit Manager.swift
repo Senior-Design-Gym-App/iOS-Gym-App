@@ -6,6 +6,16 @@ final class ProgressManager {
     
     var bodyFatData: [WeightEntry] = []
     var bodyWeightData: [WeightEntry] = []
+    
+    var monthBodyFatData: [WeightEntry] {
+        bodyFatData.filter({ calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) })
+    }
+    
+    var monthBodyWeightData: [WeightEntry] {
+        bodyWeightData.filter({ calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) })
+    }
+    
+    @ObservationIgnored private let calendar = Calendar.current
     @ObservationIgnored private let healthStore = HKHealthStore()
     @ObservationIgnored @AppStorage("useLBs") private var useLBs = true
 

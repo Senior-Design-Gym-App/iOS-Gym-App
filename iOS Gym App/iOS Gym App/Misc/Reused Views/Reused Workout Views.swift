@@ -7,14 +7,14 @@ extension ReusedViews {
         
         static func WorkoutListPreview(workout: Workout) -> some View {
             HStack {
-                Labels.SmallIconSize(key: workout.id.hashValue.description)
-                Labels.ListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout)
+                Labels.SmallIconSize(color: workout.color)
+                Labels.TypeListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout)
             }
         }
         
         static func HorizontalListPreview(workout: Workout) -> some View {
             VStack(alignment: .leading, spacing: 5) {
-                Labels.MediumIconSize(key: workout.id.hashValue.description)
+                Labels.MediumIconSize(color: workout.color)
                 ReusedViews.Labels.MediumTextLabel(title: workout.name)
             }
         }
@@ -28,30 +28,37 @@ extension ReusedViews {
             @Binding var oldExercises: [Exercise]
             
             var body: some View {
-                AddSheet()
-            }
-            
-            private func AddSheet() -> some View {
                 NavigationStack {
                     List {
-                        ForEach(allExercises, id: \.self) { exercise in
-                            HStack {
+                        Section {
+                            ForEach(newExercises, id: \.self) { exercise in
                                 ExerciseViews.ExerciseListPreview(exercise: exercise)
-                                Spacer()
-                                Button {
-                                    if newExercises.contains(where: { $0 == exercise }) {
-                                        newExercises.removeAll(where: { $0 == exercise })
-                                    } else {
-                                        newExercises.append(exercise)
-                                    }
-                                } label: {
-                                    if newExercises.contains(where: { $0 == exercise }) {
-                                        Image(systemName: "checkmark")
-                                    } else {
+                            }
+                            .onMove { indices, newOffset in
+                                newExercises.move(fromOffsets: indices, toOffset: newOffset)
+                            }
+                            .onDelete { indices in
+                                newExercises.remove(atOffsets: indices)
+                            }
+                        } header: {
+                            Text("Current Exercises")
+                        }
+                        Section {
+                            ForEach(allExercises.filter({ !newExercises.contains($0) }), id: \.self) { exercise in
+                                HStack {
+                                    ExerciseViews.ExerciseListPreview(exercise: exercise)
+                                    Spacer()
+                                    Button {
+                                        withAnimation {
+                                            newExercises.append(exercise)
+                                        }
+                                    } label: {
                                         Image(systemName: "plus.circle")
                                     }
                                 }
                             }
+                        } header: {
+                            
                         }
                     }
                     .environment(\.editMode, .constant(.active))
@@ -63,12 +70,6 @@ extension ReusedViews {
                             ReusedViews.Buttons.SaveButton(disabled: newExercises.isEmpty, save: SaveOptions)
                         }
                     }
-                    //                .onMove { indices, newOffset in
-                    //                    newSetData.move(fromOffsets: indices, toOffset: newOffset)
-                    //                }
-                    //                .onDelete { indices in
-                    //                    newSetData.remove(atOffsets: indices)
-                    //                }
                 }
             }
             

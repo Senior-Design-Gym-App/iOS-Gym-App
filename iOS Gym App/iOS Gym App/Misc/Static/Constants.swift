@@ -20,19 +20,19 @@ struct Constants {
     static let sessionTheme: Color = .indigo
     static let updateTheme: Color = .blue
     static let optionsTheme: Color = .cyan
-    static let healthTheme: Color = .pink
     static let calendarTheme: Color = .mint
     static let buttonTheme: Color = .white
     static let labelColor: Color = Color.primary
     static let iconColor: Color = Color.white
+    static let bodyWeightTheme: Color = Color.purple
+    static let bodyFatTheme: Color = Color.pink
     
     // MARK: SF Icons
     
     static let exerciseIcon = "dumbbell"
     static let workoutIcon = "document"
     static let splitIcon = "folder"
-    static let defaultEquipmentIcon = "dumbbell"
-//    static let test: Font = .subheadline
+    static let defaultEquipmentIcon = "flame"
     
     // MARK: Size
     static let cornerRadius: CGFloat = 10

@@ -4,23 +4,15 @@
 //
 //  Created by 鄭承典 on 11/4/25.
 //
+
 import SwiftUI
 import UIKit
 
 struct UserProfileView: View {
-    @State private var username: String = "Demo User"
-    @State private var displayName: String = "demo_user"
-    @State private var coverImage: UIImage? = nil
-    @State private var profileImage: UIImage? = nil
-    @State private var bio: String = "Love training and tracking progress."
-    @State private var location: String = "San Francisco, CA"
-    
-    init(username: String = "Demo User", displayName: String = "demo_user") {
-        _username = State(initialValue: username)
-        _displayName = State(initialValue: displayName)
-    }
-    private let stats: [(String, String)] = [("Workouts", "124"), ("Followers", "1.2k"), ("Following", "180")]
-    private let recentWorkouts: [String] = ["Push Day A", "Legs A", "Upper Power"]
+    var profile: UserProfileContent = .demo
+
+    @State private var currentProfile: UserProfileContent = .empty
+    @State private var hasLoadedProfile = false
 
     var body: some View {
         ScrollView {
@@ -32,23 +24,22 @@ struct UserProfileView: View {
                     .padding(.top, 16)
             }
         }
-        .navigationTitle("@\(displayName)")
+        .navigationTitle("@\(currentProfile.displayName)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 NavigationLink {
                     AccountEditView(
-                        coverImage: $coverImage,
-                        profileImage: $profileImage,
-                        username: $username,
-                        displayName: $displayName,
-                        bio: $bio,
-                        location: $location
+                        profile: $currentProfile
                     )
                 } label: {
                     Image(systemName: "gearshape")
                 }
             }
+        }
+        .onAppear(perform: loadProfileIfNeeded)
+        .onChange(of: profile, initial: false) { _, newValue in
+            currentProfile = newValue
         }
     }
 
@@ -56,7 +47,7 @@ struct UserProfileView: View {
     private var cover: some View {
         ZStack(alignment: .bottomLeading) {
             ZStack {
-                if let coverImage = coverImage {
+                if let coverImage = currentProfile.coverImage {
                     Image(uiImage: coverImage)
                         .resizable()
                         .scaledToFill()
@@ -72,7 +63,7 @@ struct UserProfileView: View {
             .frame(height: 140)
             HStack(alignment: .bottom, spacing: 16) {
                 ZStack {
-                    if let profileImage = profileImage {
+                    if let profileImage = currentProfile.profileImage {
                         Image(uiImage: profileImage)
                             .resizable()
                             .scaledToFill()
@@ -84,7 +75,7 @@ struct UserProfileView: View {
                 .frame(width: 96, height: 96)
                 .clipShape(Circle())
                 .overlay {
-                    if profileImage == nil {
+                    if currentProfile.profileImage == nil {
                         Image(systemName: "person.fill")
                             .font(.system(size: 44))
                             .foregroundStyle(.secondary)
@@ -92,11 +83,11 @@ struct UserProfileView: View {
                 }
                 .offset(y: 48)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(username)
+                    Text(currentProfile.username)
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
-                    Text(bio)
+                    Text(currentProfile.bio)
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.9))
                         .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
@@ -121,7 +112,7 @@ struct UserProfileView: View {
             HStack(spacing: 12) {
                 Image(systemName: "mappin.and.ellipse")
                     .foregroundStyle(.secondary)
-                Text(location)
+                Text(currentProfile.location)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -131,7 +122,7 @@ struct UserProfileView: View {
             // Removed for now - can be added back when implementing social features
 
             HStack(spacing: 12) {
-                ForEach(stats, id: \.0) { label, value in
+                ForEach(currentProfile.stats, id: \.0) { label, value in
                     VStack {
                         Text(value)
                             .font(.headline)
@@ -155,7 +146,7 @@ struct UserProfileView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Workouts")
                 .font(.headline)
-            ForEach(recentWorkouts, id: \.self) { workout in
+            ForEach(currentProfile.recentWorkouts, id: \.self) { workout in
                 HStack(spacing: 12) {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color(.systemGray6))
@@ -174,6 +165,62 @@ struct UserProfileView: View {
                 .padding(12)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.systemGray6)))
             }
+        }
+    }
+
+    private func loadProfileIfNeeded() {
+        guard !hasLoadedProfile else { return }
+        currentProfile = profile
+        hasLoadedProfile = true
+    }
+}
+
+struct UserProfileContent: Equatable {
+    var username: String = "Demo User"
+    var displayName: String = "demo_user"
+    var bio: String = "Love training and tracking progress."
+    var location: String = "San Francisco, CA"
+    var coverImage: UIImage? = nil
+    var profileImage: UIImage? = nil
+    var stats: [(String, String)] = [("Workouts", "124"), ("Followers", "1.2k"), ("Following", "180")]
+    var recentWorkouts: [String] = ["Push Day A", "Legs A", "Upper Power"]
+    var isPrivate: Bool = false
+
+    static var empty: UserProfileContent { UserProfileContent(username: "", displayName: "") }
+    static var demo: UserProfileContent { UserProfileContent() }
+}
+
+extension UserProfileContent {
+    static func == (lhs: UserProfileContent, rhs: UserProfileContent) -> Bool {
+        lhs.username == rhs.username &&
+        lhs.displayName == rhs.displayName &&
+        lhs.bio == rhs.bio &&
+        lhs.location == rhs.location &&
+        imagesEqual(lhs.coverImage, rhs.coverImage) &&
+        imagesEqual(lhs.profileImage, rhs.profileImage) &&
+        statsEqual(lhs.stats, rhs.stats) &&
+        lhs.recentWorkouts == rhs.recentWorkouts &&
+        lhs.isPrivate == rhs.isPrivate
+    }
+
+    private static func imagesEqual(_ lhs: UIImage?, _ rhs: UIImage?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return true
+        case let (l?, r?):
+            return l === r
+        default:
+            return false
+        }
+    }
+
+    private static func statsEqual(
+        _ lhs: [(String, String)],
+        _ rhs: [(String, String)]
+    ) -> Bool {
+        guard lhs.count == rhs.count else { return false }
+        return zip(lhs, rhs).allSatisfy { left, right in
+            left.0 == right.0 && left.1 == right.1
         }
     }
 }

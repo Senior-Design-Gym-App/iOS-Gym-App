@@ -3,10 +3,11 @@ import SwiftData
 
 struct CreateExerciseView: View {
     
-    @State private var setData: [SetEntry] = []
+    @State private var setData: [SetData] = []
     @State private var selectedMuscle: Muscle?
     @State private var selectedEquipment: WorkoutEquipment?
     @State private var newExercise = Exercise(name: "", rest: [], muscleWorked: "", weights: [], reps: [], equipment: nil)
+    @State private var showAddSheet: Bool = false
     @State private var showChangeNameAlert: Bool = false
     
     @Environment(\.dismiss) private var dismiss
@@ -24,7 +25,7 @@ struct CreateExerciseView: View {
                 ReusedViews.ExerciseViews.ListHorizontalButtons(selectedEquipment: $selectedEquipment, selectedMuscle: $selectedMuscle)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
-                ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData)
+                ReusedViews.ExerciseViews.SetDataInfo(setData: setData, exericse: newExercise, showAddSheet: $showAddSheet)
             }
             .onChange(of: selectedMuscle) {
                 newExercise.muscleWorked = selectedMuscle?.rawValue
@@ -40,6 +41,9 @@ struct CreateExerciseView: View {
                     ReusedViews.Buttons.CancelButton(cancel: dismisx)
                 }
             }
+            .sheet(isPresented: $showAddSheet) {
+                ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet)
+            }
         }
     }
     
@@ -54,8 +58,7 @@ struct CreateExerciseView: View {
         newExercise.reps = [reps]
         newExercise.weights = [weights]
         newExercise.rest = [rest]
-        newExercise.muscleWorked = selectedMuscle?.rawValue
-        newExercise.equipment = selectedEquipment?.rawValue
+        newExercise.updateDates = [Date()]
         
         context.insert(newExercise)
         try? context.save()

@@ -23,14 +23,7 @@ extension ActivityLabels {
             "Make today your best set!",
             "Earn those gains!",
             "Time to move mountains!",
-            "Push. Lift. Repeat."
-        ]
-        
-        return greetings.randomElement() ?? "Welcome back!"
-    }
-
-    static func getRandomGymPun() -> String {
-        let puns = [
+            "Push. Lift. Repeat.",
             "No pain, no champagne",
             "Gym and tonic",
             "Beast mode: activated",
@@ -100,8 +93,8 @@ extension ActivityLabels {
             "Rep-a-roni",
             "Cardio party-o"
         ]
-
-        return puns.randomElement() ?? "Keep pushing!"
+        
+        return greetings.randomElement() ?? "Welcome back!"
     }
     
     static func GenerateTitle(name: String?) -> String {

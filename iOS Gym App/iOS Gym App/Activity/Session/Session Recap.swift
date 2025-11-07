@@ -1,48 +1,102 @@
-//
-//  SessionView.swift
-//  LetsGym2
-//
-//  Created by Matthew Jacobs on 9/16/25.
-//
-
-
 import SwiftUI
+import Charts
 import SwiftData
 
 struct SessionRecap: View {
     
     @State var session: WorkoutSession
-    @State var sessionName: String
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @State private var selectedSection: DonutData?
     
     var body: some View {
         NavigationStack {
             List {
-                AboutSessionView()
-                SessionDataView()
-                SaveOptions()
+                SessionInfo()
+                Section {
+                    MuscleInfo()
+                } header: {
+                    Text("Sets by Muscle")
+                }
+                ForEach(session.exercises ?? [], id: \.self) { sessionEntry in
+                    ExerciseSection(entry: sessionEntry)
+                }
+                Text("Exercise Data \(session.exercises?.count ?? -1)")
             }
-            .navigationTitle(session.name)
-            .navigationSubtitle("Session Recap")
+            .toolbar {
+                Button {
+                    context.delete(session)
+                    dismiss()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .onAppear {
+                for i in session.recentSetData {
+                    print(i)
+                }
+            }
         }
     }
     
-    private func AboutSessionView() -> some View {
+    private func SessionInfo() -> some View {
+        HStack {
+            ReusedViews.Labels.SmallIconSize(color: session.color)
+            ReusedViews.Labels.Description(topText: session.name, bottomText: formatDateRange(start: session.started, end: session.completed))
+            Spacer()
+        }.listRowBackground(Color.clear)
+    }
+    
+    private func ExerciseSection(entry: WorkoutSessionEntry) -> some View {
         Section {
-            TextField("Session Name", text: $sessionName)
-            Text("Started: \(CheckInDateFormatter(date: session.started))")
-            if let endDate = session.completed {
-                Text("Ended: \(CheckInDateFormatter(date: endDate))")
-            } else {
-                Text("Session not yet completed.")
+            Chart {
+                ForEach(entry.setEntry) { set in
+                    BarMark(
+                        x: .value("Set", set.rest + 1),
+                        y: .value("Weight", set.weight),
+//                        width: .fixed(20)
+                    )
+                    .foregroundStyle(.red)
+                    .opacity(0.5)
+//                    .foregroundStyle(by: .value("Set", set.rest + 1))
+                }
+                if let recent = session.recentSetData.first(where: { $0.exercise == entry.exercise }) {
+                    ForEach(recent.mostRecentSetData.setData) { set in
+                        BarMark(
+                            x: .value("Set", set.rest + 1),
+                            y: .value("Weight", set.weight),
+//                            width: .fixed(20)
+                        )
+                        .foregroundStyle(.blue)
+//                        .foregroundStyle(by: .value("Set", set.rest + 1))
+                    }
+                }
             }
-//            if let gymID = session.gym {
-//                GymAddress(gym: <#T##MKMapItem#>)
-//            }
+            .frame(minHeight: 200)
+            .chartXScale(domain: (0.7)...(Double(entry.weight.count) + 0.3))
+//            .chartYScale(domain: (0)...(200)) // Add a small range buffer
+            .chartXAxisLabel("Reps")
+            .chartYAxisLabel("Weight (lbs)")
         } header: {
-            Text("About")
+            if let exerciseName = entry.exercise?.name {
+                Text(exerciseName)
+            } else {
+                Text("Unknown Exercise")
+            }
         }
+    }
+    
+    private func MuscleInfo() -> some View {
+        Chart(session.allmuscleSetData) { item in
+            SectorMark(
+                angle: .value("Sets", item.sets),
+                innerRadius: .ratio(0.6),
+                angularInset: 1.5
+            )
+            .foregroundStyle(by: .value("Muscle Group", item.muscle.rawValue))
+        }
+        .frame(idealHeight: 200)
+        .chartLegend(position: .trailing)
     }
     
     private func SessionDataView() -> some View {
@@ -52,28 +106,6 @@ struct SessionRecap: View {
             }
         } header: {
             Text("Session Data")
-        }
-    }
-    
-    private func SaveOptions() -> some View {
-        Section {
-            Button {
-                session.name = sessionName
-                try? context.save()
-                dismiss()
-            } label: {
-                Label("Update & Exit", systemImage: "square.and.arrow.down.badge.checkmark")
-            }
-            Button {
-                context.delete(session)
-                try? context.save()
-                dismiss()
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            .foregroundStyle(.red)
-        } header: {
-            Text("Save Options")
         }
     }
     
@@ -97,5 +129,27 @@ struct SessionRecap: View {
         formatter.locale = Locale.current
         return formatter.string(from: date)
     }
+    
+    private func formatDateRange(start: Date, end: Date?) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        
+        // Handle missing end date
+        guard let end = end else {
+            return "Incomplete"
+        }
+        
+        let calendar = Calendar.current
+        
+        // Check if same day
+        if calendar.isDate(start, inSameDayAs: end) {
+            formatter.dateFormat = "h:mm a"
+            return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
+        } else {
+            formatter.dateFormat = "MMM d h:mm a"
+            return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
+        }
+    }
+
     
 }

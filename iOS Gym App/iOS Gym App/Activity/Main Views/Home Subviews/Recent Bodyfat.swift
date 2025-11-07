@@ -12,13 +12,9 @@ struct RecentBodyfat: View {
                 VStack {
                     VStack(alignment: .leading, spacing: 0) {
                         ReusedViews.Labels.HeaderWithArrow(title: "Body Fat")
-                        ReusedViews.Labels.Subheader(title: "test.")
+                        ReusedViews.Labels.Subheader(title: "This month")
                     }
-                    if hkm.bodyFatData.isEmpty {
-                        Text("No body weight data available.")
-                    } else {
-                        ReusedViews.ProgressChartView(color: .pink, unit: "%", data: hkm.bodyFatData)
-                    }
+                    ReusedViews.Charts.BarChartMonth(data: hkm.monthBodyFatData, color: Constants.bodyFatTheme)
                 }
             }
         }

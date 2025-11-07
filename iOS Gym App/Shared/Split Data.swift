@@ -19,6 +19,10 @@ final class Split {
         }
     }
     
+    var color: Color {
+        Constants.mainAppTheme
+    }
+    
     init(name: String, workouts: [Workout]? = nil, imageData: Data? = nil, active: Bool) {
         self.name = name
         self.workouts = workouts
