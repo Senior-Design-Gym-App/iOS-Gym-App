@@ -11,7 +11,7 @@ extension ReusedViews {
                         Image(systemName: exercise.workoutEquipment?.imageName ?? "dumbbell")
                             .foregroundStyle(Constants.iconColor)
                     }
-                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise)
+                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise, extend: true)
             }
         }
         
@@ -36,7 +36,6 @@ extension ReusedViews {
         static func HorizontalListPreview(exercise: Exercise) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 ZStack {
-//                    ReusedViews.Labels.MediumIconSize(color: exercise.id.hashValue.description)
                     ReusedViews.Labels.MediumIconSize(color: exercise.color)
                     Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                         .resizable()
@@ -47,7 +46,7 @@ extension ReusedViews {
                 }
                 .aspectRatio(1.0, contentMode: .fit)
                 .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
-                ReusedViews.Labels.MediumTextLabel(title: exercise.name)
+                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise, extend: false)
             }
         }
         
@@ -163,7 +162,7 @@ extension ReusedViews {
                     Stepper("Ideal Reps \(reps)", value: $reps, in: 0...40, step: 1)
                     Stepper("Rest \(formatSeconds(totalSeconds: restTime))", value: $restTime, in: 0...600, step: 5)
                     Button("Add Set", role: .confirm) {
-                        let newData = SetData(rest: restTime, reps: reps, weight: Double(weightString) ?? 0)
+                        let newData = SetData(set: 0, rest: restTime, reps: reps, weight: Double(weightString) ?? 0)
                         newSetData.append(newData)
                     }
                 }

@@ -40,7 +40,7 @@ extension ReusedViews {
         static func HorizontalListPreview(split: Split) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 MediumIconView(split: split)
-                Labels.MediumTextLabel(title: split.name)
+                Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split, extend: false)
             }
         }
         
@@ -59,7 +59,7 @@ extension ReusedViews {
                 } else {
                     Labels.SmallIconSize(color: split.color)
                 }
-                Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split)
+                Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split, extend: true)
             }
         }
         

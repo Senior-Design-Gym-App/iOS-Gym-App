@@ -8,14 +8,14 @@ extension ReusedViews {
         static func WorkoutListPreview(workout: Workout) -> some View {
             HStack {
                 Labels.SmallIconSize(color: workout.color)
-                Labels.TypeListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout)
+                Labels.TypeListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout, extend: true)
             }
         }
         
         static func HorizontalListPreview(workout: Workout) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 Labels.MediumIconSize(color: workout.color)
-                ReusedViews.Labels.MediumTextLabel(title: workout.name)
+                Labels.TypeListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout, extend: false)
             }
         }
         

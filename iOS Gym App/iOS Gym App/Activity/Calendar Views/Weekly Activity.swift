@@ -13,11 +13,10 @@ struct WeeklyActivity: View {
             List {
                 DatePicker("", selection: $viewingDate, displayedComponents: [.date])
                     .datePickerStyle(.graphical)
-                ForEach(WeekDays(week: viewingDate), id: \.self) { day in
-                    DayActivity(dayProgress: day, session: workoutSessions, allExercises: allExercises)
-                }
+//                ForEach(WeekDays(week: viewingDate), id: \.self) { day in
+//                    DayActivity(dayProgress: day, session: workoutSessions, allExercises: allExercises)
+//                }
             }
-            .listStyle(.plain)
             .navigationTitle("Weekly Activity")
         }
     }

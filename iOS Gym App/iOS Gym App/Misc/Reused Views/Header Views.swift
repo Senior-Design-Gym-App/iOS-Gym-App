@@ -11,15 +11,6 @@ struct ReusedViews {
                 .frame(width: size, height: size)
         }
         
-        static func MediumTextLabel(title: String) -> some View {
-            Text(title)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .foregroundStyle(Constants.labelColor)
-                .font(.footnote)
-                .frame(width: Constants.mediumIconSize)
-        }
-        
         static func MediumIconSize(color: Color) -> some View {
             Icon(size: Constants.mediumIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
@@ -27,10 +18,6 @@ struct ReusedViews {
         static func SmallIconSize(color: Color) -> some View {
             Icon(size: Constants.smallIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
-        
-//        static func TinyIconSize(Color: String) -> some View {
-//            Icon(size: Constants.tinyIconSIze, cornerRadius: Constants.smallRadius, color: ColorManager.shared.GetColor(key: Color))
-//        }
         
         static func LargeIconSize(color: Color) -> some View {
             HStack {
@@ -71,8 +58,8 @@ struct ReusedViews {
             }
         }
         
-        static func TypeListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType) -> some View {
-            ListDescription(title: name, subtitle: "\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")")
+        static func TypeListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType, extend: Bool) -> some View {
+            ListDescription(title: name, subtitle: "\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")", extend: extend)
         }
         
         static func HeaderWithArrow(title: String) -> some View {
@@ -84,12 +71,16 @@ struct ReusedViews {
             }
         }
         
-        static func ListDescription(title: String, subtitle: String) -> some View {
+        static func ListDescription(title: String, subtitle: String, extend: Bool) -> some View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
+                    .fontWeight(.semibold)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(idealWidth: extend ? .infinity : Constants.mediumIconSize, alignment: .leading)
                 Text(subtitle)
-                    .font(.callout)
-                    .fontWeight(.thin)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         
@@ -117,6 +108,19 @@ struct ReusedViews {
                     .foregroundStyle(Constants.labelColor)
                     .font(.caption)
                     .fontWeight(.thin)
+            }
+        }
+        
+        static func NavigationHeader(text: String) -> some View {
+            HStack(spacing: 5) {
+                Text(text)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Constants.labelColor)
+                Image(systemName: "chevron.right")
+                    .fontWeight(.medium)
+                    .tint(Constants.labelColor.tertiary)
+                Spacer()
             }
         }
         

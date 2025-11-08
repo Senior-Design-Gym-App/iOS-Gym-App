@@ -32,9 +32,14 @@ enum WorkoutViewTypes: String, CaseIterable, Identifiable {
 struct SetData: Identifiable, Hashable, Codable {
     
     var id = UUID()
+    let set: Int
     let rest: Int
     let reps: Int
     let weight: Double
+    
+    var setDouble: Double {
+        Double(set)
+    }
     
 }
 

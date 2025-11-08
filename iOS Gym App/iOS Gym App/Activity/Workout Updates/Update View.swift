@@ -6,118 +6,139 @@ struct ExerciseChanges: View {
     let exercise: Exercise
     @Environment(\.modelContext) private var context
     
-//    var recentSessions: [WorkoutSession] {
-//        guard let originalWorkout = workout.workout else {
-//            return []
-//        }
-//        guard let sessionEntries = originalWorkout.sessionEntries else {
-//            return []
-//        }
-//
-//        // Get non-nil sessions
-//        let allSessions = sessionEntries.compactMap { $0.session }
-//
-//        // Sort by started descending (most recent first)
-//        let sortedByDate = allSessions.sorted { lhs, rhs in
-//            lhs.started > rhs.started
-//        }
-//
-//        // Return up to the 5 most recent
-//        return Array(sortedByDate.prefix(5))
-//    }
-
+    var recentSessions: [WorkoutSession] {
+        guard let allSessionEntries = exercise.sessionEntries else { return [] }
+        
+        let sessions = allSessionEntries
+            .compactMap { $0.session }
+            .filter { $0.started < Date() }
+            .prefix(5)
+        return Array(sessions)
+    }
+    
+    var relatedSessions: [WorkoutSession] {
+        guard let allSessionEntries = exercise.sessionEntries else { return [] }
+        
+        let sessions = allSessionEntries
+            .compactMap { $0.session }
+            .sorted { $0.started > $1.started }
+        return Array(sessions)
+    }
     
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    ForEach(exercise.updateData, id: \.self) { data in
+                        ChangeChartView(data: data)
+                    }
+                } header: {
+                    Text("All Updates")
+                }
+                WeightInfo()
+                ExerciseSessions()
+                TotalExerciseInfo()
                 Text("Found stuff \(exercise.sessionEntries?.count ?? 0)")
-//                Section {
-//                    if workout.prData.isEmpty == false {
-//                        ProgressChartView(color: Constants.mainAppTheme, unit: "lbs", data: workout.prData)
-//                    }
-//                } header: {
-//                    Label("PR History", systemImage: "trophy")
-//                }
-//                Section {
-//                    AverageGraph(data: workout.updateData)
-//                } header: {
-//                    Label("Average Weight", systemImage: "divide")
-//                }
-//                Section {
-//                    ForEach(workout.updateData, id: \.self) { data in
-//                        UpdateDataHistory(data: data)
-//                    }
-//                } header: {
-//                    Label("Change History", systemImage: "calendar")
-//                }
-//                Section {
-//                    ForEach(recentSessions, id: \.self) { session in
-//                        NavigationLink {
-//                            SessionRecap(session: session, sessionName: session.name)
-//                        } label: {
-//                            Label {
-//                                Text(session.name)
-//                            } icon: {
-//                                Image(systemName: "timer")
-//                                    .foregroundStyle(.purple)
-//                            }
-//                        }
-//                    }
-//                } header: {
-//                    Label("Recent Sessions", systemImage: "timer")
-//                }
-                EmptyView()
-                .navigationTitle("History")
-                .navigationSubtitle(exercise.name)
-//                .toolbar {
-//                    ToolbarItem(placement: .secondaryAction) {
-//                        Section {
-//                            DeletePRData()
-//                        } header: {
-//                            Text("Delete Options")
-//                        }
-//                    }
-//                }
+            }
+            .navigationTitle("History")
+            .navigationSubtitle(exercise.name)
+        }
+    }
+    
+    private func ChangeChartView(data: SetChangeData) -> some View {
+        Chart {
+            ForEach(data.setData, id: \.self) { point in
+                BarMark(
+                    x: .value("Set", point.set),
+                    y: .value("Weight", point.weight),
+                    //                            width: .fixed(20)
+                )
             }
         }
     }
     
-//    private func BarGraphLabel(data: UpdateData) -> some View {
-//        Chart {
-//            BarMark(x: .value("Avg", "bird"),
-//                    y: .value("Date?", 1))
-//        }
-//    }
-//
-//    private func AverageGraph(data: [UpdateData]) -> some View {
-//        Chart {
-//            ForEach(data, id: \.self) { point in
-//                BarMark(x: .value("Order", point.updateDate, unit: .day),
-//                        y: .value("Avg", point.averageVolumePerSet))
-//            }
-//        }
-//    }
+    private func IndividualUpdate() -> some View {
+        HStack {
+            Chart {
+                ForEach(exercise.updateData, id: \.self) { data in
+                    
+                }
+            }
+        }
+    }
     
-//    private func UpdateDataHistory(data: UpdateData) -> some View {
-//        VStack(alignment: .leading) {
-//            Text("\(UpdateDate(date: data.updateDate))")
-//                .font(.headline)
-//            Group {
-//                HStack {
-//                    VStack(alignment: .leading) {
-//                        Text("Reps")
-//                        Text("Weight")
-//                    }
-//                    ForEach(0..<data.sets, id: \.self) { set in
-//                        VStack(alignment: .leading) {
-//                            Text("\(data.reps[set])")
-//                            Text("\(data.weights[set], specifier: "%.1f")")
-//                        }
-//                    }
-//                }
-//            }.font(.subheadline)
-//        }
-//    }
+    private func WeightInfo() -> some View {
+        Section {
+            HStack {
+                Chart {
+                    BarMark(
+                        x: .value("Set", 0),
+                        y: .value("Weight", exercise.maxWeight),
+                    )
+                    BarMark(
+                        x: .value("Set", 0.2),
+                        y: .value("Weight", exercise.minWeight),
+                    )
+                    BarMark(
+                        x: .value("Set", 0.4),
+                        y: .value("Weight", exercise.averageWeight),
+                    )
+                }
+                .chartXAxis(.hidden)
+                .chartYAxisLabel("(lbs)")
+                VStack(alignment: .leading) {
+                    LabeledContent("Min") {
+                        Text("\(exercise.minWeight, specifier: "%.1f")")
+                    }
+                    LabeledContent("Max") {
+                        Text("\(exercise.maxWeight, specifier: "%.1f")")
+                    }
+                    LabeledContent("Average") {
+                        Text("\(exercise.averageWeight, specifier: "%.1f")")
+                    }
+                }
+            }
+        } header: {
+            Text("Weight")
+        }
+    }
+    
+    private func TotalExerciseInfo() -> some View {
+        Section {
+            LabeledContent("Total Sets") {
+                Text("\(exercise.totalSets)")
+            }
+            LabeledContent("Total Reps") {
+                Text("\(exercise.totalReps)")
+            }
+            LabeledContent("Total Weight") {
+                Text("\(exercise.totalWeight, specifier: "%.1f")")
+            }
+            LabeledContent("Max Reps in one set") {
+                Text("\(exercise.maxReps)")
+            }
+            LabeledContent("Average Reps") {
+                Text("\(exercise.averageReps)")
+            }
+        } header: {
+            Text("Exercise Stats")
+        }
+    }
+    
+    private func ExerciseSessions() -> some View {
+        Section {
+            ForEach(recentSessions, id: \.self) { session in
+                ReusedViews.SessionViews.SessionLink(session: session)
+            }
+            NavigationLink {
+                SessionsListView(allSessions: relatedSessions)
+            } label: {
+                Label("Found in \(relatedSessions.count) session\(relatedSessions.count == 1 ? "" : "s")", systemImage: "square")
+            }.disabled(relatedSessions.isEmpty)
+        } header: {
+            Text("Sessions containing \(exercise.name)")
+        }
+    }
     
     private func UpdateDate(date: Date) -> String {
         let formatter = DateFormatter()

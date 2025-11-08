@@ -29,7 +29,7 @@ struct SessionHomeView: View {
             List {
                 if !incompleteSessions.isEmpty {
                     Section {
-                        ForEach(incompleteSessions, id: \.self) { session in
+                        ForEach(incompleteSessions.filter { $0 != sm.session }, id: \.self) { session in
                             IncompleteSession(session: session)
                         }
                     } header: {
@@ -63,7 +63,7 @@ struct SessionHomeView: View {
     private func WorkoutView(workout: Workout) -> some View {
         HStack {
             ReusedViews.Labels.SmallIconSize(color: workout.color)
-            ReusedViews.Labels.ListDescription(title: workout.name, subtitle: ReusedViews.WorkoutViews.MostRecentSession(workout: workout))
+            ReusedViews.Labels.ListDescription(title: workout.name, subtitle: ReusedViews.WorkoutViews.MostRecentSession(workout: workout), extend: true)
             Spacer()
             Menu {
                 Section {
@@ -91,7 +91,7 @@ struct SessionHomeView: View {
     private func IncompleteSession(session: WorkoutSession) -> some View {
         HStack {
             ReusedViews.Labels.SmallIconSize(color: session.color)
-            ReusedViews.Labels.ListDescription(title: session.name, subtitle: "Started \(DateHandler().RelativeTime(from: session.started))")
+            ReusedViews.Labels.ListDescription(title: session.name, subtitle: "Started \(DateHandler().RelativeTime(from: session.started))", extend: true)
             Spacer()
             Menu {
                 Section {
@@ -102,15 +102,32 @@ struct SessionHomeView: View {
                             Label("Unknown Exercise", systemImage: "exclamationmark.shield")
                         }
                     }
+                } header: {
+                    Text("Completed")
+                }
+                if let workout = session.workout {
+                    Section {
+                        ForEach(workout.exercises?.filter { workoutExercise in
+                            session.exercises?.contains(where: { sessionEntry in
+                                sessionEntry.exercise?.id == workoutExercise.id
+                            }) == false
+                        } ?? [], id: \.self) { exercise in
+                            Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                        }
+                    } header: {
+                        Text("Incomplete")
+                    }
+                }
+                Section {
                     Button {
                         StartIncompleteSession(incomplete: session)
                     } label: {
-                        Label("Continue \(session.name)", systemImage: "play")
+                        Label("Continue", systemImage: "play")
                     }
                     Button {
                         context.delete(session)
                     } label: {
-                        Label("Delete \(session.name)", systemImage: "trash")
+                        Label("Delete", systemImage: "trash")
                     }
                 } header: {
                     Text(session.name)
@@ -136,6 +153,8 @@ struct SessionHomeView: View {
     
     private func StartIncompleteSession(incomplete: WorkoutSession) {
         if let workout = incomplete.workout {
+            
+            sm.completedWorkouts = incomplete.exercises ?? []
             
             for exercise in workout.exercises ?? [] {
                 let hasEntry = incomplete.exercises?.contains(where: { entry in

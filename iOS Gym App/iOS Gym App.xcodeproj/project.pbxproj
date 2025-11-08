@@ -11,7 +11,6 @@
 		E40F0B522EAA8FDA00618BB9 /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
 		E40F0B532EAA8FDA00618BB9 /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
 		E40F0B542EAA8FDA00618BB9 /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
-		E40F0B552EAA8FDA00618BB9 /* Workout Update Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B502EAA8FDA00618BB9 /* Workout Update Data.swift */; };
 		E40F0B562EAA8FDA00618BB9 /* Live Activity Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */; };
 		E40F0B572EAA8FDA00618BB9 /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
 		E40F0B5D2EAA914600618BB9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E40F09412EA7E68800618BB9 /* WidgetKit.framework */; };
@@ -72,7 +71,6 @@
 		E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Session Data.swift"; sourceTree = "<group>"; };
 		E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Split Data.swift"; sourceTree = "<group>"; };
 		E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Workout Data.swift"; sourceTree = "<group>"; };
-		E40F0B502EAA8FDA00618BB9 /* Workout Update Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Workout Update Data.swift"; sourceTree = "<group>"; };
 		E40F0B5C2EAA914600618BB9 /* Live Activity TimerExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Live Activity TimerExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4BCAFB02EA07765009133F6 /* Rep the Set Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rep the Set Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4F362AA2E8C32B2000A0DEE /* iOS Gym App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Gym App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,7 +162,6 @@
 				E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */,
 				E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */,
 				E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */,
-				E40F0B502EAA8FDA00618BB9 /* Workout Update Data.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -359,7 +356,6 @@
 				E40F0B522EAA8FDA00618BB9 /* Exercise Data.swift in Sources */,
 				E40F0B532EAA8FDA00618BB9 /* Split Data.swift in Sources */,
 				E40F0B542EAA8FDA00618BB9 /* Session Data.swift in Sources */,
-				E40F0B552EAA8FDA00618BB9 /* Workout Update Data.swift in Sources */,
 				E40F0B562EAA8FDA00618BB9 /* Live Activity Object.swift in Sources */,
 				E40F0B572EAA8FDA00618BB9 /* Workout Data.swift in Sources */,
 			);

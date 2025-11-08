@@ -15,7 +15,11 @@ final class WorkoutSession {
     
     var workout: Workout?
     var color: Color {
-        Constants.mainAppTheme
+        if let workout {
+            workout.color
+        } else {
+            Constants.mainAppTheme
+        }
     }
     
     @Relationship(deleteRule: .cascade)
@@ -33,13 +37,16 @@ final class WorkoutSession {
 @Model
 final class WorkoutSessionEntry {
     
+    @Transient
+    var id = UUID()
+    
     var reps: [Int] = []
     var weight: [Double] = []
     var setEntry: [SetData] {
         let count = min(reps.count, weight.count)
         var all: [SetData] = []
         for i in 0..<count {
-            let new = SetData(rest: i, reps: reps[i], weight: weight[i])
+            let new = SetData(set: i, rest: i, reps: reps[i], weight: weight[i])
             all.append(new)
         }
         return all

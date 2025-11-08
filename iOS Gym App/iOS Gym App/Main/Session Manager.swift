@@ -1,4 +1,5 @@
 import Observation
+import SwiftUI
 import Foundation
 import ActivityKit
 import SwiftData
@@ -11,6 +12,7 @@ class SessionManager {
     var exerciseTimer: Activity<WorkoutTimer>? = nil
     var elapsedTime: TimeInterval = 0
     var timer: Timer? = nil
+    @ObservationIgnored @AppStorage("timerType") private var timerType: TimerType = .liveActivities
     
     // MARK: Session Logic
     var session: WorkoutSession?
@@ -28,10 +30,6 @@ class SessionManager {
     var totalSets: Int {
         max(currentWorkout?.exercise.recentSetData.setData.count ?? 1, currentSet)
     }
-    
-    init() {
-        EndLiveActivity()
-    }
         
     func StartTimer(exercise: Exercise, entry: WorkoutSessionEntry) {
         FinishTimer()
@@ -43,8 +41,14 @@ class SessionManager {
                     self.FinishTimer()
                 }
             })
-            UpdateLiveActivity(exercise: exercise)
-            NotificationManager.instance.ScheduleNotification(seconds: rest)
+            switch timerType {
+            case .liveActivities:
+                UpdateLiveActivity(exercise: exercise)
+            case .notifications:
+                NotificationManager.instance.ScheduleNotification(seconds: rest)
+            case .timer:
+                return
+            }
         }
     }
 
@@ -79,7 +83,7 @@ class SessionManager {
     }
     
     func NextWorkout() {
-        
+        FinishTimer()
         if let current = currentWorkout {
             current.entry.exercise = current.exercise
             current.entry.session = session
@@ -96,12 +100,8 @@ class SessionManager {
     }
     
     func PreviousWorkout() {
+        FinishTimer()
         if let prevEntry = completedWorkouts.last {
-            
-            if let currentWorkout {
-                upcomingWorkouts.insert(currentWorkout, at: 0)
-                self.currentWorkout = nil
-            }
             
             if let exercise = prevEntry.exercise {
                 QueueExercise(exercise: exercise)
@@ -111,10 +111,14 @@ class SessionManager {
             prevEntry.session = nil
             completedWorkouts.removeLast()
         }
+        if let currentWorkout {
+            upcomingWorkouts.insert(currentWorkout, at: 0)
+            self.currentWorkout = nil
+        }
     }
     
     func NextSet() {
-        
+        FinishTimer()
         self.currentWorkout?.entry.reps.append(reps)
         self.currentWorkout?.entry.weight.append(weight)
         
@@ -139,6 +143,7 @@ class SessionManager {
     }
     
     func PreviousSet() {
+        FinishTimer()
         if let weight = currentWorkout?.entry.weight.last, let reps = currentWorkout?.entry.reps.last {
             self.weight = weight
             self.reps = reps

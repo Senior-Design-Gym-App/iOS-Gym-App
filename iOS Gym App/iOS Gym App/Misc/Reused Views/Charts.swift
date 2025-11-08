@@ -27,6 +27,17 @@ extension ReusedViews {
             }.foregroundStyle(color)
         }
         
+        static func BarChartMonth(data: [SetData], color: Color) -> some View {
+            Chart {
+                ForEach(data, id: \.self) { progress in
+                    PointMark(
+                        x: .value("Date", progress.reps),
+                        y: .value("Weight", progress.weight),
+                    )
+                }
+            }.foregroundStyle(color)
+        }
+        
     }
         
     

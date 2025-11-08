@@ -13,29 +13,41 @@ struct DayActivity: View {
     private let AL = ActivityLabels()
     
     var body: some View {
-        Section {
-            ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
-                BodyWeightData(data: data)
+        List {
+            Section {
+                ForEach(
+                    session.filter {
+                        $0.completed.map { calendar.isDate($0, inSameDayAs: dayProgress) } ?? false
+                    },
+                    id: \.self
+                ) { session in
+                    SessionLink(session: session)
+                }
+            } header: {
+                Text("Session")
             }
-            ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
-                BodyFatData(data: data)
+            Section {
+                ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
+                    BodyWeightData(data: data)
+                }
+            } header: {
+                Text("Body Weight")
             }
-//            ForEach(updates.filter { $0.updateData.contains { calendar.isDate($0.updateDate, inSameDayAs: dayProgress) } }) { update in
-//                PRList(update: update)
-//            }
-//            ForEach(allExercises.filter { $0.updateDates.contains { calendar.isDate($0.date, inSameDayAs: dayProgress) } }) { update in
-//                UpdateList(update: update)
-//            }
-            ForEach(
-                session.filter {
-                    $0.completed.map { calendar.isDate($0, inSameDayAs: dayProgress) } ?? false
-                },
-                id: \.self
-            ) { session in
-                SessionLink(session: session)
+            Section {
+                ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
+                    BodyFatData(data: data)
+                }
+            } header: {
+                Text("Body Fat")
             }
-        } header: {
-            Text(HeaderDateFormatter())
+            Section {
+                ForEach(allExercises.filter { $0.updateData.contains { calendar.isDate($0.changeDate, inSameDayAs: dayProgress) } }, id: \.self) { update in
+                    
+                }
+            } header: {
+                Text("Progress")
+            }
+            .navigationTitle(HeaderDateFormatter())
         }
     }
     

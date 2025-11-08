@@ -11,13 +11,6 @@ struct InspirationalTextView: View {
                 .fontWeight(.semibold)
                 .font(.largeTitle)
                 .frame(maxWidth: .infinity)
-            if allWorkouts.isEmpty {
-                Text("Create a few exercises and add them to a workout to start a session.")
-                    .font(.body)
-            } else {
-                Text("Select a session to get started")
-                    .font(.body)
-            }
         }.frame(idealWidth: .infinity, maxWidth: .infinity)
     }
     

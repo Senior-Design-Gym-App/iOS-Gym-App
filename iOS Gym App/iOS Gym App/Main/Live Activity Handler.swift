@@ -5,7 +5,7 @@ import ActivityKit
 extension SessionManager {
     
     func UpdateLiveActivity(exercise: Exercise) {
-        let set = SetData(rest: rest, reps: reps, weight: weight)
+        let set = SetData(set: 0, rest: rest, reps: reps, weight: weight)
 
         if exerciseTimer?.content.state != nil {
             
@@ -41,7 +41,7 @@ extension SessionManager {
         )
         
         Task {
-            await exerciseTimer?.end(ActivityContent(state: finalState, staleDate: nil), dismissalPolicy: .default)
+            await exerciseTimer?.end(ActivityContent(state: finalState, staleDate: nil), dismissalPolicy: .immediate)
         }
     }
     

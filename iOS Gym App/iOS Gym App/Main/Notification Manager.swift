@@ -22,7 +22,7 @@ final class NotificationManager {
     }
     
     func ScheduleNotification(seconds: Int) {
-        
+        CancelAllNotifications()
         let body = LoadNotificationBodyies().randomElement() ?? "Come to the Gym"
         let content = UNMutableNotificationContent()
         content.title = "Gym"

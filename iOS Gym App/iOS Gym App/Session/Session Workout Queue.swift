@@ -4,8 +4,8 @@ struct SessionWorkoutQueueView: View {
     
     @Environment(SessionManager.self) private var sessionManager: SessionManager
     
-    private var allWorkouts: [SessionData] {
-        var allItems: [SessionData] = sessionManager.upcomingWorkouts
+    private var completedWorkouts: [SessionData] {
+        var allItems: [SessionData] = []
         for entry in sessionManager.completedWorkouts {
             if let workout = entry.exercise {
                 allItems.append(SessionData(exercise: workout, entry: entry))
@@ -19,49 +19,45 @@ struct SessionWorkoutQueueView: View {
     
     var body: some View {
         List {
-            PreviousWorkouts(workouts: sessionManager.completedWorkouts)
-            if let current = sessionManager.currentWorkout {
-                CurrentWorkoutView(currentExercise: current)
+            Section {
+                PreviousWorkouts(completedExercises: completedWorkouts)
+            } header: {
+                Text("Completed")
             }
-            UpcomingExercises(queuedExercises: sessionManager.upcomingWorkouts)
-        }
-    }
-    
-    private func CurrentWorkoutView(currentExercise: SessionData) -> some View {
-        HStack {
-            Image(systemName: currentExercise.exercise.workoutEquipment?.imageName ?? "dumbbell")
-            VStack {
-                Text(currentExercise.exercise.name)
-                Text("\(currentExercise.entry.weight.count + 1) Sets")
+            Section {
+                UpcomingExercises(queuedExercises: sessionManager.upcomingWorkouts)
+            } header: {
+                Text("Queue")
             }
         }
+        .environment(\.editMode, .constant(.active))
     }
     
-    private func PreviousWorkouts(workouts: [WorkoutSessionEntry]) -> some View {
-        ForEach(workouts, id: \.self) { workout in
-            NotCurrentWorkoutView(imageName: workout.exercise?.workoutEquipment?.imageName, workoutName: workout.exercise?.name ?? "Unknown Workout", setCount: workout.weight.count)
+    private func PreviousWorkouts(completedExercises: [SessionData]) -> some View {
+        ForEach(completedExercises, id: \.self) { exercise in
+            ExerciseListPreview(exercise: exercise.exercise, data: exercise)
         }
     }
     
     private func UpcomingExercises(queuedExercises: [SessionData]) -> some View {
         ForEach(queuedExercises, id: \.self) { workout in
-            NotCurrentWorkoutView(imageName: workout.exercise.workoutEquipment?.imageName, workoutName: workout.exercise.name, setCount: workout.exercise.recentSetData.setData.count)
+            ReusedViews.ExerciseViews.ExerciseListPreview(exercise: workout.exercise)
         }
         .onMove { indices, newOffset in
             sessionManager.upcomingWorkouts.move(fromOffsets: indices, toOffset: newOffset)
+        }.onDelete { indicies in
+            sessionManager.upcomingWorkouts.remove(atOffsets: indicies)
         }
     }
     
-    private func NotCurrentWorkoutView(imageName: String?, workoutName: String, setCount: Int) -> some View {
+    private func ExerciseListPreview(exercise: Exercise, data: SessionData) -> some View {
         HStack {
-            Image(systemName: imageName ?? Constants.defaultEquipmentIcon)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 40, height: 40)
-            VStack(alignment: .leading) {
-                Text(workoutName)
-                Text("\(setCount) set\(setCount == 1 ? "" : "s")")
-            }
+            ReusedViews.Labels.SmallIconSize(color: exercise.color)
+                .overlay(alignment: .center) {
+                    Image(systemName: exercise.workoutEquipment?.imageName ?? "dumbbell")
+                        .foregroundStyle(Constants.iconColor)
+                }
+            ReusedViews.Labels.TypeListDescription(name: exercise.name, items: data.entry.weight, type: .exercise, extend: true)
         }
     }
     

@@ -57,19 +57,34 @@ struct SessionRecap: View {
 //                        width: .fixed(20)
                     )
                     .foregroundStyle(.red)
-                    .opacity(0.5)
 //                    .foregroundStyle(by: .value("Set", set.rest + 1))
                 }
                 if let recent = session.recentSetData.first(where: { $0.exercise == entry.exercise }) {
                     ForEach(recent.mostRecentSetData.setData) { set in
                         BarMark(
-                            x: .value("Set", set.rest + 1),
+                            x: .value("Set", Double(set.rest) + 1 - 0.3),
                             y: .value("Weight", set.weight),
 //                            width: .fixed(20)
                         )
                         .foregroundStyle(.blue)
 //                        .foregroundStyle(by: .value("Set", set.rest + 1))
                     }
+//                    .onAppear {
+//                        print("testing 1")
+//                    }
+                }
+                if let exercise = entry.exercise {
+                    ForEach(exercise.findAverageSetDataForExercises(in: session), id: \.self) { set in
+                        BarMark(
+                            x: .value("Set", Double(set.rest) + 1 + 0.3),
+                            y: .value("Weight", set.weight),
+    //                        width: .fixed(20)
+                        )
+                        .foregroundStyle(.yellow)
+                    }
+//                    .onAppear {
+//                        print("testing 2")
+//                    }
                 }
             }
             .frame(minHeight: 200)
@@ -78,8 +93,12 @@ struct SessionRecap: View {
             .chartXAxisLabel("Reps")
             .chartYAxisLabel("Weight (lbs)")
         } header: {
-            if let exerciseName = entry.exercise?.name {
-                Text(exerciseName)
+            if let exercise = entry.exercise {
+                NavigationLink {
+                    ExerciseChanges(exercise: exercise)
+                } label: {
+                    ReusedViews.Labels.NavigationHeader(text: exercise.name)
+                }
             } else {
                 Text("Unknown Exercise")
             }
@@ -87,39 +106,30 @@ struct SessionRecap: View {
     }
     
     private func MuscleInfo() -> some View {
-        Chart(session.allmuscleSetData) { item in
-            SectorMark(
-                angle: .value("Sets", item.sets),
-                innerRadius: .ratio(0.6),
-                angularInset: 1.5
-            )
-            .foregroundStyle(by: .value("Muscle Group", item.muscle.rawValue))
-        }
-        .frame(idealHeight: 200)
-        .chartLegend(position: .trailing)
-    }
-    
-    private func SessionDataView() -> some View {
-        Section {
-            ForEach(session.exercises ?? [], id: \.self) { entry in
-                EntryView(entry: entry)
+        HStack {
+            Chart(session.allmuscleSetData) { item in
+                SectorMark(
+                    angle: .value("Sets", item.sets),
+                    innerRadius: .ratio(0.6),
+                    angularInset: 1.5
+                )
+                .foregroundStyle(item.muscle.colorPalette)
             }
-        } header: {
-            Text("Session Data")
-        }
-    }
-    
-    @ViewBuilder
-    private func EntryView(entry: WorkoutSessionEntry) -> some View {
-        if let workout = entry.exercise?.updateData {
-            NavigationLink {
-//                ExerciseChanges(exercise: e)
-//                WorkoutUpdateView(workout: workout)
-            } label: {
-                WorkoutEntryView(workout: entry)
+            VStack(alignment: .leading) {
+                ForEach(session.allmuscleSetData) { item in
+                    HStack {
+                        Circle()
+                            .fill(item.muscle.colorPalette)
+                            .frame(width: 25, height: 25)
+                        VStack(alignment: .leading) {
+                            Text(item.muscle.rawValue)
+                            Text("\(item.sets) Set\(item.sets == 1 ? "" : "s")")
+                                .font(.caption2)
+                                .fontWeight(.thin)
+                        }
+                    }
+                }
             }
-        } else {
-            WorkoutEntryView(workout: entry)
         }
     }
     

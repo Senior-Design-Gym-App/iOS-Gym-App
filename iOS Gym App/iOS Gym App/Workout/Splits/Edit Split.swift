@@ -60,6 +60,7 @@ struct EditSplitView: View {
     }
     
     private func SaveSplit() {
+        selectedSplit.modified = Date()
         selectedSplit.workouts = selectedWorkouts
         try? context.save()
     }

@@ -20,13 +20,13 @@ struct RecentPRView: View {
                 }
             }
             if let recentExercise {
-                NavigationLink {
-                    ExerciseChanges(exercise: recentExercise)
-                } label: {
-//                    ReusedViews.Charts.ExerciseChart(update: recentExercise)
-                }
+//                NavigationLink {
+//                    ExerciseChanges(exercise: recentExercise)
+//                } label: {
+//                    ReusedViews.Charts.BarChartMonth(data: recentExercise.recentSetData.setData, color: recentExercise.color)
+//                }
             } else {
-                Text("Here will be your most recent exercise update.")
+//                Text("Here will be your most recent exercise update.")
             }
         }
         .frame(idealWidth: .infinity, maxWidth: .infinity)

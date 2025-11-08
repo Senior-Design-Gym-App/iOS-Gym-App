@@ -10,7 +10,9 @@ struct SessionCover: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            Spacer(minLength: 10)
             Capsule()
+//                .padding(.top, 20)
                 .frame(width: 65, height: 5)
             TabView {
                 Tab("Current", systemImage: "circle") {
@@ -24,7 +26,7 @@ struct SessionCover: View {
             Spacer()
             GroupBox {
                 SessionCurrentExerciseView(sessionManager: sessionManager)
-                SessionSetControlView(endAction: EndSession, deleteAction: DeleteSession, sessionManager: sessionManager)
+                SessionSetControlView(sessionName: session.name, endAction: EndSession, deleteAction: DeleteSession, sessionManager: sessionManager)
             }.frame(idealWidth: .infinity)
         }
         .ignoresSafeArea(edges: .bottom)
@@ -34,12 +36,16 @@ struct SessionCover: View {
         sessionManager.NextSet()
         sessionManager.NextWorkout()
         session.completed = Date()
+        sessionManager.EndLiveActivity()
+        sessionManager.FinishTimer()
         try? context.save()
         ClearCurrentData()
         dismiss()
     }
     
     private func DeleteSession() -> Void {
+        sessionManager.EndLiveActivity()
+        sessionManager.FinishTimer()
         context.delete(session)
         try? context.save()
         ClearCurrentData()
