@@ -33,6 +33,8 @@ struct Constants {
     static let workoutIcon = "document"
     static let splitIcon = "folder"
     static let defaultEquipmentIcon = "flame"
+    static let sessionIcon = "gauge.with.needle"
+    static let healthIcon = "heart.text.clipboard"
     
     // MARK: Size
     static let cornerRadius: CGFloat = 10

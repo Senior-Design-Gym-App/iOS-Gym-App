@@ -1,67 +1,39 @@
 import SwiftUI
+import SwiftData
 
 struct RecentMonthActivity: View {
     
-    let allExercises: [Exercise]
-    let allSessions: [WorkoutSession]
-    private let calendar = Calendar.current
-    
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
-    
+    @Namespace private var namespace
     @Environment(ProgressManager.self) private var hkm
+    @Query private var allExercises: [Exercise]
     
     var body: some View {
         GroupBox {
             NavigationLink {
-                WeeklyActivity()
+                MonthlyProgressView()
             } label: {
-                VStack(alignment: .leading, spacing: 0) {
-                    ReusedViews.Labels.HeaderWithArrow(title: "Monthly Activity")
-                    ReusedViews.Labels.Subheader(title: monthYearString)
+                ReusedViews.Labels.HeaderWithArrow(title: "Monthly Activity")
+            }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
+                ForEach(ReusedViews.CalendarViews.GenerateMonthGrid(month: Date()), id: \.self) { day in
+                    ProgressDay(daysDate: day, bodyFat: hkm.bodyFatData, bodyWeight: hkm.bodyWeightData, allExercises: allExercises, inMonth: Calendar.current.isDate(day, equalTo: Date(), toGranularity: .month))
                 }
             }
-            MonthGridView()
         }
         .frame(idealWidth: .infinity, maxWidth: .infinity)
         .aspectRatio(1, contentMode: .fit)
     }
     
-    private func MonthGridView() -> some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7)) {
-            ForEach(ReusedViews.CalendarViews.generateMonthGrid(), id: \.self) { day in
-                ProgressDay(daysDate: day, inMonth: calendar.isDate(day, equalTo: Date(), toGranularity: .month))
-            }
-        }
-    }
-
-    private func ProgressDay(daysDate: Date, inMonth: Bool) -> some View {
+    private func ProgressDay(daysDate: Date, bodyFat: [WeightEntry], bodyWeight: [WeightEntry], allExercises: [Exercise], inMonth: Bool) -> some View {
         NavigationLink {
-            DayActivity(dayProgress: daysDate, session: allSessions, allExercises: allExercises)
+            DayActivity(dayProgress: daysDate)
+                .navigationTransition(.zoom(sourceID: daysDate, in: namespace))
         } label: {
-            VStack(spacing: 5) {
-                GenerateImage(for: daysDate)
-                    .resizable()
-                    .scaledToFit()
-                    .foregroundStyle(allSessions.contains(where: { calendar.isDate($0.completed ?? Date.distantPast, inSameDayAs: daysDate) }) ? .blue : .gray)
-//                    .bold(calendar.isDate(daysDate, inSameDayAs: Date()))
-                ReusedViews.CalendarViews.IndicatorGrid(day: daysDate, bodyFat: hkm.monthBodyFatData, bodyWeight: hkm.monthBodyWeightData, allExercises: allExercises)
-            }
-        }.navigationLinkIndicatorVisibility(.hidden)
-            .disabled(!inMonth)
-            .opacity(inMonth ? 100 : 0)
+            ReusedViews.CalendarViews.DayLabel(daysDate: daysDate, bodyFat: bodyFat, bodyWeight: bodyWeight, allExercises: allExercises, inMonth: inMonth)
+        }
+        .navigationLinkIndicatorVisibility(.hidden)
+        .disabled(!inMonth)
+        .matchedTransitionSource(id: daysDate, in: namespace)
     }
-        
-    private func GenerateImage(for date: Date) -> Image {
-        let dayNumber = Calendar.current.component(.day, from: date)
-        let imageName = "\(dayNumber).circle.fill"
-
-        return Image(systemName: imageName)
-    }
-
-    private var monthYearString: String {
-          let formatter = DateFormatter()
-          formatter.dateFormat = "MMMM yyyy"
-          return formatter.string(from: Date())
-      }
     
 }

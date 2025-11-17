@@ -1,5 +1,4 @@
 import SwiftUI
-import ActivityKit
 
 struct SessionCurrentExerciseView: View {
     
@@ -12,9 +11,7 @@ struct SessionCurrentExerciseView: View {
         @Bindable var sessionManager = sessionManager
         HStack {
             Spacer()
-            GroupBox {
-                EquipmentIcon()
-            }.clipShape(.circle)
+            EquipmentIcon()
             Spacer()
             VStack {
                 CurrentExerciseInfo()
@@ -28,9 +25,7 @@ struct SessionCurrentExerciseView: View {
                 }
             }
             Spacer()
-            GroupBox {
-                TimerInfo()
-            }.clipShape(.circle)
+            TimerInfo()
             Spacer()
         }
     }
@@ -38,16 +33,30 @@ struct SessionCurrentExerciseView: View {
     private func PreviousSetButton() -> some View {
         Menu {
             Button {
-                sessionManager.PreviousWorkout()
+                withAnimation {
+                    sessionManager.PreviousWorkout()
+                }
             } label: {
-                Text("Previous Workout")
-            }.disabled((sessionManager.completedWorkouts.isEmpty && sessionManager.currentWorkout == nil)  )
+                Label("Previous Exercise", systemImage: "backward.end")
+                Text("Previous Exercise")
+            }.disabled((sessionManager.completedExercises.isEmpty && sessionManager.currentExercise == nil)  )
             Divider()
             Button {
-                sessionManager.PreviousSet()
+                withAnimation {
+                    sessionManager.PreviousSet()
+                }
             } label: {
+                Label("Previous Set", systemImage: "backward")
                 Text("Previous Set")
-            }.disabled(sessionManager.currentWorkout == nil || sessionManager.currentSet == 0)
+            }.disabled(sessionManager.currentExercise == nil || sessionManager.currentSet == 0)
+            Button {
+                withAnimation {
+                    sessionManager.UnselectWorkout()
+                }
+            } label: {
+                Label("Unselect Exercise", systemImage: "pause")
+                Text("Adds current workout to queue")
+            }.disabled(sessionManager.currentExercise == nil)
         } label: {
             Label("Previous Set", systemImage: "backward.fill")
                 .labelStyle(.iconOnly)
@@ -59,17 +68,25 @@ struct SessionCurrentExerciseView: View {
     private func NextSetButton() -> some View {
         Menu {
             Button(role: .confirm) {
-                sessionManager.NextSet()
-                sessionManager.NextWorkout()
+                withAnimation {
+                    sessionManager.NextSet()
+                    sessionManager.NextWorkout()
+                }
             } label: {
-                Label("Next Workout", systemImage: "forward.end")
-            }.disabled(sessionManager.upcomingWorkouts.isEmpty)
+                Label("Next Exercise", systemImage: "forward.end")
+                if let next = sessionManager.upcomingExercises.first {
+                    Text(next.exercise.name)
+                }
+            }.disabled(sessionManager.upcomingExercises.isEmpty)
             Divider()
             Button(role: .confirm) {
-                sessionManager.NextSet()
+                withAnimation {
+                    sessionManager.NextSet()
+                }
             } label: {
                 Label("Next Set", systemImage: "forward")
-            }.disabled(sessionManager.currentWorkout == nil)
+                Text("Set \(sessionManager.currentSet + 1)")
+            }.disabled(sessionManager.currentExercise == nil)
         } label: {
             Label("Next Set", systemImage: "forward.fill")
                 .labelStyle(.iconOnly)
@@ -81,15 +98,17 @@ struct SessionCurrentExerciseView: View {
     private func TimerInfo() -> some View {
         Menu {
             Button {
-                if let currentWorkout = sessionManager.currentWorkout {
-                    sessionManager.StartTimer(exercise: currentWorkout.exercise, entry: currentWorkout.entry)
+                withAnimation {
+                    if let currentWorkout = sessionManager.currentExercise {
+                        sessionManager.StartTimer(exercise: currentWorkout.exercise, entry: currentWorkout.entry)
+                    }
                 }
             } label: {
                 Label("Restart Timer", systemImage: "restart")
-            }.disabled(sessionManager.currentWorkout == nil)
+            }.disabled(sessionManager.currentExercise == nil)
             Text("\(sessionManager.rest)s Rest")
         } label: {
-            Gauge(value: sessionManager.progress, in: 0...1.0) {
+            Gauge(value: sessionManager.elapsedTime, in: 0...TimeInterval(sessionManager.rest)) {
             } currentValueLabel: {
                 Text(TimeRemainingText())
             }
@@ -98,22 +117,15 @@ struct SessionCurrentExerciseView: View {
     }
     
     private func TimeRemainingText() -> String {
-        if let activityState = sessionManager.exerciseTimer?.content.state {
-            let endTime = activityState.timerStart.addingTimeInterval(Double(activityState.setEntry.rest))
-            let remaining = endTime.timeIntervalSince(Date.now)
-            let seconds = max(0, Int(remaining))
-            
-            let minutes = seconds / 60
-            let remainingSeconds = seconds % 60
-            return String(format: "%d:%02d", minutes, remainingSeconds)
-        }
-        
-        return "0:00"
+        let remaining = max(0, sessionManager.rest - Int(sessionManager.elapsedTime))
+        let minutes = remaining / 60
+        let remainingSeconds = remaining % 60
+        return String(format: "%d:%02d", minutes, remainingSeconds)
     }
     
     private func EquipmentIcon() -> some View {
         Menu {
-            if let currentExercise = sessionManager.currentWorkout?.exercise {
+            if let currentExercise = sessionManager.currentExercise?.exercise {
                 Text("Updated \(DateHandler().RelativeTime(from: currentExercise.modified))")
                 Text(currentExercise.workoutEquipment?.rawValue ?? "Unknown Equipment")
                 if let currentExerciseMuscleInfo = currentExercise.muscle {
@@ -127,7 +139,7 @@ struct SessionCurrentExerciseView: View {
             ZStack {
                 Gauge(value: Float(sessionManager.currentSet), in: 0...(Float(sessionManager.totalSets))) { }
                     .gaugeStyle(.accessoryCircularCapacity)
-                Label("Equipment", systemImage: sessionManager.currentWorkout?.exercise.workoutEquipment?.imageName ?? "questionmark")
+                Label("Equipment", systemImage: sessionManager.currentExercise?.exercise.workoutEquipment?.imageName ?? "questionmark")
                     .labelStyle(.iconOnly)
                     .foregroundStyle(.primary)
                     .font(.title3)
@@ -137,7 +149,7 @@ struct SessionCurrentExerciseView: View {
     }
     
     private func CurrentExerciseInfo() -> some View {
-        Text(sessionManager.currentWorkout?.exercise.name ?? "No Workout Selected")
+        Text(sessionManager.currentExercise?.exercise.name ?? "Suspended")
             .font(.title3)
             .fontWeight(.bold)
             .multilineTextAlignment(.center)

@@ -29,82 +29,48 @@ struct ExerciseChanges: View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(exercise.updateData, id: \.self) { data in
-                        ChangeChartView(data: data)
+                    LifetimeStats()
+                } header: {
+                    Text("Lifetime Stats")
+                }
+                Section {
+                    WeightInfo()
+                } header: {
+                    Text("Weight Info")
+                }
+                Section {
+                    if relatedSessions.isEmpty {
+                        Text("No sessions containing \(exercise.name)")
+                    } else {
+                        ExerciseSessions()
                     }
                 } header: {
-                    Text("All Updates")
+                    Text("Sessions containing \(exercise.name)")
                 }
-                WeightInfo()
-                ExerciseSessions()
-                TotalExerciseInfo()
-                Text("Found stuff \(exercise.sessionEntries?.count ?? 0)")
-            }
-            .navigationTitle("History")
-            .navigationSubtitle(exercise.name)
-        }
-    }
-    
-    private func ChangeChartView(data: SetChangeData) -> some View {
-        Chart {
-            ForEach(data.setData, id: \.self) { point in
-                BarMark(
-                    x: .value("Set", point.set),
-                    y: .value("Weight", point.weight),
-                    //                            width: .fixed(20)
-                )
-            }
-        }
-    }
-    
-    private func IndividualUpdate() -> some View {
-        HStack {
-            Chart {
                 ForEach(exercise.updateData, id: \.self) { data in
-                    
-                }
-            }
-        }
-    }
-    
-    private func WeightInfo() -> some View {
-        Section {
-            HStack {
-                Chart {
-                    BarMark(
-                        x: .value("Set", 0),
-                        y: .value("Weight", exercise.maxWeight),
-                    )
-                    BarMark(
-                        x: .value("Set", 0.2),
-                        y: .value("Weight", exercise.minWeight),
-                    )
-                    BarMark(
-                        x: .value("Set", 0.4),
-                        y: .value("Weight", exercise.averageWeight),
-                    )
-                }
-                .chartXAxis(.hidden)
-                .chartYAxisLabel("(lbs)")
-                VStack(alignment: .leading) {
-                    LabeledContent("Min") {
-                        Text("\(exercise.minWeight, specifier: "%.1f")")
-                    }
-                    LabeledContent("Max") {
-                        Text("\(exercise.maxWeight, specifier: "%.1f")")
-                    }
-                    LabeledContent("Average") {
-                        Text("\(exercise.averageWeight, specifier: "%.1f")")
+                    Section {
+                        ChangeChartView(data: data)
+                    } header: {
+                        if data == exercise.recentSetData {
+                            Text("Current")
+                        }
+                    } footer: {
+                        Text(data.changeDate.formatted())
                     }
                 }
             }
-        } header: {
-            Text("Weight")
+            .navigationTitle(exercise.name)
+            .navigationSubtitle(exercise.workoutEquipment?.rawValue ?? "No Equipment")
         }
     }
     
-    private func TotalExerciseInfo() -> some View {
-        Section {
+    private func LifetimeStats() -> some View {
+        Group {
+            Chart {
+                ForEach(exercise.avgSetsWeight, id: \.self) { point in
+                    BarMark(x: .value("Update Date", point.date, unit: .month), y: .value("Avg Weight", point.value)).cornerRadius(Constants.smallRadius)
+                }
+            }.foregroundStyle(exercise.color)
             LabeledContent("Total Sets") {
                 Text("\(exercise.totalSets)")
             }
@@ -120,23 +86,68 @@ struct ExerciseChanges: View {
             LabeledContent("Average Reps") {
                 Text("\(exercise.averageReps)")
             }
-        } header: {
-            Text("Exercise Stats")
         }
     }
     
     private func ExerciseSessions() -> some View {
-        Section {
+        Group {
             ForEach(recentSessions, id: \.self) { session in
                 ReusedViews.SessionViews.SessionLink(session: session)
             }
-            NavigationLink {
-                SessionsListView(allSessions: relatedSessions)
-            } label: {
-                Label("Found in \(relatedSessions.count) session\(relatedSessions.count == 1 ? "" : "s")", systemImage: "square")
-            }.disabled(relatedSessions.isEmpty)
-        } header: {
-            Text("Sessions containing \(exercise.name)")
+            if relatedSessions.count > 5 {
+                NavigationLink {
+                    SessionsListView(allSessions: relatedSessions)
+                } label: {
+                    Label("View all \(relatedSessions.count) session\(relatedSessions.count == 1 ? "" : "s")", systemImage: "list.bullet")
+                }.disabled(relatedSessions.isEmpty)
+            }
+        }
+    }
+    
+    private func ChangeChartView(data: SetChangeData) -> some View {
+        Group {
+            Chart {
+                ReusedViews.Charts.BarMarks(sets: data.setData, color: exercise.color, offset: 0)
+            }
+            ForEach(data.setData, id: \.self) { point in
+                ReusedViews.ExerciseViews.IndiidualSetInfo(setData: point, color: exercise.color, index: point.set)
+            }
+        }
+    }
+    
+    private func WeightInfo() -> some View {
+        HStack {
+            Chart {
+                BarMark(
+                    x: .value("Set", "Max"),
+                    y: .value("Weight", exercise.maxWeight),
+                    width: .ratio(0.3)
+                ).cornerRadius(Constants.smallRadius)
+                BarMark(
+                    x: .value("Set", "Min"),
+                    y: .value("Weight", exercise.minWeight),
+                    width: .ratio(0.3)
+                ).cornerRadius(Constants.smallRadius)
+                BarMark(
+                    x: .value("Set", "Avg"),
+                    y: .value("Weight", exercise.averageWeight),
+                    width: .ratio(0.3)
+                ).cornerRadius(Constants.smallRadius)
+            }
+            .foregroundStyle(exercise.color)
+            .chartXAxis(.hidden)
+            .chartYAxisLabel("(lbs)")
+            VStack(alignment: .leading) {
+                LabeledContent("Max") {
+                    Text("\(exercise.maxWeight, specifier: "%.1f")")
+                }
+                LabeledContent("Min") {
+                    Text("\(exercise.minWeight, specifier: "%.1f")")
+                }
+                LabeledContent("Average") {
+                    Text("\(exercise.averageWeight, specifier: "%.1f")")
+                }
+            }
         }
     }
     
@@ -144,14 +155,6 @@ struct ExerciseChanges: View {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         return formatter.string(from: date)
-    }
-    
-    private func DeletePRData() -> some View {
-        Button(role: .destructive) {
-            
-        } label: {
-            Text("Delete PR Data")
-        }
     }
     
 }

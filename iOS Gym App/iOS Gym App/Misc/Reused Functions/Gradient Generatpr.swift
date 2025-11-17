@@ -44,3 +44,41 @@ enum MuscleGroupColor: String {
     }
     
 }
+
+enum AppColors: String {
+    
+    case frenchViolet       = "7400B8"
+    case grape              = "6930C3"
+    case slateBlue          = "5E60CE"
+    case unitedNationsBlue  = "5390D9"
+    case pictonBlue         = "4EA8DE"
+    case aero               = "48BFE3"
+    case skyBlue            = "56CFE1"
+    case tiffanyBlue        = "64DFDF"
+    case turquoise          = "72EFDD"
+    case aquamarine         = "80FFDB"
+    
+    var color: Color {
+        Color(hex: rawValue)
+    }
+    
+}
+
+enum WorkoutCharColors: String {
+    
+    case celadon1           = "99E2B4"
+    case celadon2           = "88D4AB"
+    case mint1              = "78C6A3"
+    case mint2              = "67B99A"
+    case zomp1              = "56AB91"
+    case zomp2              = "469D89"
+    case viridian           = "358F80"
+    case pineGreen          = "248277"
+    case skobeloff          = "14746F"
+    case caribbeanCurrent   = "036666"
+    
+    var color: Color {
+        Color(hex: rawValue)
+    }
+    
+}

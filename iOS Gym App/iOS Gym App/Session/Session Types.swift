@@ -12,9 +12,19 @@ enum TimerType: String, CaseIterable, Identifiable {
     
     case liveActivities = "Live Activities"
     case notifications  = "Notifications"
-    case timer          = "Timer"
+    case timer          = "Timer Only"
+    case none           = "None"
     
     var id : String { rawValue }
+    
+    var imageName: String {
+        switch self {
+        case .liveActivities: return "rectangle.3.group"
+        case .notifications: return "bell.badge"
+        case .timer: return "clock"
+        case .none: return "circle.slash"
+        }
+    }
     
 }
 

@@ -38,8 +38,70 @@ extension ReusedViews {
             }.foregroundStyle(color)
         }
         
-    }
+        static func BarMarks(sets: [SetData], color: Color, offset: Double) -> some ChartContent {
+            ForEach(sets) { set in
+                BarMark(
+                    x: .value("Set", set.setDouble - 1 + offset),
+                    y: .value("Weight", set.weight),
+                )
+            }.foregroundStyle(color)
+                .cornerRadius(Constants.smallRadius)
+        }
         
+        static func SetRecapChart(sessions: [WorkoutSession]) -> some View {
+            HStack {
+                Chart(CalculateSessionSets(sessions: sessions)) { group in
+                    SectorMark(
+                        angle: .value("Sets", group.sets),
+                        innerRadius: .ratio(0.6),
+                        angularInset: 1.5
+                    )
+                    .foregroundStyle(group.muscle.colorPalette)
+                }
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(CalculateSessionSets(sessions: sessions)) { group in
+                        HStack {
+                            Circle()
+                                .fill(group.muscle.colorPalette)
+                                .frame(width: 25, height: 25)
+                            VStack(alignment: .leading) {
+                                Text(group.muscle.rawValue)
+                                Text("\(group.sets) Set\(group.sets == 1 ? "" : "s")")
+                                    .font(.caption2)
+                                    .fontWeight(.thin)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        static private func CalculateSessionSets(sessions: [WorkoutSession]) -> [DonutData] {
+            var muscleSetDict: [MuscleGroup: Int] = [:]
+            
+            for session in sessions {
+                guard let exercises = session.exercises else { continue }
+                
+                for entry in exercises {
+                    
+                    let group: MuscleGroup
+                    
+                    if let exercise = entry.exercise, let muscleGroup = exercise.muscleGroup {
+                        group = muscleGroup
+                    } else {
+                        group = .unknown
+                    }
+                    
+                    let setCount = entry.setEntry.count
+                    muscleSetDict[group, default: 0] += setCount
+                }
+            }
+            
+            return muscleSetDict.map { DonutData(muscle: $0.key, sets: $0.value) }
+                .sorted { $0.muscle.rawValue < $1.muscle.rawValue }
+        }
+                
+    }
     
     struct ProgressChartView: View {
         
@@ -96,6 +158,5 @@ extension ReusedViews {
                               abs($1.date.timeIntervalSince(selectedDate)) }
         }
     }
-
     
 }

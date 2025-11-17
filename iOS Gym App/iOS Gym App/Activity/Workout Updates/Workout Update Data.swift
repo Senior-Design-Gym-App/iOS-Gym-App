@@ -29,46 +29,31 @@ extension Exercise {
         updateData.last ?? SetChangeData(changeDate: Date.distantPast, setData: [])
     }
     
-    func findAverageSetDataForExercises(in session: WorkoutSession) -> [SetData] {
-        guard let currentExercises = session.exercises else {
+    func findAverageSetData(before date: Date) -> [SetData] {
+        guard let allSessionEntries = self.sessionEntries else { return [] }
+        
+        let previousEntries = allSessionEntries
+            .filter { sessionEntry in
+                guard let sessionStarted = sessionEntry.session?.started else { return false }
+                return sessionStarted < date
+            }
+            .sorted { entry1, entry2 in
+                let date1 = entry1.session?.started ?? Date.distantPast
+                let date2 = entry2.session?.started ?? Date.distantPast
+                return date1 > date2
+            }
+            .prefix(5)
+        
+        if previousEntries.isEmpty {
             return []
         }
         
-        var result: [Exercise: [SetData]] = [:]
-        
-        // Get the reference date (use session start date)
-        let referenceDate = session.started
-        
-        for entry in currentExercises {
-            guard let exercise = entry.exercise else { continue }
-            guard let allSessionEntries = exercise.sessionEntries else { continue }
-            
-            // Filter entries from sessions before the current session
-            let previousEntries = allSessionEntries
-                .filter { sessionEntry in
-                    guard let sessionStarted = sessionEntry.session?.started else { return false }
-                    return sessionStarted < referenceDate
-                }
-                .sorted { entry1, entry2 in
-                    let date1 = entry1.session?.started ?? Date.distantPast
-                    let date2 = entry2.session?.started ?? Date.distantPast
-                    return date1 > date2 // Most recent first
-                }
-                .prefix(5) // Take only the 5 most recent
-            
-            if !previousEntries.isEmpty {
-                let averageSetData = calculateAverageSetData(from: Array(previousEntries))
-                result[exercise] = averageSetData
-            }
-        }
-        
-        return result.values.flatMap(\.self)
+        return calculateAverageSetData(from: Array(previousEntries))
     }
-
-    func calculateAverageSetData(from entries: [WorkoutSessionEntry]) -> [SetData] {
+    
+    private func calculateAverageSetData(from entries: [WorkoutSessionEntry]) -> [SetData] {
         guard !entries.isEmpty else { return [] }
         
-        // Find the maximum number of sets across all entries
         let maxSets = entries.map { $0.setEntry.count }.max() ?? 0
         
         var averageSetData: [SetData] = []
@@ -90,13 +75,13 @@ extension Exercise {
             if count > 0 {
                 let avgReps = Int(round(Double(totalReps) / Double(count)))
                 let avgWeight = totalWeight / Double(count)
-                averageSetData.append(SetData(set: 0, rest: setIndex, reps: avgReps, weight: avgWeight))
+                averageSetData.append(SetData(set: setIndex, rest: 0, reps: avgReps, weight: avgWeight))
             }
         }
         
         return averageSetData
     }
-    
+
     var totalSets: Int {
         guard let sessions = sessionEntries else {
             return 0
@@ -128,14 +113,14 @@ extension Exercise {
         var totalReps: Double = 0
         for session in sessions {
             for set in session.setEntry {
-                totalReps += set.weight
+                totalReps += (set.weight * Double(set.reps))
             }
         }
         return totalReps
     }
     
     var averageWeight: Double {
-        return totalWeight / Double(totalSets)
+        return totalWeight / Double(totalReps == 0 ? 1 : totalReps)
     }
     
     var maxReps: Int {
@@ -154,7 +139,7 @@ extension Exercise {
     }
     
     var averageReps: Int {
-        totalReps / reps.count
+        totalReps / ((reps.count * totalSets) == 0 ? 1 : (reps.count * totalSets))
     }
     
     var maxWeight: Double {
@@ -173,18 +158,50 @@ extension Exercise {
     }
     
     var minWeight: Double {
-        guard let session = sessionEntries else {
+        guard let sessions = sessionEntries else {
             return 0
         }
-        var min: Double = 1000
-        for session in session {
+        var found = false
+        var minValue: Double = .greatestFiniteMagnitude
+        for session in sessions {
             for set in session.setEntry {
-                if set.weight < min {
-                    min = set.weight
+                if set.weight < minValue {
+                    minValue = set.weight
+                    found = true
                 }
             }
         }
-        return min
+        return found ? minValue : 0
+    }
+    
+    var avgSetsWeight: [WeightEntry] {
+        var sets: [WeightEntry] = []
+        
+        for specificUpdate in updateData {
+            var totalWeight = 0.0
+            for set in specificUpdate.setData {
+                totalWeight += set.weight
+            }
+            sets.append(WeightEntry(index: 0, value: totalWeight / Double(specificUpdate.setData.count), date: specificUpdate.changeDate))
+        }
+        
+        return sets
+    }
+    
+    func closestUpdate(date: Date) -> SetChangeData? {
+        guard !updateData.isEmpty else { return nil }
+        
+        let sorted = updateData.sorted { $0.changeDate < $1.changeDate }
+        
+        if let before = sorted.last(where: { $0.changeDate <= date }) {
+            return before
+        }
+        
+        if let closest = sorted.min(by: { abs($0.changeDate.timeIntervalSince(date)) < abs($1.changeDate.timeIntervalSince(date)) }) {
+            return closest
+        }
+        
+        return nil
     }
     
 }

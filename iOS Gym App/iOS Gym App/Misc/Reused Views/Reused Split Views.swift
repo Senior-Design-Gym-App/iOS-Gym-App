@@ -76,7 +76,7 @@ extension ReusedViews {
                     List {
                         Section {
                             ForEach(newWorkouts, id: \.self) { workout in
-                                WorkoutViews.WorkoutListPreview(workout: workout)
+                                WorkoutViews.WorkoutListPreview(workout: workout).id(workout.id)
                             }
                             .onMove { indices, newOffset in
                                 newWorkouts.move(fromOffsets: indices, toOffset: newOffset)
@@ -96,7 +96,9 @@ extension ReusedViews {
                                     ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
                                     Spacer()
                                     Button {
-                                        newWorkouts.append(workout)
+                                        withAnimation {
+                                            newWorkouts.append(workout)
+                                        }
                                     } label: {
                                         Image(systemName: "plus")
                                     }

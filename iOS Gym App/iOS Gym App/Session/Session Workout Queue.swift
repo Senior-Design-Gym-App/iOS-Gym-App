@@ -4,15 +4,12 @@ struct SessionWorkoutQueueView: View {
     
     @Environment(SessionManager.self) private var sessionManager: SessionManager
     
-    private var completedWorkouts: [SessionData] {
+    private var completedExercises: [SessionData] {
         var allItems: [SessionData] = []
-        for entry in sessionManager.completedWorkouts {
+        for entry in sessionManager.completedExercises {
             if let workout = entry.exercise {
                 allItems.append(SessionData(exercise: workout, entry: entry))
             }
-        }
-        if let currentWorkout = sessionManager.currentWorkout {
-            allItems.append(currentWorkout)
         }
         return allItems
     }
@@ -20,12 +17,12 @@ struct SessionWorkoutQueueView: View {
     var body: some View {
         List {
             Section {
-                PreviousWorkouts(completedExercises: completedWorkouts)
+                PreviousWorkouts(completedExercises: completedExercises)
             } header: {
                 Text("Completed")
             }
             Section {
-                UpcomingExercises(queuedExercises: sessionManager.upcomingWorkouts)
+                UpcomingExercises(queuedExercises: sessionManager.upcomingExercises)
             } header: {
                 Text("Queue")
             }
@@ -35,18 +32,18 @@ struct SessionWorkoutQueueView: View {
     
     private func PreviousWorkouts(completedExercises: [SessionData]) -> some View {
         ForEach(completedExercises, id: \.self) { exercise in
-            ExerciseListPreview(exercise: exercise.exercise, data: exercise)
+            ExerciseListPreview(exercise: exercise.exercise, data: exercise).id(exercise.id)
         }
     }
     
     private func UpcomingExercises(queuedExercises: [SessionData]) -> some View {
-        ForEach(queuedExercises, id: \.self) { workout in
-            ReusedViews.ExerciseViews.ExerciseListPreview(exercise: workout.exercise)
+        ForEach(queuedExercises, id: \.self) { queuedExercise in
+            ReusedViews.ExerciseViews.ExerciseListPreview(exercise: queuedExercise.exercise).id(queuedExercise.id)
         }
         .onMove { indices, newOffset in
-            sessionManager.upcomingWorkouts.move(fromOffsets: indices, toOffset: newOffset)
+            sessionManager.upcomingExercises.move(fromOffsets: indices, toOffset: newOffset)
         }.onDelete { indicies in
-            sessionManager.upcomingWorkouts.remove(atOffsets: indicies)
+            sessionManager.upcomingExercises.remove(atOffsets: indicies)
         }
     }
     

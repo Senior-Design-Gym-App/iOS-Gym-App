@@ -32,7 +32,7 @@ extension ReusedViews {
                     List {
                         Section {
                             ForEach(newExercises, id: \.self) { exercise in
-                                ExerciseViews.ExerciseListPreview(exercise: exercise)
+                                ExerciseViews.ExerciseListPreview(exercise: exercise).id(exercise.id)
                             }
                             .onMove { indices, newOffset in
                                 newExercises.move(fromOffsets: indices, toOffset: newOffset)

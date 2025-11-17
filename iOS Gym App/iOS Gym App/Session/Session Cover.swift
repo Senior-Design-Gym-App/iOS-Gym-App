@@ -7,27 +7,38 @@ struct SessionCover: View {
     @Environment(\.dismiss) private var dismiss
     @State var session: WorkoutSession
     @Environment(SessionManager.self) private var sessionManager: SessionManager
+    //    @State private var sessionManager = SessionManager()
     
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 10)
             Capsule()
-//                .padding(.top, 20)
+            //                .padding(.top, 20)
                 .frame(width: 65, height: 5)
             TabView {
                 Tab("Current", systemImage: "circle") {
-                    Text("Time and heart rate here")
+                    SessionInfo(session: session)
                 }
                 Tab("Queue", systemImage: "circle") {
                     SessionWorkoutQueueView()
                 }
             }
+            
             .tabViewStyle(.page(indexDisplayMode: .always))
             Spacer()
-            GroupBox {
+            VStack {
                 SessionCurrentExerciseView(sessionManager: sessionManager)
-                SessionSetControlView(sessionName: session.name, endAction: EndSession, deleteAction: DeleteSession, sessionManager: sessionManager)
-            }.frame(idealWidth: .infinity)
+                    .padding(.top)
+                SessionSetControlView(sessionName: session.name, endAction: EndSession, deleteAction: DeleteSession, renameAction: RenameSession, sessionManager: sessionManager)
+                    .padding(.horizontal)
+            }
+            
+            .background(
+                Rectangle()
+                    .fill(.regularMaterial)
+                    .clipShape(.rect(corners: .concentric, isUniform: true))
+            )
+            .padding()
         }
         .ignoresSafeArea(edges: .bottom)
     }
@@ -36,16 +47,12 @@ struct SessionCover: View {
         sessionManager.NextSet()
         sessionManager.NextWorkout()
         session.completed = Date()
-        sessionManager.EndLiveActivity()
-        sessionManager.FinishTimer()
         try? context.save()
         ClearCurrentData()
         dismiss()
     }
     
     private func DeleteSession() -> Void {
-        sessionManager.EndLiveActivity()
-        sessionManager.FinishTimer()
         context.delete(session)
         try? context.save()
         ClearCurrentData()
@@ -53,10 +60,10 @@ struct SessionCover: View {
     }
     
     private func ClearCurrentData() {
-        sessionManager.currentWorkout = nil
+        sessionManager.currentExercise = nil
         sessionManager.session = nil
-        sessionManager.upcomingWorkouts.removeAll()
-        sessionManager.completedWorkouts.removeAll()
+        sessionManager.upcomingExercises.removeAll()
+        sessionManager.completedExercises.removeAll()
         sessionManager.FinishTimer()
         sessionManager.EndLiveActivity()
     }
@@ -64,6 +71,9 @@ struct SessionCover: View {
     private func Dismiss() -> Void {
         dismiss()
     }
-
+    
+    private func RenameSession(name: String) -> Void {
+        session.name = name
+    }
     
 }

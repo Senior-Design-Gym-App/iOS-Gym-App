@@ -1,22 +1,31 @@
 import SwiftUI
-import ActivityKit
 
 struct SessionTabViewWrapper: View {
     
     @Namespace private var namespace
     @State private var currentSession: WorkoutSession?
     @Environment(SessionManager.self) private var sessionManager: SessionManager
+    @State private var showNewSession = false
     
     var body: some View {
-        if sessionManager.session != nil {
-            ValidSessionTabView()
-                .matchedTransitionSource(id: "tab", in: namespace)
-                .fullScreenCover(item: $currentSession) { session in
-                    SessionCover(session: session)
-                        .navigationTransition(.zoom(sourceID: "tab", in: namespace))
+        NavigationStack {
+            if sessionManager.session != nil {
+                ValidSessionTabView()
+                    .matchedTransitionSource(id: "tab", in: namespace)
+                    .fullScreenCover(item: $currentSession) { session in
+                        SessionCover(session: session)
+                            .navigationTransition(.zoom(sourceID: "tab", in: namespace))
+                    }
+            } else {
+                Button {
+                    showNewSession = true
+                } label: {
+                    Label("Select a session to get started.", systemImage: "play")
                 }
-        } else {
-            Text("thanks apple for making another bug")
+                .sheet(isPresented: $showNewSession) {
+                    SessionHomeView()
+                }
+            }
         }
     }
     
@@ -25,7 +34,7 @@ struct SessionTabViewWrapper: View {
             currentSession = sessionManager.session
         } label: {
             HStack {
-                if let currentWorkout = sessionManager.currentWorkout {
+                if let currentWorkout = sessionManager.currentExercise {
                     Image(systemName: currentWorkout.exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                         .foregroundStyle(Constants.labelColor)
                     VStack(alignment: .leading) {
@@ -47,27 +56,11 @@ struct SessionTabViewWrapper: View {
         }
     }
     
-    private func WorkoutName() -> some View {
-        if let currentWorkout = sessionManager.currentWorkout {
-            Text(currentWorkout.exercise.name)
-        } else {
-            Text("No Workout Selected")
-        }
-    }
-    
     private func TimeRemainingText() -> String {
-        if let activityState = sessionManager.exerciseTimer?.content.state {
-            let endTime = activityState.timerStart.addingTimeInterval(60)   // need to change later
-            let remaining = endTime.timeIntervalSince(Date.now)
-            let seconds = max(0, Int(remaining))
-            
-            let minutes = seconds / 60
-            let remainingSeconds = seconds % 60
-            return String(format: "%d:%02d", minutes, remainingSeconds)
-        }
-        
-        return "0:00"
+        let remaining = max(0, sessionManager.rest - Int(sessionManager.elapsedTime))
+        let minutes = remaining / 60
+        let remainingSeconds = remaining % 60
+        return String(format: "%d:%02d", minutes, remainingSeconds)
     }
-
     
 }

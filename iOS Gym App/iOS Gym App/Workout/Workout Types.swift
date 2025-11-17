@@ -38,7 +38,7 @@ struct SetData: Identifiable, Hashable, Codable {
     let weight: Double
     
     var setDouble: Double {
-        Double(set)
+        Double(set) + 1.0
     }
     
 }
@@ -69,21 +69,21 @@ enum MuscleGroup: String, CaseIterable, Identifiable {
     var colorPalette: Color {
         switch self {
         case .chest:
-            MuscleGroupColor.rose.color
+            AppColors.slateBlue.color
         case .back:
-            MuscleGroupColor.fandago.color
+            AppColors.unitedNationsBlue.color
         case .legs:
-            MuscleGroupColor.grape.color
+            AppColors.pictonBlue.color
         case .shoulders:
-            MuscleGroupColor.chryslerBlue.color
+            AppColors.aero.color
         case .biceps:
-            MuscleGroupColor.darkBlue.color
+            AppColors.skyBlue.color
         case .triceps:
-            MuscleGroupColor.zaffe.color
+            AppColors.tiffanyBlue.color
         case .core:
-            MuscleGroupColor.palatinateBlue.color
+            AppColors.turquoise.color
         case .forearm:
-            MuscleGroupColor.neonBlue.color
+            AppColors.aquamarine.color
         case .general:
             Color.white
         case .unknown:

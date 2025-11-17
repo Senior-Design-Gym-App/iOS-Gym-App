@@ -77,11 +77,11 @@ struct ReusedViews {
                     .fontWeight(.semibold)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .frame(idealWidth: extend ? .infinity : Constants.mediumIconSize, alignment: .leading)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .frame(idealWidth: extend ? .infinity : Constants.mediumIconSize, alignment: .leading)
         }
         
         static func Subheader(title: String) -> some View {

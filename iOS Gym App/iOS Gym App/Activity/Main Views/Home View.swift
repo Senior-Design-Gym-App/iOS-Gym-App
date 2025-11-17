@@ -16,25 +16,25 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                    InspirationalTextView(title: title, allWorkouts: allWorkouts)
-                    RecentSessionsView(allSessions: allSessions)
-                    LazyVGrid(columns: columns) {
-                        RecentUpdatesView(allExercises: allExercises)
-                        RecentPRView(allExercises: allExercises)
-                        RecentBodyweight()
-                        RecentBodyfat()
-                    }
-                    RecentMonthActivity(allExercises: allExercises, allSessions: allSessions)
-                    Divider().padding(.vertical)
-                    GroupBox {
-                        NavigationLink {
-                            HomeViewList(allWorkouts: allWorkouts, allExercises: allExercises, allSessions: allSessions)
-                        } label: {
-                            Text("See All")
-                                .frame(idealWidth: .infinity, maxWidth: .infinity)
-                        }.navigationLinkIndicatorVisibility(.hidden)
-                    }.clipShape(.capsule)
-                    Spacer(minLength: 20)
+                InspirationalTextView(title: title, allWorkouts: allWorkouts)
+                RecentMonthActivity()
+                RecentSessionsView(allSessions: allSessions)
+                LazyVGrid(columns: columns) {
+                    RecentUpdatesView(allExercises: allExercises)
+                    RecentPRView(allExercises: allExercises)
+                    RecentBodyweight()
+                    RecentBodyfat()
+                }
+                Divider().padding(.vertical)
+                GroupBox {
+                    NavigationLink {
+                        HomeViewList(allWorkouts: allWorkouts, allExercises: allExercises, allSessions: allSessions)
+                    } label: {
+                        Text("See All")
+                            .frame(idealWidth: .infinity, maxWidth: .infinity)
+                    }.navigationLinkIndicatorVisibility(.hidden)
+                }.clipShape(.capsule)
+                Spacer(minLength: 20)
             }
             .padding(.horizontal, 20)
             .navigationTitle("Home")

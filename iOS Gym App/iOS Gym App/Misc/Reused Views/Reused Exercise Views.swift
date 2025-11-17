@@ -50,14 +50,14 @@ extension ReusedViews {
             }
         }
         
-        static func IndiidualSetInfo(setData: SetData, colorKey: String, index: Int) -> some View {
+        static func IndiidualSetInfo(setData: SetData, color: Color, index: Int) -> some View {
             HStack {
                 if index < 50 {
                     Image(systemName: "\(index + 1).circle")
-                        .foregroundStyle(ColorManager.shared.GetColor(key: colorKey))
+                        .foregroundStyle(color)
                 } else {
                     Image(systemName: "circle")
-                        .foregroundStyle(ColorManager.shared.GetColor(key: colorKey))
+                        .foregroundStyle(color)
                 }
                 Text("\(setData.weight, specifier: "%.1f") lbs, \(setData.reps) reps, \(setData.rest)s")
                 Spacer()
@@ -67,7 +67,7 @@ extension ReusedViews {
         static func SetDataInfo(setData: [SetData], exericse: Exercise, showAddSheet: Binding<Bool>) -> some View {
             Section {
                 ForEach(setData, id: \.self) { entry in
-                    IndiidualSetInfo(setData: entry, colorKey: exericse.id.hashValue.description, index: setData.firstIndex(of: entry)!)
+                    IndiidualSetInfo(setData: entry, color: exericse.color, index: setData.firstIndex(of: entry)!)
                 }
             } header: {
                 Buttons.EditHeaderButton(toggleEdit: showAddSheet, type: .exercise, items: setData)
@@ -128,7 +128,7 @@ extension ReusedViews {
                     List {
                         Section {
                             ForEach(newSetData, id: \.self) { set in
-                                IndiidualSetInfo(setData: set, colorKey: exercise.id.hashValue.description, index: newSetData.firstIndex(of: set)!)
+                                IndiidualSetInfo(setData: set, color: exercise.color, index: newSetData.firstIndex(of: set)!)
                             }
                             .onMove { indices, newOffset in
                                 newSetData.move(fromOffsets: indices, toOffset: newOffset)

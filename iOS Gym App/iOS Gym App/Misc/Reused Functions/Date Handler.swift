@@ -17,7 +17,7 @@ final class DateHandler {
         }
     }
     
-    func formatDateBasedOnYear(_ date: Date) -> String {
+    static func MonthYearString(date: Date) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM yyyy"
         return dateFormatter.string(from: date)

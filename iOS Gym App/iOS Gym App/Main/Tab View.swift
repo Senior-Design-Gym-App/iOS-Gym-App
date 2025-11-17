@@ -9,9 +9,6 @@ struct TabHome: View {
             Tab("Home", systemImage: "house") {
                 HomeView(title: ActivityLabels.RandomGymGreeting())
             }
-            Tab("Session", systemImage: "gauge.with.needle") {
-                SessionHomeView()
-            }
             Tab("Workout", systemImage: "dumbbell") {
                 WorkoutHome()
             }

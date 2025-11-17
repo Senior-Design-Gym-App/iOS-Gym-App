@@ -4,8 +4,8 @@ import SwiftData
 struct DayActivity: View {
     
     let dayProgress: Date
-    let session: [WorkoutSession]
-    let allExercises: [Exercise]
+    @Query private var allSessions: [WorkoutSession]
+    @Query private var allExercises: [Exercise]
     @Environment(ProgressManager.self) private var hkm
     @AppStorage("useLBs") private var useLBs = true
     private let calendar = Calendar.current
@@ -13,41 +13,44 @@ struct DayActivity: View {
     private let AL = ActivityLabels()
     
     var body: some View {
-        List {
-            Section {
-                ForEach(
-                    session.filter {
-                        $0.completed.map { calendar.isDate($0, inSameDayAs: dayProgress) } ?? false
-                    },
-                    id: \.self
-                ) { session in
-                    SessionLink(session: session)
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(
+                        allSessions.filter {
+                            $0.completed.map { calendar.isDate($0, inSameDayAs: dayProgress) } ?? false
+                        },
+                        id: \.self
+                    ) { session in
+                        SessionLink(session: session)
+                    }
+                } header: {
+                    Text("Session")
                 }
-            } header: {
-                Text("Session")
-            }
-            Section {
-                ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
-                    BodyWeightData(data: data)
+                Section {
+                    ForEach(allExercises.filter { $0.updateData.contains { calendar.isDate($0.changeDate, inSameDayAs: dayProgress) } }, id: \.self) { update in
+                        
+                    }
+                } header: {
+                    Text("Progress")
                 }
-            } header: {
-                Text("Body Weight")
-            }
-            Section {
-                ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
-                    BodyFatData(data: data)
+                Section {
+                    ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
+                        BodyWeightData(data: data)
+                    }
+                } header: {
+                    Text("Body Weight")
                 }
-            } header: {
-                Text("Body Fat")
-            }
-            Section {
-                ForEach(allExercises.filter { $0.updateData.contains { calendar.isDate($0.changeDate, inSameDayAs: dayProgress) } }, id: \.self) { update in
-                    
+                Section {
+                    ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
+                        BodyFatData(data: data)
+                    }
+                } header: {
+                    Text("Body Fat")
                 }
-            } header: {
-                Text("Progress")
+                .navigationTitle(HeaderDateFormatter())
+                .navigationBarTitleDisplayMode(.inline)
             }
-            .navigationTitle(HeaderDateFormatter())
         }
     }
     

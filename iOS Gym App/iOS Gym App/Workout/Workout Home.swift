@@ -6,6 +6,7 @@ struct WorkoutHome: View {
     @Query private var allWorkouts: [Workout]
     @Query private var allExercises: [Exercise]
     @Query private var allSplits: [Split]
+    @AppStorage("showTips") private var showTips: Bool = true
     
     @Namespace private var namespace
     
@@ -24,10 +25,7 @@ struct WorkoutHome: View {
     var body: some View {
         NavigationStack {
             List {
-                
-                Section {
-                    MyWorkoutSection()
-                }
+                MyWorkoutSection()
                 Section {
                     ScrollView(.horizontal) {
                         HStack {
@@ -78,18 +76,44 @@ struct WorkoutHome: View {
             NavigationLink {
                 AllExerciseView()
             } label: {
-                Label("Exercises", systemImage: Constants.exerciseIcon)
+                Label {
+                    Text("Exercises")
+                    if showTips {
+                        Text("Create exercises to add to a workout. An exercise can be in an infinite amount of workouts.")
+                            .font(.caption2)
+                    }
+                } icon: {
+                    Image(systemName: Constants.sessionIcon)
+                }
             }
             NavigationLink {
                 AllWorkoutsView()
             } label: {
-                Label("Workouts", systemImage: Constants.workoutIcon)
+                Label {
+                    Text("Workouts")
+                    if showTips {
+                        Text("A workout is a collection of exercises. Add a workout to a split. One workout per split.")
+                            .font(.caption2)
+                    }
+                } icon: {
+                    Image(systemName: Constants.workoutIcon)
+                }
             }
             NavigationLink {
                 AllWorkoutSplitsView(allSplits: allSplits, allWorkouts: allWorkouts, allExercises: allExercises)
             } label: {
-                Label("Splits", systemImage: Constants.splitIcon)
+                Label {
+                    Text("Splits")
+                    if showTips {
+                        Text("Create a split to organize your workouts and to start a session. Set the split as active to quickly start it.")
+                            .font(.caption2)
+                    }
+                } icon: {
+                    Image(systemName: Constants.splitIcon)
+                }
             }
+        } footer: {
+            Text("You can turn off tips in the settings.")
         }
     }
     
@@ -100,7 +124,7 @@ struct WorkoutHome: View {
         } label: {
             ReusedViews.ExerciseViews.HorizontalListPreview(exercise: exercise)
         }.buttonStyle(.plain)
-        .matchedTransitionSource(id: exercise.id, in: namespace)
+            .matchedTransitionSource(id: exercise.id, in: namespace)
     }
     
     private func RecentWorkout(workout: Workout) -> some View {
@@ -110,7 +134,7 @@ struct WorkoutHome: View {
         } label: {
             ReusedViews.WorkoutViews.HorizontalListPreview(workout: workout)
         }.buttonStyle(.plain)
-        .matchedTransitionSource(id: workout.id, in: namespace)
+            .matchedTransitionSource(id: workout.id, in: namespace)
     }
     
     private func RecentSplit(split: Split) -> some View {
@@ -120,7 +144,7 @@ struct WorkoutHome: View {
         } label: {
             ReusedViews.SplitViews.HorizontalListPreview(split: split)
         }.buttonStyle(.plain)
-        .matchedTransitionSource(id: split.id, in: namespace)
+            .matchedTransitionSource(id: split.id, in: namespace)
     }
     
 }

@@ -8,7 +8,6 @@ import SwiftData
 class SessionManager {
     
     // MARK: Live Activities
-    var progress: Float = 0
     var exerciseTimer: Activity<WorkoutTimer>? = nil
     var elapsedTime: TimeInterval = 0
     var timer: Timer? = nil
@@ -16,26 +15,29 @@ class SessionManager {
     
     // MARK: Session Logic
     var session: WorkoutSession?
-    var currentWorkout: SessionData?
-    var upcomingWorkouts: [SessionData] = []
-    var completedWorkouts: [WorkoutSessionEntry] = []
+    var currentExercise: SessionData?
+    var upcomingExercises: [SessionData] = []
+    var completedExercises: [WorkoutSessionEntry] = []
     var rest: Int = 0
     var reps: Int = 0
     var weight: Double = 0
     
     var currentSet: Int {
-        (currentWorkout?.entry.weight.count ?? 0) + 1
+        (currentExercise?.entry.weight.count ?? 0) + 1
     }
     
     var totalSets: Int {
-        max(currentWorkout?.exercise.recentSetData.setData.count ?? 1, currentSet)
+        max(currentExercise?.exercise.recentSetData.setData.count ?? 1, currentSet)
     }
         
     func StartTimer(exercise: Exercise, entry: WorkoutSessionEntry) {
         FinishTimer()
+        elapsedTime = 0
         if rest > 0 {
             timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [self] _ in
-                self.UpdateTimer(restTime: rest)
+                withAnimation {
+                    elapsedTime += 1
+                }
                 
                 if Int(self.elapsedTime) >= rest {
                     self.FinishTimer()
@@ -48,60 +50,55 @@ class SessionManager {
                 NotificationManager.instance.ScheduleNotification(seconds: rest)
             case .timer:
                 return
+            case .none:
+                FinishTimer()
             }
         }
-    }
-
-    private func UpdateTimer(restTime: Int) {
-        guard let currentState = exerciseTimer?.content.state else { return }
-        
-        self.elapsedTime += 1
-        let elapsed = Date.now.timeIntervalSince(currentState.timerStart)
-        progress = Float(min(elapsed / Double(restTime), 1.0))
     }
     
     func FinishTimer() {
         timer?.invalidate()
         timer = nil
-        elapsedTime = 0
+        elapsedTime = TimeInterval(rest)
     }
     
     func QueueExercise(exercise: Exercise) {
         let newEntry = WorkoutSessionEntry(reps: [], weight: [], session: nil, exercise: nil)
         let newQueueItem = SessionData(exercise: exercise, entry: newEntry)
-        if currentWorkout == nil {
+        if currentExercise == nil {
             if let first = exercise.recentSetData.setData.first {
                 reps = first.reps
                 weight = first.weight
                 rest = first.rest
                 StartTimer(exercise: exercise, entry: newEntry)
             }
-            currentWorkout = newQueueItem
+            currentExercise = newQueueItem
         } else {
-            upcomingWorkouts.append(newQueueItem)
+            upcomingExercises.append(newQueueItem)
         }
     }
     
     func NextWorkout() {
         FinishTimer()
-        if let current = currentWorkout {
+        if let current = currentExercise {
             current.entry.exercise = current.exercise
             current.entry.session = session
-            completedWorkouts.append(current.entry)
-            self.currentWorkout = nil
+            completedExercises.append(current.entry)
+            self.currentExercise = nil
         }
         
-        if let next = upcomingWorkouts.first {
+        if let next = upcomingExercises.first {
             
             QueueExercise(exercise: next.exercise)
-            upcomingWorkouts.removeFirst()
+            upcomingExercises.removeFirst()
             
         }
     }
     
     func PreviousWorkout() {
         FinishTimer()
-        if let prevEntry = completedWorkouts.last {
+        UnselectWorkout()
+        if let prevEntry = completedExercises.last {
             
             if let exercise = prevEntry.exercise {
                 QueueExercise(exercise: exercise)
@@ -109,56 +106,60 @@ class SessionManager {
             }
             
             prevEntry.session = nil
-            completedWorkouts.removeLast()
-        }
-        if let currentWorkout {
-            upcomingWorkouts.insert(currentWorkout, at: 0)
-            self.currentWorkout = nil
+            completedExercises.removeLast()
         }
     }
     
     func NextSet() {
         FinishTimer()
-        self.currentWorkout?.entry.reps.append(reps)
-        self.currentWorkout?.entry.weight.append(weight)
+        self.currentExercise?.entry.reps.append(reps)
+        self.currentExercise?.entry.weight.append(weight)
         
-        if let currentWorkout {
+        if let currentExercise {
             
-            let nextSetIndex = currentWorkout.entry.weight.count // This is now the index for the NEXT set (0-indexed)
+            let nextSetIndex = currentExercise.entry.weight.count // This is now the index for the NEXT set (0-indexed)
             
-            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
-                reps = currentWorkout.exercise.recentSetData.setData[nextSetIndex].reps
+            if nextSetIndex < currentExercise.exercise.recentSetData.setData.count {
+                reps = currentExercise.exercise.recentSetData.setData[nextSetIndex].reps
             }
             
-            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
-                weight = currentWorkout.exercise.recentSetData.setData[nextSetIndex].weight
+            if nextSetIndex < currentExercise.exercise.recentSetData.setData.count {
+                weight = currentExercise.exercise.recentSetData.setData[nextSetIndex].weight
             }
             
-            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
-                rest = currentWorkout.exercise.recentSetData.setData[nextSetIndex].rest
+            if nextSetIndex < currentExercise.exercise.recentSetData.setData.count {
+                rest = currentExercise.exercise.recentSetData.setData[nextSetIndex].rest
             }
             
-            StartTimer(exercise: currentWorkout.exercise, entry: currentWorkout.entry)
+            StartTimer(exercise: currentExercise.exercise, entry: currentExercise.entry)
+        }
+    }
+    
+    func UnselectWorkout() {
+        FinishTimer()
+        if let currentExercise {
+            upcomingExercises.insert(currentExercise, at: 0)
+            self.currentExercise = nil
         }
     }
     
     func PreviousSet() {
         FinishTimer()
-        if let weight = currentWorkout?.entry.weight.last, let reps = currentWorkout?.entry.reps.last {
+        if let weight = currentExercise?.entry.weight.last, let reps = currentExercise?.entry.reps.last {
             self.weight = weight
             self.reps = reps
         }
         
-        currentWorkout?.entry.weight.removeLast()
-        currentWorkout?.entry.reps.removeLast()
+        currentExercise?.entry.weight.removeLast()
+        currentExercise?.entry.reps.removeLast()
         
-        if let currentWorkout {
+        if let currentExercise {
             
-            let nextSetIndex = currentWorkout.entry.weight.count // This is now the index for the NEXT set (0-indexed)
-            if nextSetIndex < currentWorkout.exercise.recentSetData.setData.count {
-                rest = currentWorkout.exercise.recentSetData.setData[nextSetIndex].rest
+            let nextSetIndex = currentExercise.entry.weight.count // This is now the index for the NEXT set (0-indexed)
+            if nextSetIndex < currentExercise.exercise.recentSetData.setData.count {
+                rest = currentExercise.exercise.recentSetData.setData[nextSetIndex].rest
             }
-            StartTimer(exercise: currentWorkout.exercise, entry: currentWorkout.entry)
+            StartTimer(exercise: currentExercise.exercise, entry: currentExercise.entry)
         }
         
     }
