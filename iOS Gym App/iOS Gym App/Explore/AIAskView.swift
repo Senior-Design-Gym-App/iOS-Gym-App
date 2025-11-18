@@ -15,23 +15,36 @@ struct AIAskView: View {
         "Recommend a mobility routine",
         "What should I do for fat loss?"
     ]
+    
+    private let chipCornerRadius = Constants.cornerRadius
+    private let chipSpacing: CGFloat = Constants.customLabelPadding
+    private let inputRadius: CGFloat = Constants.cornerRadius + 8
+    private let primaryTint = Constants.mainAppTheme
+    private let bubbleCornerRadius = Constants.cornerRadius + 4
+    
     var body: some View {
         VStack(spacing: 0) {
             // Suggestions chips
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: chipSpacing) {
                     ForEach(suggestions, id: \.self) { item in
                         Button(action: { prompt = item }) {
-                            HStack(spacing: 6) {
+                            HStack(spacing: chipSpacing) {
                                 Image(systemName: "sparkles")
                                     .font(.footnote)
                                 Text(item)
                                     .font(.footnote)
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.systemGray6)))
-                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color(.separator)))
+                            .padding(.vertical, chipSpacing + 3)
+                            .padding(.horizontal, Constants.titlePadding * 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: chipCornerRadius, style: .continuous)
+                                    .fill(Color(.systemGray6))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: chipCornerRadius, style: .continuous)
+                                    .stroke(Color(.separator))
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -61,15 +74,21 @@ struct AIAskView: View {
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 12)
-                .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(.systemGray6)))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color(.separator)))
+                .background(
+                    RoundedRectangle(cornerRadius: inputRadius, style: .continuous)
+                        .fill(Color(.systemGray6))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: inputRadius, style: .continuous)
+                        .stroke(Color(.separator))
+                )
 
                 Button(action: { /* TODO: send */ }) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Constants.buttonTheme)
                         .frame(width: 36, height: 36)
-                        .background(Circle().fill(Color.accentColor))
+                        .background(Circle().fill(primaryTint))
                 }
                 .buttonStyle(.plain)
             }
@@ -85,18 +104,23 @@ struct AIAskView: View {
 private struct ChatBubble: View {
     let text: String
     let isUser: Bool
+    
+    private let cornerRadius = Constants.cornerRadius + 4
+    private let userTint = Constants.mainAppTheme
+    private let bubblePadding = Constants.titlePadding + 5
+    
     var body: some View {
         HStack(alignment: .bottom) {
             if isUser { Spacer(minLength: 40) }
             Text(text)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 12)
+                .padding(.vertical, bubblePadding)
+                .padding(.horizontal, bubblePadding + 2)
                 .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(isUser ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(isUser ? userTint.opacity(0.15) : Color(.systemGray6))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                         .stroke(Color(.separator))
                 )
                 .frame(maxWidth: 320, alignment: .leading)
@@ -105,4 +129,7 @@ private struct ChatBubble: View {
     }
 }
 
+#Preview{
+    AIAskView()
+}
 

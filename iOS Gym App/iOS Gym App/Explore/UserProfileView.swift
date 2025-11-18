@@ -13,6 +13,14 @@ struct UserProfileView: View {
 
     @State private var currentProfile: UserProfileContent = .empty
     @State private var hasLoadedProfile = false
+    
+    private let bannerHeight: CGFloat = 140
+    private let avatarSize: CGFloat = Constants.mediumIconSize
+    private let infoCornerRadius = Constants.cornerRadius + 2
+    private let cardCornerRadius = Constants.homeRadius
+    private let statCardCornerRadius = Constants.cornerRadius
+    private let recentCardCornerRadius = Constants.cornerRadius + 2
+    private let horizontalSpacing = Constants.customLabelPadding * 3
 
     var body: some View {
         ScrollView {
@@ -51,17 +59,17 @@ struct UserProfileView: View {
                     Image(uiImage: coverImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(height: 140)
+                        .frame(height: bannerHeight)
                         .clipped()
                 } else {
                     Rectangle()
                         .fill(Color(.systemGray5))
-                        .frame(height: 140)
+                        .frame(height: bannerHeight)
                 }
                 LinearGradient(colors: [.black.opacity(0.2), .black.opacity(0.05)], startPoint: .top, endPoint: .bottom)
             }
-            .frame(height: 140)
-            HStack(alignment: .bottom, spacing: 16) {
+            .frame(height: bannerHeight)
+            HStack(alignment: .bottom, spacing: horizontalSpacing) {
                 ZStack {
                     if let profileImage = currentProfile.profileImage {
                         Image(uiImage: profileImage)
@@ -72,12 +80,12 @@ struct UserProfileView: View {
                             .fill(Color(.systemGray6))
                     }
                 }
-                .frame(width: 96, height: 96)
+                .frame(width: avatarSize, height: avatarSize)
                 .clipShape(Circle())
                 .overlay {
                     if currentProfile.profileImage == nil {
                         Image(systemName: "person.fill")
-                            .font(.system(size: 44))
+                            .font(.system(size: avatarSize / 2.2))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -95,7 +103,7 @@ struct UserProfileView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: infoCornerRadius, style: .continuous)
                         .fill(.ultraThinMaterial)
                         .opacity(0.7)
                 )
@@ -132,23 +140,32 @@ struct UserProfileView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(.systemGray6)))
+                    .background(
+                        RoundedRectangle(cornerRadius: statCardCornerRadius, style: .continuous)
+                            .fill(Color(.systemGray6))
+                    )
                 }
             }
         }
         .padding()
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(.systemBackground)))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color(.separator)))
+        .background(
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                .stroke(Color(.separator))
+        )
         .padding(.horizontal)
     }
 
     private var recent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Constants.customLabelPadding * 2) {
             Text("Recent Workouts")
                 .font(.headline)
             ForEach(currentProfile.recentWorkouts, id: \.self) { workout in
-                HStack(spacing: 12) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                HStack(spacing: Constants.customLabelPadding * 2) {
+                    RoundedRectangle(cornerRadius: statCardCornerRadius, style: .continuous)
                         .fill(Color(.systemGray6))
                         .frame(width: 56, height: 56)
                         .overlay { Image(systemName: "dumbbell").foregroundStyle(.primary) }
@@ -163,7 +180,10 @@ struct UserProfileView: View {
                     Image(systemName: "chevron.right").foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.systemGray6)))
+            .background(
+                RoundedRectangle(cornerRadius: recentCardCornerRadius, style: .continuous)
+                    .fill(Color(.systemGray6))
+            )
             }
         }
     }

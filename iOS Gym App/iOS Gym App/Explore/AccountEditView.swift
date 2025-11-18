@@ -21,10 +21,17 @@ struct AccountEditView: View {
     @State private var coverPickerSource: UIImagePickerController.SourceType = .photoLibrary
     
     @Environment(\.dismiss) private var dismiss
+    
+    private let cardCornerRadius = Constants.cornerRadius
+    private let accentTint = Constants.mainAppTheme
+    private let sectionSpacing = Constants.customLabelPadding
+    private let avatarSize: CGFloat = 96
+    private let photoHeight: CGFloat = 120
+    
     var body: some View {
         Form {
             Section(header: Text("Cover Photo")) {
-                VStack(spacing: 10) {
+                VStack(spacing: sectionSpacing) {
                     ZStack {
                         if let coverImage = editingProfile.coverImage {
                             Image(uiImage: coverImage)
@@ -34,13 +41,13 @@ struct AccountEditView: View {
                             Color.gray.opacity(0.3)
                                 .overlay {
                                     Image(systemName: "photo.fill")
-                                        .font(.system(size: 48))
+                                        .font(.system(size: Constants.mediumIconSize / 2))
                                         .foregroundStyle(.secondary)
                                 }
                         }
                     }
-                    .frame(height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .frame(height: photoHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                     .contentShape(Rectangle())
                     .onTapGesture { showCoverImageOptions = true }
                     Text("Cover Photo")
@@ -55,7 +62,7 @@ struct AccountEditView: View {
                 .alignmentGuide(.listRowSeparatorTrailing) { _ in 0 }
             }
             Section(header: Text("Profile")) {
-                VStack(spacing: 10) {
+                VStack(spacing: sectionSpacing) {
                     ZStack {
                         if let uiImage = editingProfile.profileImage {
                             Image(uiImage: uiImage)
@@ -65,13 +72,13 @@ struct AccountEditView: View {
                             Color.gray.opacity(0.3)
                                 .overlay {
                                 Image(systemName: "person.fill")
-                                .font(.system(size: 48))
+                                .font(.system(size: Constants.mediumIconSize / 2))
                                 .foregroundStyle(.secondary)
                                 }
                         }
                     }
                     .clipShape(Circle())
-                    .frame(width: 96, height: 96)
+                    .frame(width: avatarSize, height: avatarSize)
                     .contentShape(Circle())
                     .onTapGesture { showImageOptions = true }
                     .onLongPressGesture { if editingProfile.profileImage != nil { showPreview = true } }
@@ -126,9 +133,9 @@ struct AccountEditView: View {
                                         .font(.body.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
-                                        .foregroundStyle(Color.accentColor)
+                                        .foregroundStyle(accentTint)
                                         .background(Color.secondary.opacity(0.12))
-                                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                                 }
                             }
                             Button(action: {
@@ -140,9 +147,9 @@ struct AccountEditView: View {
                                     .font(.body.weight(.semibold))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
-                                    .foregroundStyle(Color.accentColor)
+                                    .foregroundStyle(accentTint)
                                     .background(Color.secondary.opacity(0.12))
-                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                             }
                             if editingProfile.coverImage != nil {
                                 Button(role: .destructive, action: {
@@ -154,7 +161,7 @@ struct AccountEditView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
                                         .background(Color.secondary.opacity(0.12))
-                                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                                 }
                             }
                             Button(role: .cancel, action: { showCoverImageOptions = false }) {
@@ -192,9 +199,9 @@ struct AccountEditView: View {
                                         .font(.body.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
-                                        .foregroundStyle(Color.accentColor)
+                                        .foregroundStyle(accentTint)
                                         .background(Color.secondary.opacity(0.12))
-                                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                                 }
                             }
                             Button(action: {
@@ -206,9 +213,9 @@ struct AccountEditView: View {
                                     .font(.body.weight(.semibold))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
-                                    .foregroundStyle(Color.accentColor)
+                                    .foregroundStyle(accentTint)
                                     .background(Color.secondary.opacity(0.12))
-                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                             }
                             if editingProfile.profileImage != nil {
                                 Button(role: .destructive, action: {
@@ -220,7 +227,7 @@ struct AccountEditView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 12)
                                         .background(Color.secondary.opacity(0.12))
-                                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                        .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
                                 }
                             }
                             Button(role: .cancel, action: { showImageOptions = false }) {
@@ -271,7 +278,7 @@ struct AccountEditView: View {
         }
         .navigationTitle("Edit Account")
         .onAppear(perform: loadInitialState)
-        .onChange(of: profile) { _, newValue in
+        .onChange(of: profile) { newValue in
             editingProfile = newValue
         }
     }
@@ -321,4 +328,3 @@ private struct ImagePicker: UIViewControllerRepresentable {
         }
     }
 }
-

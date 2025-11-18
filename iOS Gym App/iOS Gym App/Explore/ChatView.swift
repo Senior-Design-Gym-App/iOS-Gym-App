@@ -14,6 +14,11 @@ struct ChatView: View {
         .init(id: UUID(), text: "Hey there!", isMe: false),
         .init(id: UUID(), text: "Hi! Big fan of your workouts.", isMe: true)
     ]
+    
+    private let bubbleCornerRadius = Constants.cornerRadius + 4
+    private let bubblePadding = Constants.titlePadding + 5
+    private let inputCornerRadius = Constants.cornerRadius + 8
+    private let primaryTint = Constants.mainAppTheme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,13 +29,16 @@ struct ChatView: View {
                             HStack {
                                 if msg.isMe { Spacer(minLength: 40) }
                                 Text(msg.text)
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, bubblePadding)
+                                    .padding(.horizontal, bubblePadding + 2)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(msg.isMe ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                                        RoundedRectangle(cornerRadius: bubbleCornerRadius, style: .continuous)
+                                            .fill(msg.isMe ? primaryTint.opacity(0.15) : Color(.systemGray6))
                                     )
-                                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color(.separator)))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: bubbleCornerRadius, style: .continuous)
+                                            .stroke(Color(.separator))
+                                    )
                                 if !msg.isMe { Spacer(minLength: 40) }
                             }
                             .id(msg.id)
@@ -39,8 +47,12 @@ struct ChatView: View {
                     }
                     .padding(.top, 12)
                 }
-                .onChange(of: messages.count) { _, newValue in
-                    if let last = messages.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
+                .onChange(of: messages.count, initial: false) { _, _ in
+                    if let last = messages.last {
+                        withAnimation {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
+                    }
                 }
             }
 
@@ -49,14 +61,20 @@ struct ChatView: View {
                     .textFieldStyle(.plain)
                     .padding(.vertical, 10)
                     .padding(.horizontal, 12)
-                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color(.systemGray6)))
-                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color(.separator)))
+                    .background(
+                        RoundedRectangle(cornerRadius: inputCornerRadius, style: .continuous)
+                            .fill(Color(.systemGray6))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: inputCornerRadius, style: .continuous)
+                            .stroke(Color(.separator))
+                    )
                 Button(action: send) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Constants.buttonTheme)
                         .frame(width: 36, height: 36)
-                        .background(Circle().fill(Color.accentColor))
+                        .background(Circle().fill(primaryTint))
                 }
                 .buttonStyle(.plain)
                 .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

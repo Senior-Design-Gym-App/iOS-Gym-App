@@ -10,6 +10,11 @@ import SwiftUI
 struct UserSearchView: View {
     @State private var query: String = ""
     private let mockUsers: [String] = ["aaron", "matthew", "troy", "zach"]
+    
+    private let avatarSize: CGFloat = Constants.smallIconSize
+    private let primaryTint = Constants.mainAppTheme
+    private let rowSpacing = Constants.customLabelPadding * 2
+    
     var filteredUsers: [String] {
         guard !query.isEmpty else { return mockUsers }
         return mockUsers.filter { $0.localizedCaseInsensitiveContains(query) }
@@ -20,12 +25,13 @@ struct UserSearchView: View {
                 NavigationLink {
                     UserProfileView(profile: UserProfileContent(username: user.capitalized, displayName: user))
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: rowSpacing) {
                         Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: 40, height: 40)
+                            .fill(primaryTint.opacity(0.2))
+                            .frame(width: avatarSize, height: avatarSize)
                             .overlay {
                                 Image(systemName: "person.fill")
+                                    .foregroundStyle(primaryTint)
                             }
                         VStack(alignment: .leading) {
                             Text(user)

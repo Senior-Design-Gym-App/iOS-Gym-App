@@ -18,11 +18,15 @@ private enum SearchCategory: String, CaseIterable, Identifiable {
 struct GlobalSearchView: View {
     @State private var query: String = ""
     @State private var activeCategories: Set<SearchCategory> = Set(SearchCategory.allCases)
+    
+    private let fieldCornerRadius = Constants.cornerRadius + 4
+    private let chipSpacing = Constants.customLabelPadding
+    private let primaryTint = Constants.mainAppTheme
 
     var body: some View {
         VStack(spacing: 0) {
             // Search field
-            HStack(spacing: 8) {
+            HStack(spacing: chipSpacing) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField("Search users, workouts, sessions, gyms", text: $query)
@@ -36,13 +40,19 @@ struct GlobalSearchView: View {
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 12)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.systemGray6)))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color(.separator)))
+            .background(
+                RoundedRectangle(cornerRadius: fieldCornerRadius, style: .continuous)
+                    .fill(Color(.systemGray6))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: fieldCornerRadius, style: .continuous)
+                    .stroke(Color(.separator))
+            )
             .padding([.horizontal, .top])
 
             // Filters
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: chipSpacing) {
                     ForEach(SearchCategory.allCases) { cat in
                         let isOn = activeCategories.contains(cat)
                         Button(action: {
@@ -50,11 +60,11 @@ struct GlobalSearchView: View {
                         }) {
                             Text(cat.rawValue)
                                 .font(.footnote.weight(.semibold))
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
+                                .padding(.vertical, chipSpacing)
+                                .padding(.horizontal, Constants.titlePadding * 2)
                                 .background(
                                     Capsule(style: .continuous)
-                                        .fill(isOn ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                                        .fill(isOn ? primaryTint.opacity(0.15) : Color(.systemGray6))
                                 )
                                 .overlay(
                                     Capsule(style: .continuous)
@@ -93,6 +103,7 @@ struct GlobalSearchView: View {
                                     ShareLink(item: item.shareText) {
                                         Label("Share", systemImage: "square.and.arrow.up")
                                     }
+                                    .tint(primaryTint)
                                 }
                             }
                             .padding(.vertical, 6)
@@ -110,6 +121,7 @@ struct GlobalSearchView: View {
                                     ShareLink(item: item.shareText) {
                                         Label("Share", systemImage: "square.and.arrow.up")
                                     }
+                                    .tint(primaryTint)
                                 }
                             }
                             .padding(.vertical, 6)
