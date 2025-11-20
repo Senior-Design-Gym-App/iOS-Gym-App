@@ -4,4 +4,10 @@
    <FileRef
       location = "self:">
    </FileRef>
+   <FileRef
+      location = "group:Rep the Set Watch App.entitlements">
+   </FileRef>
+   <FileRef
+      location = "group:Live Activity TimerExtension.entitlements">
+   </FileRef>
 </Workspace>
