@@ -11,13 +11,19 @@ struct AuthTokens: Codable {
     let refreshToken: String
 }
 enum CognitoConfig {
-    static let region = "us-east-1"
-    static let userPoolId = "us-east-1_CufyXN1AX"
-    static let clientId = "3altkace0jjhoabhguqq4et7om"
-    static let apiBaseUrl = "https://mhfwd1sla9.execute-api.us-east-1.amazonaws.com/prod"
-    //static let callbackURL = "https://d84l1y8p4kdic.cloudfront.net"
-    static let callbackURL = "yourapp://callback"
-    static let domainURL = "https://us-east-1cufyxn1ax.auth.us-east-1.amazoncognito.com"
+    private static func getConfigValue(for key: String) -> String {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
+            fatalError("Missing \(key) in Info.plist")
+        }
+        return value
+    }
+    
+    static let region = getConfigValue(for: "AWSRegion")
+    static let userPoolId = getConfigValue(for: "AWSUserPoolId")
+    static let clientId = getConfigValue(for: "AWSClientId")
+    static let apiBaseUrl = getConfigValue(for: "AWSAPIBaseUrl")
+    static let callbackURL = getConfigValue(for: "AWSCallbackURL")
+    static let domainURL = getConfigValue(for: "AWSDomainURL")
 }
 
 class CognitoManager: NSObject, ObservableObject{
@@ -44,6 +50,12 @@ class CognitoManager: NSObject, ObservableObject{
         self.apiBaseUrl = CognitoConfig.apiBaseUrl
         self.callbackURL = CognitoConfig.callbackURL
         self.domainURL = CognitoConfig.domainURL
+        
+        print(userPoolId)
+        print(clientId)
+        print(apiBaseUrl)
+        print(callbackURL)
+        print(domainURL)
     }
     
     // MARK: - Sign Up

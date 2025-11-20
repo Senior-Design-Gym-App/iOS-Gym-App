@@ -58,9 +58,9 @@ private struct ExploreGrid: View {
             NavigationLink(destination: { AIAskView() }, label: {
                 ExploreCard(title: "Ask AI", subtitle: "Get guidance", systemImage: "sparkles")
             })
-            NavigationLink(destination: { AccountCreateView() }, label: {
-                ExploreCard(title: "Create Account", subtitle: "Join now", systemImage: "person.badge.plus.fill")
-            })
+//            NavigationLink(destination: { AccountCreateView() }, label: {
+//                ExploreCard(title: "Create Account", subtitle: "Join now", systemImage: "person.badge.plus.fill")
+//            })
         }
     }
 }

@@ -2,6 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AWSAPIBaseUrl</key>
+	<string>$(AWS_APIBASEURL)</string>
+	<key>AWSCallbackURL</key>
+	<string>$(AWS_CALLBACKURL)</string>
+	<key>AWSClientId</key>
+	<string>$(AWS_CLIENTID)</string>
+	<key>AWSDomainURL</key>
+	<string>$(AWS_DOMAINURL)</string>
+	<key>AWSRegion</key>
+	<string>$(AWS_REGION)</string>
+	<key>AWSUserPoolId</key>
+	<string>$(AWS_USERPOOLID)</string>
+	<key>CFBundleGetInfoString</key>
+	<string></string>
+	<key>OpenAICallback</key>
+	<string>$(OPENAI_CALLBACK)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

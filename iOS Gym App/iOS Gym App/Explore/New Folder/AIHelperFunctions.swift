@@ -13,8 +13,14 @@ class AIFunctions{
     struct MessagePayload: Codable {
         let message: String
     }
+    private static func getConfigValue(for key: String) -> String {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
+            fatalError("Missing \(key) in Info.plist")
+        }
+        return value
+    }
     
-    var APIURL = URL(string: "https://api.repthesetapi.xyz/chat")
+    var APIURL = URL(string: getConfigValue(for: "OpenAICallback"))
     var response = ""
     func GenericResponse(message : String) async throws -> String{
         print(message)
