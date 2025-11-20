@@ -1,2 +1,76 @@
-.xcuserstate
-.gitignore
+# macOS -----------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Xcode -----------------------------------------
+*.xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# User-specific IDE files
+xcuserdata/
+*.xcuserdatad
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Build artifacts
+build/
+DerivedData/
+
+# Swift Package Manager --------------------------
+.swiftpm/
+.build/
+
+# CocoaPods -------------------------------------
+Pods/
+Podfile.lock
+Generated/
+
+# Carthage --------------------------------------
+Carthage/Build/
+
+# Fastlane --------------------------------------
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/*
+fastlane/test_output
+
+# Archives ---------------------------------------
+*.xcarchive
+
+# Swift Playgrounds -------------------------------
+timeline.xctimeline
+playground.xcworkspace
+
+# iOS / watchOS / tvOS logs -----------------------
+*.asm
+*.dSYM
+*.dSYM.zip
+*.dSYM.tar.gz
+
+# Debug symbols
+*.ipa
+*.app.dSYM
+
+# Other common ignores ----------------------------
+*.lock
+*.log
+*.swp
+*.tmp
+
+# Prevent accidental private key commits ----------
+*.p12
+*.mobileprovision
+*.cer
+
+# Optional: ignore xcodeproj user files
+project.xcworkspace/xcuserdata/
+project.xcworkspace/xcshareddata/*.xcuserdatad
+
+# Optional: SwiftUI Previews
+.previews/
