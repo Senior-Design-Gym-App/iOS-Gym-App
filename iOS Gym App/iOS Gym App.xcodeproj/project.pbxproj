@@ -468,7 +468,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Rep-the-Set-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Rep the Set needs clinical records to display";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Rep the Set needs to read your heart rate and workout data to provide real-time fitness tracking during your strength training sessions.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Rep the Set needs to save your workouts, heart rate, and active energy data to the Health app so you can track your fitness progress over time.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.seniordesign.iOSGymApp;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
@@ -502,7 +506,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Rep-the-Set-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Rep the Set needs clinical records to display";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Rep the Set needs to read your heart rate and workout data to provide real-time fitness tracking during your strength training sessions.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Rep the Set needs to save your workouts, heart rate, and active energy data to the Health app so you can track your fitness progress over time.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.seniordesign.iOSGymApp;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
@@ -664,7 +672,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use this data to track weight and need to share it with the app";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Privacy - Health Update Usage Description";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We use this data to update weight and heart rate.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used to get current user location";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -682,6 +690,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
+				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -716,7 +725,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use this data to track weight and need to share it with the app";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Privacy - Health Update Usage Description";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We use this data to update weight and heart rate.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used to get current user location";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -734,6 +743,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
+				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;

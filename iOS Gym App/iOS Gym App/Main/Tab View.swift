@@ -1,8 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct TabHome: View {
-    
-    
+    @Environment(WatchSyncViewModel.self) private var watchSync
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         TabView {
@@ -20,6 +21,10 @@ struct TabHome: View {
             SessionTabViewWrapper()
         }
         .tabBarMinimizeBehavior(.onScrollDown)
+        .onAppear {
+            // Setup watch sync with modelContext
+            watchSync.setup(modelContext: modelContext)
+        }
     }
     
     

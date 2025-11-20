@@ -2,56 +2,23 @@
 //  ContentView.swift
 //  Rep the Set Watch App
 //
-//  Created by Troy Madden on 10/7/25.
+//  Main workout view using synced data from iPhone
 //
 
 import SwiftUI
 internal import Combine
+import WatchConnectivity
+import HealthKit
 
-struct Exercise_: Identifiable, Hashable {
-    let id = UUID()
-    let name: String
-    let targetSets: Int
-    let targetReps: Int
-}
-
-struct Workout_: Identifiable, Hashable {
-    let id = UUID()
-    let name: String
-    let exercises: [Exercise_]
-}
-
-extension Workout_ {
-    static let demo: [Workout_] = [
-        Workout_(name: "Push", exercises: [
-            Exercise_(name: "Bench Press", targetSets: 4, targetReps: 8),
-            Exercise_(name: "Incline DB Press", targetSets: 3, targetReps: 10),
-            Exercise_(name: "Shoulder Press", targetSets: 3, targetReps: 10),
-            Exercise_(name: "Triceps Pushdown", targetSets: 3, targetReps: 12)
-        ]),
-        Workout_(name: "Pull", exercises: [
-            Exercise_(name: "Deadlift", targetSets: 3, targetReps: 5),
-            Exercise_(name: "Lat Pulldown", targetSets: 3, targetReps: 10),
-            Exercise_(name: "Seated Row", targetSets: 3, targetReps: 10),
-            Exercise_(name: "Biceps Curl", targetSets: 3, targetReps: 12)
-        ]),
-        Workout_(name: "Legs", exercises: [
-            Exercise_(name: "Squat", targetSets: 5, targetReps: 5),
-            Exercise_(name: "Leg Press", targetSets: 3, targetReps: 10),
-            Exercise_(name: "Leg Curl", targetSets: 3, targetReps: 12),
-            Exercise_(name: "Calf Raise", targetSets: 4, targetReps: 15)
-        ])
-    ]
-}
-
+// MARK: - Workout Session Model
 
 final class WorkoutSessionModel: ObservableObject {
-    @Published var workout: Workout_
+    @Published var workout: WorkoutTransfer
     @Published var currentExerciseIndex: Int = 0
     @Published var currentSet: Int = 1
-    @Published var currentReps: Int = 0
+    @Published var completedSets: [[Int]] = [] // [exercise][set] = reps
+    @Published var weights: [[Double]] = [] // [exercise][set] = weight
     @Published var isRunning: Bool = false
-
 
     @Published var workoutElapsed: TimeInterval = 0
     @Published var setElapsed: TimeInterval = 0
@@ -59,11 +26,26 @@ final class WorkoutSessionModel: ObservableObject {
     private var workoutTimer: Timer?
     private var setTimer: Timer?
 
-    init(workout: Workout_) {
+    init(workout: WorkoutTransfer) {
         self.workout = workout
+        // Initialize tracking arrays
+        self.completedSets = Array(repeating: [], count: workout.exercises.count)
+        self.weights = Array(repeating: [], count: workout.exercises.count)
     }
 
-    var currentExercise: Exercise_ { workout.exercises[currentExerciseIndex] }
+    var currentExercise: ExerciseTransfer {
+        workout.exercises[currentExerciseIndex]
+    }
+    
+    var currentReps: Int {
+        let exerciseSets = completedSets[currentExerciseIndex]
+        return currentSet <= exerciseSets.count ? exerciseSets[currentSet - 1] : 0
+    }
+    
+    var currentWeight: Double {
+        let exerciseWeights = weights[currentExerciseIndex]
+        return currentSet <= exerciseWeights.count ? exerciseWeights[currentSet - 1] : currentExercise.targetWeight ?? 0
+    }
 
     func start() {
         isRunning = true
@@ -82,27 +64,38 @@ final class WorkoutSessionModel: ObservableObject {
         setTimer?.invalidate()
         if isRunning { startSetTimer() }
     }
+    
+    func logSet(reps: Int, weight: Double) {
+        // Ensure arrays are large enough
+        while completedSets[currentExerciseIndex].count < currentSet {
+            completedSets[currentExerciseIndex].append(0)
+            weights[currentExerciseIndex].append(currentExercise.targetWeight ?? 0)
+        }
+        
+        // Update or append
+        if currentSet <= completedSets[currentExerciseIndex].count {
+            completedSets[currentExerciseIndex][currentSet - 1] = reps
+            weights[currentExerciseIndex][currentSet - 1] = weight
+        } else {
+            completedSets[currentExerciseIndex].append(reps)
+            weights[currentExerciseIndex].append(weight)
+        }
+    }
 
     func nextSet() {
         currentSet += 1
-        currentReps = 0
         resetSetTimer()
     }
 
     func prevSet() {
         currentSet = max(1, currentSet - 1)
-        currentReps = 0
         resetSetTimer()
     }
-
-    func incRep() { currentReps += 1 }
-    func decRep() { currentReps = max(0, currentReps - 1) }
 
     func nextExercise() {
         guard currentExerciseIndex + 1 < workout.exercises.count else { return }
         currentExerciseIndex += 1
         currentSet = 1
-        currentReps = 0
         resetSetTimer()
     }
 
@@ -110,8 +103,31 @@ final class WorkoutSessionModel: ObservableObject {
         guard currentExerciseIndex > 0 else { return }
         currentExerciseIndex -= 1
         currentSet = 1
-        currentReps = 0
         resetSetTimer()
+    }
+    
+    func completeWorkout() -> WorkoutSessionTransfer {
+        // Convert to transfer model for sending back to iPhone
+        var entries: [SessionEntryTransfer] = []
+        
+        for (index, exercise) in workout.exercises.enumerated() {
+            let reps = completedSets[index]
+            let weight = weights[index]
+            
+            entries.append(SessionEntryTransfer(
+                exerciseId: exercise.id,
+                reps: reps,
+                weight: weight
+            ))
+        }
+        
+        return WorkoutSessionTransfer(
+            name: workout.name,
+            started: Date(timeIntervalSinceNow: -workoutElapsed),
+            completed: Date(),
+            workoutId: workout.id,
+            entries: entries
+        )
     }
 
     private func startWorkoutTimer() {
@@ -129,21 +145,142 @@ final class WorkoutSessionModel: ObservableObject {
     }
 }
 
+// MARK: - Main Content View
+
 struct ContentView: View {
+    @State private var connectivityManager = WatchConnectivityManager.shared
+    
     var body: some View {
         NavigationStack {
-            List(Workout_.demo) { workout in
-                NavigationLink(workout.name) {
-                    WorkoutDetailView(workout: workout)
+            if connectivityManager.workouts.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "iphone.and.arrow.forward")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                    
+                    Text("No Workouts")
+                        .font(.headline)
+                    
+                    Text("Open the iPhone app to sync your workouts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    if let lastSync = connectivityManager.lastSyncDate {
+                        Text("Last sync: \(lastSync.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .padding(.top, 8)
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Button {
+                            checkApplicationContext()
+                        } label: {
+                            Label("Check App Context", systemImage: "tray.and.arrow.down")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button {
+                            connectivityManager.requestWorkouts()
+                        } label: {
+                            Label("Request from iPhone", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.top)
+                }
+                .padding()
+            } else {
+                List {
+                    if let split = connectivityManager.activeSplit {
+                        Section("Active Split: \(split.name)") {
+                            ForEach(split.workouts) { workout in
+                                WorkoutRow(workout: workout)
+                            }
+                        }
+                    }
+                    
+                    Section("All Workouts") {
+                        ForEach(connectivityManager.workouts) { workout in
+                            WorkoutRow(workout: workout)
+                        }
+                    }
+                }
+                .navigationTitle("Workouts")
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        NavigationLink {
+                            DebugConnectivityView()
+                        } label: {
+                            Image(systemName: "ant.fill")
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            connectivityManager.requestWorkouts()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                    }
                 }
             }
-            .navigationTitle("Workouts")
+        }
+    }
+    
+    private func checkApplicationContext() {
+        let session = WCSession.default
+        let context = session.receivedApplicationContext
+        
+        print("⌚️ Checking received application context...")
+        print("⌚️ Context keys: \(context.keys)")
+        
+        if let workoutsData = context["workouts"] as? Data {
+            print("✅ Found workouts data: \(workoutsData.count) bytes")
+            do {
+                let workouts = try JSONDecoder().decode([WorkoutTransfer].self, from: workoutsData)
+                print("✅ Successfully decoded \(workouts.count) workouts from context")
+                
+                // Manually update if not already loaded
+                if connectivityManager.workouts.isEmpty {
+                    connectivityManager.workouts = workouts
+                    print("✅ Manually loaded workouts into app")
+                }
+            } catch {
+                print("❌ Failed to decode: \(error)")
+            }
+        } else {
+            print("⚠️ No workouts data in received context")
+            print("⚠️ iPhone may not have sent data yet. Open iPhone app and wait 30 seconds.")
         }
     }
 }
 
+// MARK: - Workout Row
+
+struct WorkoutRow: View {
+    let workout: WorkoutTransfer
+    
+    var body: some View {
+        NavigationLink {
+            WorkoutDetailView(workout: workout)
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(workout.name)
+                    .font(.headline)
+                
+                Text("\(workout.exercises.count) exercises")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+// MARK: - Workout Detail View
+
 struct WorkoutDetailView: View {
-    let workout: Workout_
+    let workout: WorkoutTransfer
     @State private var start = false
     @State private var showInfo = false
 
@@ -199,32 +336,64 @@ struct WorkoutDetailView: View {
     }
 }
 
+// MARK: - Workout Session View
+
 struct WorkoutSessionView: View {
     @StateObject var model: WorkoutSessionModel
+    @State private var heartRateManager = HeartRateManager()
     @Environment(\.dismiss) private var dismiss
     @State private var showEndConfirmation = false
-    @State private var heartRate: Int = 0
-    @State private var hrTimer: Timer?
-    
-    @State private var currentTimeString: String = Date.now.formatted(date: .omitted, time: .standard)
+    @State private var repsInput: Int = 0
+    @State private var weightInput: Double = 0
     
     var body: some View {
         ScrollView {
-            VStack() {
-                HStack(spacing: 6) {
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(.red)
-                    Text("\(heartRate) BPM")
-                        .monospacedDigit()
-                        .font(.caption)
+            VStack(spacing: 12) {
+                // Heart rate
+                VStack(spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "heart.fill")
+                            .foregroundStyle(heartRateManager.currentHeartRate > 0 ? .red : .gray)
+                        Text("\(heartRateManager.currentHeartRate) BPM")
+                            .monospacedDigit()
+                            .font(.caption)
+                        
+                        if !heartRateManager.isAuthorized {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    
+                    // Debug info
+                    if !heartRateManager.isAuthorized {
+                        VStack(spacing: 2) {
+                            Text("HealthKit not authorized")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                            Button("Request Access") {
+                                Task {
+                                    await heartRateManager.requestAuthorization()
+                                }
+                            }
+                            .font(.caption2)
+                            .buttonStyle(.bordered)
+                        }
+                    } else if heartRateManager.currentHeartRate == 0 {
+                        Text("Waiting for heart rate...")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 
-                VStack(spacing: 6) {
+                VStack(spacing: 8) {
+                    // Timers
                     LabeledContent("Workout") {
                         Text(timeString(model.workoutElapsed))
                             .monospacedDigit()
                     }
                     
+                    // Exercise info
                     VStack(spacing: 2) {
                         Text(model.currentExercise.name)
                             .font(.headline)
@@ -233,25 +402,76 @@ struct WorkoutSessionView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 4)
                     
                     LabeledContent("Set") {
                         Text(timeString(model.setElapsed))
                             .monospacedDigit()
                     }
                     
+                    // Reps & Weight input
+                    VStack(spacing: 6) {
+                        HStack {
+                            Text("Reps:")
+                            Spacer()
+                            Button("-") { repsInput = max(0, repsInput - 1) }
+                            Text("\(repsInput)")
+                                .frame(width: 40)
+                                .monospacedDigit()
+                            Button("+") { repsInput += 1 }
+                        }
+                        .font(.caption)
+                        
+                        HStack {
+                            Text("Weight:")
+                            Spacer()
+                            Button("-") { weightInput = max(0, weightInput - 5) }
+                            Text(String(format: "%.0f", weightInput))
+                                .frame(width: 40)
+                                .monospacedDigit()
+                            Button("+") { weightInput += 5 }
+                        }
+                        .font(.caption)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    // Log set button
+                    Button("Log Set") {
+                        model.logSet(reps: repsInput, weight: weightInput)
+                        model.nextSet()
+                        repsInput = model.currentExercise.targetReps
+                        weightInput = model.currentExercise.targetWeight ?? weightInput
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(repsInput == 0)
+                    
+                    // Navigation
                     HStack(spacing: 10) {
-                        Button("Prev Set") { model.prevSet() }
+                        Button("Prev Set") {
+                            model.prevSet()
+                            repsInput = model.currentReps
+                            weightInput = model.currentWeight
+                        }
                         Button("Next Set") { model.nextSet() }
+                            .handGestureShortcut(.primaryAction)
                     }
                     .font(.caption)
                     
                     HStack(spacing: 10) {
-                        Button("Prev Ex.") { model.prevExercise() }
-                        Button("Next Ex.") { model.nextExercise() }
+                        Button("Prev Ex.") {
+                            model.prevExercise()
+                            repsInput = model.currentExercise.targetReps
+                            weightInput = model.currentExercise.targetWeight ?? 0
+                        }
+                        Button("Next Ex.") {
+                            model.nextExercise()
+                            repsInput = model.currentExercise.targetReps
+                            weightInput = model.currentExercise.targetWeight ?? 0
+                        }
                     }
                     .font(.caption)
                     
+                    // Controls
                     HStack(spacing: 10) {
                         Button(model.isRunning ? "Pause" : "Start") {
                             model.isRunning ? model.pause() : model.start()
@@ -273,26 +493,42 @@ struct WorkoutSessionView: View {
                     }
             )
             .confirmationDialog("End Workout?", isPresented: $showEndConfirmation, titleVisibility: .visible) {
-                Button("End Workout", role: .destructive) {
+                Button("Complete Workout", role: .destructive) {
+                    let session = model.completeWorkout()
+                    WatchConnectivityManager.shared.sendCompletedSession(session)
                     dismiss()
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Are you sure you want to end this workout?")
+                Text("This will save your workout to your iPhone")
             }
         }
         .navigationTitle("Session")
         .onAppear {
             model.start()
-            //dummy heart rate updates (replace with HealthKit later)
-            hrTimer?.invalidate()
-            hrTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-                heartRate = Int.random(in: 110...150)
+            repsInput = model.currentExercise.targetReps
+            weightInput = model.currentExercise.targetWeight ?? 0
+            
+            // Start HealthKit workout session
+            Task {
+                do {
+                    try await heartRateManager.startWorkoutSession()
+                } catch {
+                    print("❌ Failed to start workout session: \(error.localizedDescription)")
+                }
             }
         }
         .onDisappear {
             model.pause()
-            hrTimer?.invalidate(); hrTimer = nil
+            
+            // End HealthKit workout session
+            Task {
+                do {
+                    try await heartRateManager.endWorkoutSession()
+                } catch {
+                    print("❌ Failed to end workout session: \(error.localizedDescription)")
+                }
+            }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -310,8 +546,6 @@ struct WorkoutSessionView: View {
     }
 }
 
-
 #Preview {
     ContentView()
 }
-

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Rep the Set needs to read your heart rate and workout data to provide real-time fitness tracking during your strength training sessions.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Rep the Set needs to save your workouts, heart rate, and active energy data to the Health app so you can track your fitness progress over time.</string>
+</dict>
+</plist>

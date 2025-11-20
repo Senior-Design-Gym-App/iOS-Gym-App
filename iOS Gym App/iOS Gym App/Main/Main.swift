@@ -13,6 +13,12 @@ struct iOS_Gym_AppApp: App {
     
     @State private var sessionManager = SessionManager()
     @State private var pm = ProgressManager()
+    @State private var watchSync = WatchSyncViewModel()
+    
+    init() {
+        // Initialize WatchConnectivity on app launch
+        _ = WatchConnectivityManager.shared
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -20,6 +26,7 @@ struct iOS_Gym_AppApp: App {
                 .tint(Constants.mainAppTheme)
                 .environment(pm)
                 .environment(sessionManager)
+                .environment(watchSync)
         }.modelContainer(for: [Exercise.self, Workout.self, Split.self, WorkoutSession.self, WorkoutSessionEntry.self])
     }
 }
