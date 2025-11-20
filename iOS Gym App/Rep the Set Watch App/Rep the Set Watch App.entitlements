@@ -2,9 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<<<<<<< HEAD
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.yourcompany.reptheset</string>
 	</array>
 </dict>
 </plist>
+=======
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.yourcompany.reptheset</string>
+    </array>
+</dict>
+</plist>
+>>>>>>> eafca30 (updated using misc data type)
