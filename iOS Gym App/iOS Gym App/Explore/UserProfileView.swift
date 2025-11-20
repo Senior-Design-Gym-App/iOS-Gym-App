@@ -13,6 +13,8 @@ struct UserProfileView: View {
 
     @State private var currentProfile: UserProfileContent = .empty
     @State private var hasLoadedProfile = false
+    @State private var showProfilePreview = false
+    @State private var showCoverPreview = false
     
     private let bannerHeight: CGFloat = 140
     private let avatarSize: CGFloat = Constants.mediumIconSize
@@ -49,6 +51,54 @@ struct UserProfileView: View {
         .onChange(of: profile, initial: false) { _, newValue in
             currentProfile = newValue
         }
+        .fullScreenCover(isPresented: $showProfilePreview) {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                if let profileImage = currentProfile.profileImage {
+                    Image(uiImage: profileImage)
+                        .resizable()
+                        .scaledToFit()
+                        .background(Color.black)
+                        .ignoresSafeArea()
+                }
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: { showProfilePreview = false }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 28, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.9))
+                        }
+                    }
+                    .padding()
+                    Spacer()
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showCoverPreview) {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                if let coverImage = currentProfile.coverImage {
+                    Image(uiImage: coverImage)
+                        .resizable()
+                        .scaledToFit()
+                        .background(Color.black)
+                        .ignoresSafeArea()
+                }
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: { showCoverPreview = false }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 28, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.9))
+                        }
+                    }
+                    .padding()
+                    Spacer()
+                }
+            }
+        }
     }
 
     // MARK: - Sections
@@ -69,6 +119,12 @@ struct UserProfileView: View {
                 LinearGradient(colors: [.black.opacity(0.2), .black.opacity(0.05)], startPoint: .top, endPoint: .bottom)
             }
             .frame(height: bannerHeight)
+            .contentShape(Rectangle())
+            .onLongPressGesture {
+                if currentProfile.coverImage != nil {
+                    showCoverPreview = true
+                }
+            }
             HStack(alignment: .bottom, spacing: horizontalSpacing) {
                 ZStack {
                     if let profileImage = currentProfile.profileImage {
@@ -87,6 +143,12 @@ struct UserProfileView: View {
                         Image(systemName: "person.fill")
                             .font(.system(size: avatarSize / 2.2))
                             .foregroundStyle(.secondary)
+                    }
+                }
+                .contentShape(Circle())
+                .onLongPressGesture {
+                    if currentProfile.profileImage != nil {
+                        showProfilePreview = true
                     }
                 }
                 .offset(y: 48)

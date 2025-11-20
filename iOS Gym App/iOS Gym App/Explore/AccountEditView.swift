@@ -30,7 +30,7 @@ struct AccountEditView: View {
     
     var body: some View {
         Form {
-            Section(header: Text("Cover Photo")) {
+            Section(header: ReusedViews.Labels.Header(text: "Cover Photo")) {
                 VStack(spacing: sectionSpacing) {
                     ZStack {
                         if let coverImage = editingProfile.coverImage {
@@ -61,7 +61,7 @@ struct AccountEditView: View {
                 .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 .alignmentGuide(.listRowSeparatorTrailing) { _ in 0 }
             }
-            Section(header: Text("Profile")) {
+            Section(header: ReusedViews.Labels.Header(text: "Profile")) {
                 VStack(spacing: sectionSpacing) {
                     ZStack {
                         if let uiImage = editingProfile.profileImage {
@@ -93,23 +93,41 @@ struct AccountEditView: View {
                 .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 .alignmentGuide(.listRowSeparatorTrailing) { _ in 0 }
                 TextField("Name", text: $editingProfile.username)
+                    .textFieldStyle(.plain)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 4)
+                
                 HStack {
                     Text("@")
                         .foregroundStyle(.secondary)
                     TextField("Username", text: $editingProfile.displayName)
+                        .textFieldStyle(.plain)
                 }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 4)
+                
                 TextField("Location", text: $editingProfile.location)
+                    .textFieldStyle(.plain)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 4)
+                
                 TextField("Bio", text: $editingProfile.bio, axis: .vertical)
                     .lineLimit(3, reservesSpace: true)
-            }
-            Section(header: Text("Privacy")) {
-                Toggle("Private Account", isOn: $editingProfile.isPrivate)
+                    .textFieldStyle(.plain)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 4)
             }
             Section {
-                Button("Save Changes") {
+                Button {
                     saveChanges()
+                } label: {
+                    Text("Save Changes")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                 }
-                    .frame(maxWidth: .infinity, alignment: .center)
+                .buttonStyle(.borderedProminent)
+                .tint(accentTint)
             }
         }
         .overlay(alignment: .center) {

@@ -12,14 +12,13 @@ struct ExploreView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    SectionHeader(title: "Explore")
                     ExploreGrid()
                 }
                 .padding(.horizontal)
                 .padding(.top)
             }
-            .navigationTitle("")
-            .toolbarTitleDisplayMode(.inline)
+            .navigationTitle("Explore")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: { GlobalSearchView() }) {
@@ -31,19 +30,15 @@ struct ExploreView: View {
     }
 }
 
-private struct SectionHeader: View {
-    let title: String
-    var body: some View {
-        ReusedViews.Labels.Header(text: title)
-            .font(.largeTitle.weight(.bold))
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
 private struct ExploreGrid: View {
     @State private var demoProfile = UserProfileContent.demo
     private let gridSpacing = Constants.customLabelPadding * 3
-    private var columns: [GridItem] { [GridItem(.flexible(), spacing: gridSpacing)] }
+    private var columns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: gridSpacing),
+            GridItem(.flexible(), spacing: gridSpacing)
+        ]
+    }
     var body: some View {
         LazyVGrid(columns: columns, spacing: gridSpacing) {
             NavigationLink(destination: { UserProfileView(profile: demoProfile) }, label: {
@@ -58,9 +53,9 @@ private struct ExploreGrid: View {
             NavigationLink(destination: { AIAskView() }, label: {
                 ExploreCard(title: "Ask AI", subtitle: "Get guidance", systemImage: "sparkles")
             })
-            NavigationLink(destination: { AccountCreateView() }, label: {
-                ExploreCard(title: "Create Account", subtitle: "Join now", systemImage: "person.badge.plus.fill")
-            })
+//            NavigationLink(destination: { AccountCreateView() }, label: {
+//                ExploreCard(title: "Create Account", subtitle: "Join now", systemImage: "person.badge.plus.fill")
+//            })
         }
     }
 }
@@ -71,37 +66,42 @@ private struct ExploreCard: View {
     let systemImage: String
     
     private let cardCornerRadius = Constants.homeRadius
-    private let cardPadding = Constants.bigImagePadding
-    private let cardHeight: CGFloat = 140
-    private let iconFrame: CGFloat = Constants.smallIconSize + 10
+    private let cardPadding: CGFloat = 16
+    private let cardHeight: CGFloat = 120
+    private let iconSize: CGFloat = 32
     
     var body: some View {
-        ZStack(alignment: .leading) {
+        VStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: iconSize, weight: .medium))
+                .foregroundStyle(.primary)
+            
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: cardHeight)
+        .padding(cardPadding)
+        .background(
             RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .fill(Color(.systemGray6))
-                .frame(height: cardHeight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
-                        .stroke(Color(.separator), lineWidth: 1)
-                )
-            HStack(spacing: Constants.customLabelPadding * 3) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(.primary)
-                    .frame(width: iconFrame, height: iconFrame)
-                VStack(alignment: .leading, spacing: Constants.customLabelPadding + 1) {
-                    Text(title)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-            .padding(cardPadding)
-        }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                .stroke(Color(.separator), lineWidth: 1)
+        )
     }
 }
+
 
 
