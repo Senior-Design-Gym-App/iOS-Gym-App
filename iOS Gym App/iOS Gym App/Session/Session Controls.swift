@@ -11,6 +11,7 @@ struct SessionSetControlView: View {
     
     @AppStorage("timerType") private var timerType: TimerType = .liveActivities
     @AppStorage("weightChangeType") private var weightChangeType: WeightChangeType = .ten
+    @AppStorage("autoAdjustWeights") private var autoAdjustWeights: Bool = true
     
     @Query private var allExercises: [Exercise]
     @State private var showRenameAlert: Bool = false
@@ -89,6 +90,9 @@ struct SessionSetControlView: View {
                 }
                 Section {
                     TimerMenu()
+                    Toggle(isOn: $autoAdjustWeights) {
+                        Label("Auto-Adjust Weights", systemImage: "lightbulb")
+                    }
                 } header: {
                     Label("Prefrences", systemImage: "paintpalette")
                 }
@@ -125,13 +129,9 @@ struct SessionSetControlView: View {
     
     private func TimerMenu() -> some View {
         Menu {
-            Picker("Timer Type", selection: $timerType) {
-                ForEach(TimerType.allCases, id: \.self) { type in
-                    Label(type.rawValue, systemImage: type.imageName).tag(type)
-                }
-            }
+            ReusedViews.Pickers.TimerTypePicker(type: $timerType)
         } label: {
-            Label("Timer Type", systemImage: "bell")
+            Label("Rest Timer Type", systemImage: "bell")
         }.onChange(of: timerType) {
             if timerType == .none {
                 sessionManager.FinishTimer()

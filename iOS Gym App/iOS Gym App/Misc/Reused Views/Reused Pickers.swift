@@ -21,6 +21,14 @@ extension ReusedViews {
             }
         }
         
+        static func TimerTypePicker(type: Binding<TimerType>) -> some View {
+            Picker("Timer Type", selection: type) {
+                ForEach(TimerType.allCases, id: \.self) { type in
+                    Label(type.rawValue, systemImage: type.imageName).tag(type)
+                }
+            }
+        }
+        
     }
     
 }

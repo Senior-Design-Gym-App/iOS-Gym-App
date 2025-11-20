@@ -4,7 +4,7 @@ import Foundation
 import Observation
 
 @Model
-final class Exercise {
+final class Exercise: Codable {
     
     var name: String = ""
     var muscleWorked: String?
@@ -30,6 +30,35 @@ final class Exercise {
         self.weights = weights
         self.reps = reps
         self.equipment = equipment
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case name, rest, muscleWorked, weights, reps, equipment, workouts, updateDates
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(rest, forKey: .rest)
+        try container.encode(muscleWorked, forKey: .muscleWorked)
+        try container.encode(weights, forKey: .weights)
+        try container.encode(reps, forKey: .reps)
+        try container.encode(updateDates, forKey: .updateDates)
+        try container.encodeIfPresent(equipment, forKey: .equipment)
+        try container.encodeIfPresent(workouts, forKey: .workouts)
+    }
+    
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        name = try container.decode(String.self, forKey: .name)
+        rest = try container.decode([[Int]].self, forKey: .rest)
+        muscleWorked = try container.decodeIfPresent(String.self, forKey: .muscleWorked)
+        weights = try container.decode([[Double]].self, forKey: .weights)
+        reps = try container.decode([[Int]].self, forKey: .reps)
+        equipment = try container.decodeIfPresent(String.self, forKey: .equipment)
+        updateDates = try container.decode([Date].self, forKey: .updateDates)
+        workouts = try container.decode([Workout].self, forKey: .workouts)
     }
     
     var muscleGroup: MuscleGroup? {

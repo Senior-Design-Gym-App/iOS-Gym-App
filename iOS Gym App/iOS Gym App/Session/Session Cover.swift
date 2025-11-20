@@ -15,6 +15,7 @@ struct SessionCover: View {
             Capsule()
             //                .padding(.top, 20)
                 .frame(width: 65, height: 5)
+//                .background(Color.clear)
             TabView {
                 Tab("Current", systemImage: "circle") {
                     SessionInfo(session: session)
@@ -25,12 +26,11 @@ struct SessionCover: View {
             }
             
             .tabViewStyle(.page(indexDisplayMode: .always))
-            Spacer()
             VStack {
                 SessionCurrentExerciseView(sessionManager: sessionManager)
                     .padding(.top)
                 SessionSetControlView(sessionName: session.name, endAction: EndSession, deleteAction: DeleteSession, renameAction: RenameSession, sessionManager: sessionManager)
-                    .padding(.horizontal)
+//                    .padding(.horizontal)
             }
             
             .background(

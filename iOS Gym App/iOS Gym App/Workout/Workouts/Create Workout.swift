@@ -6,19 +6,24 @@ struct CreateWorkoutView: View {
     let allExercises: [Exercise]
     @State private var showAddSheet: Bool = false
     @State private var selectedExercises: [Exercise] = []
-    @State private var newWorkout = Workout(name: "", exercises: [])
+    @State private var newWorkout = Workout(name: "New Workout", exercises: [])
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.Labels.LargeIconSize(color: newWorkout.color)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                ReusedViews.Labels.SingleCardTextField(textFieldName: $newWorkout.name, createdDate: newWorkout.created, type: .workout)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                HStack {
+                    ReusedViews.Labels.MediumIconSize(color: newWorkout.color)
+                    VStack(alignment: .leading) {
+                        ReusedViews.Labels.SingleCardTitle(title: newWorkout.name, modified: newWorkout.modified)
+                        HStack {
+                            ReusedViews.Buttons.RenameButtonAlert(type: .workout, oldName: $newWorkout.name)
+                        }
+                    }
+                }.padding(.bottom)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
                 SelectedExerciseList()
             }
             .toolbar {

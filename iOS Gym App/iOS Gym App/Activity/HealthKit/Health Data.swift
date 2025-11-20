@@ -5,7 +5,6 @@ struct HealthData: View {
     @Environment(ProgressManager.self) private var hkm
 //    @Environment(AppHandler.self) private var ah: AppHandler
     @State var type: HealthKitType = .bodyWeight
-    @AppStorage("useLBs") private var useLBs = true
     @AppStorage("sortMethod") private var sortMethod: Bool = false
     
     var body: some View {
@@ -20,7 +19,7 @@ struct HealthData: View {
                     if type == .bodyFat {
                         ReusedViews.ProgressChartView(color: .pink, unit: "%", data: hkm.bodyFatData)
                     } else {
-                        ReusedViews.ProgressChartView(color: .pink, unit: useLBs ? "lbs" : "kg", data: hkm.bodyWeightData)
+                        ReusedViews.ProgressChartView(color: .pink, unit: hkm.weightUnitString, data: hkm.bodyWeightData)
                     }
                 }
                 Section {
@@ -38,11 +37,11 @@ struct HealthData: View {
                     case .bodyWeight:
                         if sortMethod {
                             ForEach(hkm.bodyWeightData.indices.reversed(), id: \.self) { index in
-                                WeightEntryViews().DataView(data: hkm.bodyWeightData[index], label: useLBs ? "lbs" : "kg")
+                                WeightEntryViews().DataView(data: hkm.bodyWeightData[index], label: hkm.weightUnitString)
                             }
                         } else {
                             ForEach(hkm.bodyWeightData.indices, id: \.self) { index in
-                                WeightEntryViews().DataView(data: hkm.bodyWeightData[index], label: useLBs ? "lbs" : "kg")
+                                WeightEntryViews().DataView(data: hkm.bodyWeightData[index], label: hkm.weightUnitString)
                             }
                         }
                     }

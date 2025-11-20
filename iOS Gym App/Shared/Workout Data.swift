@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @Model
-final class Workout {
+final class Workout: Codable {
     
     var name: String = ""
     
@@ -36,6 +36,24 @@ final class Workout {
     init(name: String, exercises: [Exercise]) {
         self.name = name
         self.exercises = exercises
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case name, exercises, split
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(exercises, forKey: .exercises)
+        try container.encode(split, forKey: .split)
+    }
+    
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        exercises = try container.decodeIfPresent([Exercise].self, forKey: .exercises)
+        split = try container.decodeIfPresent(Split.self, forKey: .split)
     }
     
 }

@@ -7,19 +7,6 @@ extension ReusedViews {
     struct SplitViews {
         
         @ViewBuilder
-        static func LargeIconView(split: Split) -> some View {
-            if let image = split.image {
-                HStack {
-                    Spacer()
-                    SplitPreview(splitImage: image, size: Constants.largeIconSize)
-                    Spacer()
-                }
-            } else {
-                Labels.LargeIconSize(color: split.color)
-            }
-        }
-        
-        @ViewBuilder
         static func MediumIconView(split: Split) -> some View {
             if let image = split.image {
                 SplitPreview(splitImage: image, size: Constants.mediumIconSize)
@@ -61,6 +48,19 @@ extension ReusedViews {
                 }
                 Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split, extend: true)
             }
+        }
+        
+        static func ActiveSplit(split: Binding<Split>, allSplits: [Split]) -> some View {
+            Button {
+                split.wrappedValue.active.toggle()
+            } label: {
+                Label(split.wrappedValue.active ? "Favorite" : "Unfavorite", systemImage: split.wrappedValue.active ? "star.fill" : "star")
+                    .labelStyle(.iconOnly)
+                    .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                    .contentTransition(.symbolEffect(.replace))
+            }.buttonBorderShape(.circle)
+                .buttonStyle(.glass)
+                .disabled(allSplits.contains(where: { $0.active }) && !split.wrappedValue.active)
         }
         
         struct SplitControls: View {
@@ -141,18 +141,26 @@ extension ReusedViews {
             @State private var selectedItem: PhotosPickerItem?
             
             var body: some View {
-                if split.image != nil {
-                    Button(role: .destructive) {
-                        split.imageData = nil
+                Menu {
+                    Button {
+                        showImagePicker = true
                     } label: {
-                        Label("Remove Image", systemImage: "trash")
+                        Label("Add Image", systemImage: "camera.circle")
                     }
-                }
-                Button {
-                    showImagePicker = true
+                    if split.image != nil {
+                        Button(role: .destructive) {
+                            split.imageData = nil
+                        } label: {
+                            Label("Remove Image", systemImage: "trash")
+                        }
+                    }
                 } label: {
-                    Label("Add Image", systemImage: "camera.circle")
+                    Label("CustomImage", systemImage: "photo")
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                        .labelStyle(.iconOnly)
                 }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
                 .photosPicker(isPresented: $showImagePicker, selection: $selectedItem, matching: .images)
                 .onChange(of: selectedItem, initial: false) { _, newItem in
                     if let newItem = newItem {

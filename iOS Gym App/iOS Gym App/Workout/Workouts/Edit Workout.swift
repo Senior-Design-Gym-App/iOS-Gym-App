@@ -13,19 +13,20 @@ struct EditWorkoutView: View {
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.Labels.LargeIconSize(color: selectedWorkout.color)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                ReusedViews.Labels.SingleCardTitle(title: selectedWorkout.name, modified: selectedWorkout.modified)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                HStack {
+                    ReusedViews.Labels.MediumIconSize(color: selectedWorkout.color)
+                    VStack(alignment: .leading) {
+                        ReusedViews.Labels.SingleCardTitle(title: selectedWorkout.name, modified: selectedWorkout.modified)
+                        HStack {
+                            ReusedViews.Buttons.RenameButtonAlert(type: .workout, oldName: $selectedWorkout.name)
+                            ReusedViews.Buttons.DeleteButtonConfirmation(type: .workout, deleteAction: Delete)
+                        }
+                    }
+                }.padding(.bottom)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
                 SelectedExerciseList()
                 WorkoutSplitsList()
-            }.toolbar {
-                ToolbarItemGroup(placement: .secondaryAction) {
-                    ReusedViews.Buttons.RenameButtonAlert(type: .workout, oldName: $selectedWorkout.name)
-                    ReusedViews.Buttons.DeleteButtonConfirmation(type: .workout, deleteAction: Delete)
-                }
             }
             .sheet(isPresented: $showAddSheet) {
                 ReusedViews.WorkoutViews.WorkoutControls(saveAction: Save, newExercises: selectedExercises, showAddSheet: $showAddSheet, oldExercises: $selectedExercises)

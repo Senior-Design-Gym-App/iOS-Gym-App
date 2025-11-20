@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @Model
-final class Split {
+final class Split: Codable {
     
     var name: String = ""
     @Relationship(deleteRule: .nullify)
@@ -28,6 +28,22 @@ final class Split {
         self.workouts = workouts
         self.imageData = imageData
         self.active = active
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case name, workouts
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(workouts, forKey: .workouts)
+    }
+    
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        workouts = try container.decodeIfPresent([Workout].self, forKey: .workouts)
     }
     
 }

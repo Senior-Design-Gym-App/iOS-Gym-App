@@ -13,11 +13,15 @@ extension ReusedViews {
             
             var body: some View {
                 Button {
-                    newName = oldName // Initialize with current name
+                    newName = oldName
                     showRename = true
                 } label: {
                     Label("Rename", systemImage: "pencil")
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                        .labelStyle(.iconOnly)
                 }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
                 .alert("Rename \(type.rawValue)", isPresented: $showRename) {
                     TextField("Enter new name", text: $newName)
                     Button("Cancel", role: .cancel) {
@@ -41,8 +45,12 @@ extension ReusedViews {
                     showDelete = true
                 } label: {
                     Label("Delete", systemImage: "trash")
-                    Text("This cannot be undone.")
+                        .foregroundStyle(.red)
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                        .labelStyle(.iconOnly)
                 }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
                 .confirmationDialog("Are you sure?", isPresented: $showDelete) {
                     Button("Delete", role: .destructive) {
                         deleteAction()

@@ -3,29 +3,31 @@ import SwiftData
 
 struct CreateWorkoutSplitView: View {
     
+    @Query private var allSplits: [Split]
     let allWorkouts: [Workout]
     let allExercises: [Exercise]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    @State private var newSplit = Split(name: "", workouts: [], imageData: nil, active: false)
+    @State private var newSplit = Split(name: "New Split", workouts: [], imageData: nil, active: false)
     @State private var selectedWorkouts: [Workout] = []
     @State private var showAddSheet: Bool = false
     
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.SplitViews.LargeIconView(split: newSplit)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                    .overlay {
-                        ReusedViews.SplitViews.ImagePicker(split: $newSplit)
-                            .labelStyle(.iconOnly)
-                            .font(.largeTitle)
-                            .tint(.white)
+                HStack {
+                    ReusedViews.SplitViews.MediumIconView(split: newSplit)
+                    VStack(alignment: .leading) {
+                        ReusedViews.Labels.SingleCardTitle(title: newSplit.name, modified: newSplit.modified)
+                        HStack {
+                            ReusedViews.SplitViews.ImagePicker(split: $newSplit)
+                            ReusedViews.SplitViews.ActiveSplit(split: $newSplit, allSplits: allSplits)
+                            ReusedViews.Buttons.RenameButtonAlert(type: .split, oldName: $newSplit.name)
+                        }
                     }
-                ReusedViews.Labels.SingleCardTextField(textFieldName: $newSplit.name, createdDate: newSplit.created, type: .workout)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                }.padding(.bottom)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
                 SelectedWorkoutsList()
             }
             .toolbar {

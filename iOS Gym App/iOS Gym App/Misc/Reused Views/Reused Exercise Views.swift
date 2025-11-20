@@ -8,44 +8,18 @@ extension ReusedViews {
             HStack {
                 Labels.SmallIconSize(color: exercise.color)
                     .overlay(alignment: .center) {
-                        Image(systemName: exercise.workoutEquipment?.imageName ?? "dumbbell")
+                        Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                             .foregroundStyle(Constants.iconColor)
                     }
                 Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise, extend: true)
             }
         }
         
-        static func SingleExerciseCard(exercise: Exercise) -> some View {
-            HStack {
-                Spacer()
-                ZStack {
-                    Labels.LargeIconSize(color: exercise.color)
-                    Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(Constants.bigImagePadding)
-                        .clipShape(.rect(cornerRadius: 10))
-                        .foregroundStyle(Constants.iconColor)
-                }
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(width: Constants.largeIconSize, height: Constants.largeIconSize)
-                Spacer()
-            }
-        }
-        
         static func HorizontalListPreview(exercise: Exercise) -> some View {
             VStack(alignment: .leading, spacing: 5) {
-                ZStack {
-                    ReusedViews.Labels.MediumIconSize(color: exercise.color)
-                    Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(Constants.bigImagePadding)
-                        .clipShape(.rect(cornerRadius: 10))
-                        .foregroundStyle(Constants.iconColor)
-                }
-                .aspectRatio(1.0, contentMode: .fit)
-                .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
+                ExerciseLabel(exercise: exercise)
+                    .aspectRatio(1.0, contentMode: .fit)
+                    .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
                 Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise, extend: false)
             }
         }
@@ -74,38 +48,102 @@ extension ReusedViews {
             }
         }
         
-        struct EquipmentPickerView: UIViewRepresentable {
-            @Binding var selectedEquipment: WorkoutEquipment?
-            
-            func makeUIView(context: Context) -> EquipmentPicker {
-                let picker = EquipmentPicker(selectedEquipment: selectedEquipment)
-                picker.onSelectionChanged = { equipment in
-                    selectedEquipment = equipment
-                }
-                return picker
-            }
-            
-            func updateUIView(_ uiView: EquipmentPicker, context: Context) {
-                uiView.selectedEquipment = selectedEquipment
+        static func ExerciseLabel(exercise: Exercise) -> some View {
+            ZStack {
+                Labels.MediumIconSize(color: exercise.color)
+                Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: Constants.mediumIconSize - Constants.bigImagePadding, height: Constants.mediumIconSize - Constants.bigImagePadding)
+                    .clipShape(.rect(cornerRadius: 10))
+                    .foregroundStyle(Constants.iconColor)
             }
         }
         
-        static func ListHorizontalButtons(selectedEquipment: Binding<WorkoutEquipment?>, selectedMuscle: Binding<Muscle?>) -> some View {
-            HStack {
-                Spacer()
-                EquipmentPickerView(selectedEquipment: selectedEquipment)
-                    .padding(.trailing)
-                    .buttonBorderShape(.capsule)
-                    .buttonStyle(.borderless)
-                //                    .background(.regularMaterial, in: Capsule())
-                    .frame(maxWidth: .infinity)
-                MuscleMenuButton(selectedMuscle: selectedMuscle)
-                    .padding(.leading)
-                    .buttonBorderShape(.capsule)
-                    .buttonStyle(.borderedProminent)
-                //                    .background(.regularMaterial, in: Capsule())
-                    .frame(maxWidth: .infinity)
-                Spacer()
+        struct ExerciseCustomization: View {
+            
+            @Binding var selectedMuscle: Muscle?
+            @Binding var selectedEquipment: WorkoutEquipment?
+            
+            var body: some View {
+                HStack {
+                    MuscleSelector(selectedMuscle: $selectedMuscle)
+                    Menu {
+                        EquipmentSelector(selectedEquipment: $selectedEquipment)
+                    } label: {
+                        Label("Equipment", systemImage: "scale.3d")
+                            .labelStyle(.iconOnly)
+                            .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                    }.buttonBorderShape(.circle)
+                        .buttonStyle(.glass)
+                }
+            }
+            
+            private func EquipmentSelector(selectedEquipment: Binding<WorkoutEquipment?>) -> some View {
+                Picker("Equipment", selection: $selectedEquipment) {
+                    Label("No Equipment", systemImage: "circle.badge.xmark").tag(nil as WorkoutEquipment?)
+                    ForEach(EquipmentCategory.allCases, id: \.self) { category in
+                        Section(header: Text(category.rawValue)) {
+                            ForEach(WorkoutEquipment.allCases.filter { $0.category == category }) { equipment in
+                                Label(equipment.rawValue, systemImage: equipment.imageName).tag(equipment)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            private func MuscleSelector(selectedMuscle: Binding<Muscle?>) -> some View {
+                Menu {
+                    Section {
+                        MuscleSelect(muscle: nil, selectedMuscle: selectedMuscle)
+                        MuscleMenu(
+                            muscles: Muscle.allCases.filter { $0.general == .general },
+                            title: "Groups",
+                            selectedMuscle: selectedMuscle
+                        )
+                    } header: {
+                        Text("General Options")
+                    }
+                    Section {
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .chest }, title: "Chest", selectedMuscle: selectedMuscle)
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .back }, title: "Back", selectedMuscle: selectedMuscle)
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .legs }, title: "Legs", selectedMuscle: selectedMuscle)
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .shoulders }, title: "Shoulders", selectedMuscle: selectedMuscle)
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .biceps }, title: "Biceps", selectedMuscle: selectedMuscle)
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .triceps }, title: "Triceps", selectedMuscle: selectedMuscle)
+                        MuscleMenu(muscles: Muscle.allCases.filter { $0.general == .core }, title: "Core", selectedMuscle: selectedMuscle)
+                    } header: {
+                        Text("Specific Options")
+                    }
+                } label: {
+                    Label(selectedMuscle.wrappedValue?.rawValue.capitalized ?? "Muscle", systemImage: "scope")
+                        .labelStyle(.iconOnly)
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                }
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
+            }
+            
+            private func MuscleMenu(muscles: [Muscle], title: String, selectedMuscle: Binding<Muscle?>) -> some View {
+                Menu {
+                    ForEach(muscles, id: \.self) { muscle in
+                        MuscleSelect(muscle: muscle, selectedMuscle: selectedMuscle)
+                    }
+                } label: {
+                    Text(title)
+                }
+            }
+            
+            private func MuscleSelect(muscle: Muscle?, selectedMuscle: Binding<Muscle?>) -> some View {
+                Button {
+                    selectedMuscle.wrappedValue = muscle
+                } label: {
+                    if let muscle {
+                        Text(muscle.rawValue.capitalized)
+                    } else {
+                        Text("None")
+                    }
+                }
             }
         }
         
@@ -117,11 +155,11 @@ extension ReusedViews {
             @Binding var oldSetData: [SetData]
             @Binding var showAddSheet: Bool
             
-            @State private var restTime: Int = 60
-            @State private var reps: Int = 8
+            @State var restTime: Int
+            @State var reps: Int
+            @Environment(ProgressManager.self) private var hkm
             
             @State private var weightString: String = ""
-            @AppStorage("useLBs") private var useLBs = true
             
             var body: some View {
                 NavigationStack {
@@ -155,7 +193,7 @@ extension ReusedViews {
             
             private func SetOptions() -> some View {
                 Group {
-                    TextField("Weight (\(useLBs ? "lbs" : "kg"))", text: $weightString)
+                    TextField("Weight \(hkm.weightUnitString)", text: $weightString)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .keyboardType(.decimalPad)

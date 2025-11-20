@@ -105,7 +105,7 @@ struct WorkoutHome: View {
                 Label {
                     Text("Splits")
                     if showTips {
-                        Text("Create a split to organize your workouts and to start a session. Set the split as active to quickly start it.")
+                        Text("Create a split to organize your workouts and to start a session. Favorite a split to  quickly a session from one of its workouts.")
                             .font(.caption2)
                     }
                 } icon: {

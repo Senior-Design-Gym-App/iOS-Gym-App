@@ -19,42 +19,15 @@ struct ReusedViews {
             Icon(size: Constants.smallIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
         
-        static func LargeIconSize(color: Color) -> some View {
-            HStack {
-                Spacer()
-                Icon(size: Constants.largeIconSize, cornerRadius: Constants.cornerRadius, color: color)
-                Spacer()
-            }
-        }
-        
-        static func SingleCardTextField(textFieldName: Binding<String>, createdDate: Date, type: WorkoutItemType) -> some View {
-            VStack(spacing: 0) {
-                TextField("\(type.rawValue) Name", text: textFieldName)
+        static func SingleCardTitle(title: String, modified: Date) -> some View {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
                     .font(.title)
                     .fontWeight(.semibold)
-                    .multilineTextAlignment(.center)
-                Text("Created \(DateHandler().RelativeTime(from: createdDate))")
+                Text("Edited \(DateHandler().RelativeTime(from: modified))")
                     .foregroundStyle(.secondary)
-                    .font(.caption2)
+                    .font(.caption)
                     .fontWeight(.light)
-            }
-        }
-        
-        static func SingleCardTitle(title: String, modified: Date) -> some View {
-            HStack {
-                Spacer()
-                VStack(alignment: .center, spacing: 0) {
-                    Text(title)
-                        .font(.title)
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
-                    Text("Edited \(DateHandler().RelativeTime(from: modified))")
-                        .foregroundStyle(.secondary)
-                        .font(.caption2)
-                        .fontWeight(.light)
-                        .multilineTextAlignment(.center)
-                }
-                Spacer()
             }
         }
         
@@ -81,7 +54,7 @@ struct ReusedViews {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .frame(idealWidth: extend ? .infinity : Constants.mediumIconSize, alignment: .leading)
+            .frame(maxWidth: extend ? .infinity : Constants.mediumIconSize, alignment: .leading)
         }
         
         static func Subheader(title: String) -> some View {

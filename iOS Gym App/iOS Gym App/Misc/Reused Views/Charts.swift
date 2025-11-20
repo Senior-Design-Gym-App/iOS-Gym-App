@@ -42,7 +42,7 @@ extension ReusedViews {
             ForEach(sets) { set in
                 BarMark(
                     x: .value("Set", set.setDouble - 1 + offset),
-                    y: .value("Weight", set.weight),
+                    y: .value("Weight", set.weight)
                 )
             }.foregroundStyle(color)
                 .cornerRadius(Constants.smallRadius)

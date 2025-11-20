@@ -38,7 +38,9 @@ struct SessionCurrentExerciseView: View {
                 }
             } label: {
                 Label("Previous Exercise", systemImage: "backward.end")
-                Text("Previous Exercise")
+                if let previous = sessionManager.completedExercises.last?.exercise {
+                    Text(previous.name)
+                }
             }.disabled((sessionManager.completedExercises.isEmpty && sessionManager.currentExercise == nil)  )
             Divider()
             Button {
@@ -47,7 +49,7 @@ struct SessionCurrentExerciseView: View {
                 }
             } label: {
                 Label("Previous Set", systemImage: "backward")
-                Text("Previous Set")
+                Text("Set \(sessionManager.currentSet - 1)")
             }.disabled(sessionManager.currentExercise == nil || sessionManager.currentSet == 0)
             Button {
                 withAnimation {
@@ -58,7 +60,7 @@ struct SessionCurrentExerciseView: View {
                 Text("Adds current workout to queue")
             }.disabled(sessionManager.currentExercise == nil)
         } label: {
-            Label("Previous Set", systemImage: "backward.fill")
+            Label("Previous Options", systemImage: "backward.fill")
                 .labelStyle(.iconOnly)
                 .font(.title3)
                 .fontWeight(.black)
@@ -88,7 +90,7 @@ struct SessionCurrentExerciseView: View {
                 Text("Set \(sessionManager.currentSet + 1)")
             }.disabled(sessionManager.currentExercise == nil)
         } label: {
-            Label("Next Set", systemImage: "forward.fill")
+            Label("Next Options", systemImage: "forward.fill")
                 .labelStyle(.iconOnly)
                 .font(.title3)
                 .fontWeight(.black)

@@ -6,25 +6,30 @@ struct CreateExerciseView: View {
     @State private var setData: [SetData] = []
     @State private var selectedMuscle: Muscle?
     @State private var selectedEquipment: WorkoutEquipment?
-    @State private var newExercise = Exercise(name: "", rest: [], muscleWorked: "", weights: [], reps: [], equipment: nil)
+    @State private var newExercise = Exercise(name: "New Exercise", rest: [], muscleWorked: "", weights: [], reps: [], equipment: nil)
     @State private var showAddSheet: Bool = false
     @State private var showChangeNameAlert: Bool = false
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @AppStorage("defaultRepCount") private var defaultRepCount: Int = 8
+    @AppStorage("defaultRestTime") private var defaultRestTime: Int = 60
     
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.ExerciseViews.SingleExerciseCard(exercise: newExercise)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                ReusedViews.Labels.SingleCardTextField(textFieldName: $newExercise.name, createdDate: newExercise.created, type: .exercise)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                ReusedViews.ExerciseViews.ListHorizontalButtons(selectedEquipment: $selectedEquipment, selectedMuscle: $selectedMuscle)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                HStack {
+                    ReusedViews.ExerciseViews.ExerciseLabel(exercise: newExercise)
+                    VStack(alignment: .leading) {
+                        ReusedViews.Labels.SingleCardTitle(title: newExercise.name, modified: newExercise.modified)
+                        HStack {
+                            ReusedViews.ExerciseViews.ExerciseCustomization(selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
+                            ReusedViews.Buttons.RenameButtonAlert(type: .exercise, oldName: $newExercise.name)
+                        }
+                    }
+                }.padding(.bottom)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
                 ReusedViews.ExerciseViews.SetDataInfo(setData: setData, exericse: newExercise, showAddSheet: $showAddSheet)
             }
             .onChange(of: selectedMuscle) {
@@ -42,7 +47,7 @@ struct CreateExerciseView: View {
                 }
             }
             .sheet(isPresented: $showAddSheet) {
-                ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet)
+                ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet, restTime: defaultRestTime, reps: defaultRepCount)
             }
         }
     }

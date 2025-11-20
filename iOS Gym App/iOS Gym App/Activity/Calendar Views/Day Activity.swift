@@ -7,7 +7,6 @@ struct DayActivity: View {
     @Query private var allSessions: [WorkoutSession]
     @Query private var allExercises: [Exercise]
     @Environment(ProgressManager.self) private var hkm
-    @AppStorage("useLBs") private var useLBs = true
     private let calendar = Calendar.current
     private let formatter = DateFormatter()
     private let AL = ActivityLabels()
@@ -120,9 +119,9 @@ struct DayActivity: View {
         } label: {
             Label {
                 if data.index != 0 {
-                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: hkm.bodyWeightData[data.index - 1].value, unit: WLabel(useLBs: useLBs)))
+                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: hkm.bodyWeightData[data.index - 1].value, unit: hkm.weightUnitString))
                 } else {
-                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: nil, unit: WLabel(useLBs: useLBs)))
+                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: nil, unit: hkm.weightUnitString))
                 }
             } icon: {
                 Image(systemName: "heart.text.clipboard")
@@ -134,14 +133,6 @@ struct DayActivity: View {
     private func HeaderDateFormatter() -> String {
         formatter.dateFormat = "MM/dd/yy"
         return formatter.string(from: dayProgress)
-    }
-    
-    private func WLabel(useLBs: Bool) -> String {
-        if useLBs {
-            return "lbs"
-        } else {
-            return "kg"
-        }
     }
     
 }

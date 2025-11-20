@@ -17,10 +17,17 @@ final class ProgressManager {
     
     @ObservationIgnored private let calendar = Calendar.current
     @ObservationIgnored private let healthStore = HKHealthStore()
-    @ObservationIgnored @AppStorage("useLBs") private var useLBs = true
 
     init() {
         RequestAuthorization()
+    }
+    
+    var usesMetricSystem: Bool {
+        Locale.current.measurementSystem == .metric
+    }
+    
+    var weightUnitString: String {
+        usesMetricSystem ? "kg" : "lb"
     }
 
     private func RequestAuthorization() {
@@ -47,7 +54,7 @@ final class ProgressManager {
     func FetchBodyWeightData() async throws {
         async let weightData = fetchSamplesAsync(for: .bodyMass, unit: .gramUnit(with: .kilo))
         bodyWeightData = try await weightData.map {
-            let converted = $0.value * (useLBs ? 2.20462 : 1)
+            let converted = $0.value * (usesMetricSystem ? 1.0 : 2.20462)
             let rounded = round(converted * 10) / 10
             return WeightEntry(index: 0, value: rounded, date: $0.date)
         }

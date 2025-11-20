@@ -39,9 +39,9 @@ struct SetTable: View {
         NavigationStack {
             List {
                 Section {
-                        ForEach(ChartGraphType.allCases, id: \.self) { type in
-                            LabelType(type: type)
-                        }
+                    ForEach(ChartGraphType.allCases, id: \.self) { type in
+                        LabelType(type: type)
+                    }
                 } header: {
                     Text("Label")
                 }

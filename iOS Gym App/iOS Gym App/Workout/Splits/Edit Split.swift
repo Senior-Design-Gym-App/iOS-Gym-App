@@ -3,6 +3,7 @@ import SwiftData
 
 struct EditSplitView: View {
     
+    @Query private var allSplits: [Split]
     @State var selectedImage: UIImage?
     @State var selectedSplit: Split
     @State var selectedWorkouts: [Workout]
@@ -17,21 +18,21 @@ struct EditSplitView: View {
     var body: some View {
         NavigationStack {
             List {
-                ReusedViews.SplitViews.LargeIconView(split: selectedSplit)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                ReusedViews.Labels.SingleCardTitle(title: selectedSplit.name, modified: selectedSplit.modified)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                HStack {
+                    ReusedViews.SplitViews.MediumIconView(split: selectedSplit)
+                    VStack(alignment: .leading) {
+                        ReusedViews.Labels.SingleCardTitle(title: selectedSplit.name, modified: selectedSplit.modified)
+                        HStack {
+                            ReusedViews.SplitViews.ImagePicker(split: $selectedSplit)
+                            ReusedViews.SplitViews.ActiveSplit(split: $selectedSplit, allSplits: allSplits)
+                            ReusedViews.Buttons.RenameButtonAlert(type: .split, oldName: $selectedSplit.name)
+                            ReusedViews.Buttons.DeleteButtonConfirmation(type: .split, deleteAction: Delete)
+                        }
+                    }
+                }.padding(.bottom)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
                 SelectedWorkoutsList()
-            }
-            .toolbar {
-                ToolbarItemGroup(placement: .secondaryAction) {
-                    ToggleFavorite()
-                    ReusedViews.Buttons.RenameButtonAlert(type: .split, oldName: $selectedSplit.name)
-                    ReusedViews.Buttons.DeleteButtonConfirmation(type: .split, deleteAction: Delete)
-                    ReusedViews.SplitViews.ImagePicker(split: $selectedSplit)
-                }
             }
             .sheet(isPresented: $showAddSheet) {
                 ReusedViews.SplitViews.SplitControls(saveAction: SaveSplit, newWorkouts: selectedWorkouts, showAddSheet: $showAddSheet, oldWorkouts: $selectedWorkouts)

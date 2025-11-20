@@ -32,14 +32,6 @@ struct SessionRecap: View {
                 }
             }
             .navigationTitle(formatMonthDayYear(session.started))
-            .toolbar {
-                Button {
-                    context.delete(session)
-                    dismiss()
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
         }
     }
     
@@ -52,17 +44,24 @@ struct SessionRecap: View {
             VStack(alignment: .leading) {
                 Text(session.name)
                     .font(.title)
-                    .fontWeight(.medium)
+                    .fontWeight(.semibold)
                 NavigationLink {
                     DayActivity(dayProgress: session.started)
                 } label: {
-                        Text(formatDateRange(start: session.started, end: session.completed))
-                            .font(.callout)
-                            .fontWeight(.light)
+                    Text(formatDateRange(start: session.started, end: session.completed))
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                        .fontWeight(.light)
                 }.navigationLinkIndicatorVisibility(.hidden)
+                Spacer()
+                HStack {
+                    ReusedViews.Buttons.RenameButtonAlert(type: .session, oldName: $session.name)
+                    ReusedViews.Buttons.DeleteButtonConfirmation(type: .session, deleteAction: DeleteSession)
+                }
             }
             Spacer()
         }.listRowBackground(Color.clear)
+            .padding(.bottom)
     }
     
     private func WorkoutSessionSection(workout: Workout) -> some View {
@@ -72,7 +71,7 @@ struct SessionRecap: View {
                     SessionsListView(allSessions: sessions)
                 } label: {
                     Label {
-                        Text("All Sessions")
+                        Text("Similar Sessions")
                     } icon: {
                         Image(systemName: "gauge.with.needle")
                             .foregroundStyle(Constants.sessionTheme)
@@ -99,11 +98,11 @@ struct SessionRecap: View {
                     if let expected = entry.exercise?.closestUpdate(date: session.started) {
                         ReusedViews.Charts.BarMarks(sets: expected.setData, color: ChartGraphType.expected.color, offset: 0.2)
                     }
-                    if let recent = session.recentSetData.first(where: { $0.exercise == entry.exercise }) {
-                        ReusedViews.Charts.BarMarks(sets: recent.mostRecentSetData.setData, color: ChartGraphType.current.color, offset: 0.4)
-                    }
                     if let exercise = entry.exercise {
-                        ReusedViews.Charts.BarMarks(sets: exercise.findAverageSetData(before: session.started), color: ChartGraphType.average.color, offset: 0.6)
+                        ReusedViews.Charts.BarMarks(sets: exercise.findAverageSetData(before: session.started), color: ChartGraphType.average.color, offset: 0.4)
+                    }
+                    if let recent = session.recentSetData.first(where: { $0.exercise == entry.exercise }) {
+                        ReusedViews.Charts.BarMarks(sets: recent.mostRecentSetData.setData, color: ChartGraphType.current.color, offset: 0.6)
                     }
                 }
                 .chartYAxisLabel("Weight (lbs)")
@@ -154,6 +153,11 @@ struct SessionRecap: View {
         let imageName = "\(dayNumber).calendar"
         
         return Image(systemName: imageName)
+    }
+    
+    private func DeleteSession() {
+        context.delete(session)
+        dismiss()
     }
     
 }

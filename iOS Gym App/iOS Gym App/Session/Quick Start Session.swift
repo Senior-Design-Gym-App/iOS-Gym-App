@@ -28,41 +28,34 @@ struct SessionHomeView: View {
                         Text("You must complete your current session before starting another.")
                     }
                 }
-                if let split = allSplits.first(where: { $0.active }) {
+                if let split = allSplits.first(where: { $0.active }), incompleteSessions.isEmpty {
                     Section {
                         ForEach(split.workouts ?? [], id: \.self) { workout in
-                            ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout) })
+                            if workout == predictNextWorkout() {
+                                UpNextCard(workout: workout)
+                            } else {
+                                ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout) })
+                            }
                         }
+                    } header: {
+                        Label(split.name, systemImage: "star")
                     }
                 }
-//                if let nextWorkout = predictNextWorkout() {
-//                    Section {
-//                        UpNextCard(workout: nextWorkout)
-//                            .listRowBackground(nextWorkout.color)
-//                        if let split = nextWorkout.split {
-//                            ForEach(split.workouts ?? [], id: \.self) { workout in
-//                                if workout != nextWorkout {
-//                                    ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout) })
-//                                }
-//                            }
-//                        }
-//                    } header: {
-//                        ReusedViews.Labels.Header(text: "Next up")
-//                    }
-//                }
-                Section {
-                    NavigationLink {
-                        StartAllSessionsView()
-                    } label: {
-                        Label {
-                            Text("All Splits")
-                        } icon: {
-                            Image(systemName: Constants.sessionIcon)
-                                .foregroundStyle(Constants.sessionTheme)
+                if incompleteSessions.isEmpty {
+                    Section {
+                        NavigationLink {
+                            StartAllSessionsView()
+                        } label: {
+                            Label {
+                                Text("All Splits")
+                            } icon: {
+                                Image(systemName: Constants.sessionIcon)
+                                    .foregroundStyle(Constants.sessionTheme)
+                            }
                         }
+                    } header: {
+                        ReusedViews.Labels.Header(text: "All")
                     }
-                } header: {
-                    ReusedViews.Labels.Header(text: "All")
                 }
             }
             .navigationTitle("Quick Start")
@@ -77,15 +70,40 @@ struct SessionHomeView: View {
     
     
     private func UpNextCard(workout: Workout) -> some View {
-        VStack {
-            HStack {
-                ReusedViews.Labels.Description(topText: workout.name, bottomText: "\(workout.exercises?.count ?? 0) Exercise\(workout.exercises?.count == 1 ? "" : "s")")
-                Spacer()
-                Image(systemName: Constants.sessionIcon)
+        VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text(workout.name)
+                        .font(.title)
+                        .fontWeight(.semibold)
+                    Spacer()
+                    Button {
+                        QueueWorkout(workout: workout)
+                    } label: {
+                        Image(systemName: "play.circle.fill")
+                            .font(.title)
+                    }
+                }
+                Text("Up Next")
+                    .font(.caption)
+                    .fontWeight(.light)
+            }.padding(.bottom)
+            if let exercises = workout.exercises {
+                ForEach(exercises, id: \.self) { exercise in
+                    HStack {
+                        Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                            .resizable()
+                            .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                        Text("\(exercise.name) (\(exercise.recentSetData.setData.count))")
+                            .fontWeight(.medium)
+                        Spacer()
+                    }
+                }
             }
-        }
+        }.listRowBackground(workout.color)
+            .foregroundStyle(.white)
     }
-        
+    
     private func IncompleteSession(session: WorkoutSession) -> some View {
         HStack {
             ReusedViews.Labels.SmallIconSize(color: session.color)
