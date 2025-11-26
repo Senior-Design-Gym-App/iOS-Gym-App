@@ -15,15 +15,11 @@ struct AIMessage: Identifiable {
 
 struct AIAskView: View {
     @State private var prompt: String = ""
-<<<<<<< Updated upstream
     @State private var messages: [AIMessage] = [
         AIMessage(text: "Ask me anything about training, programming, or nutrition.", isUser: false)
     ]
     @State private var isLoading: Bool = false
     
-=======
-    @State private var isLoading: Bool = false
->>>>>>> Stashed changes
     private let suggestions: [String] = [
         "Build me a 4-day push/pull split",
         "How to improve bench press?",
@@ -74,7 +70,6 @@ struct AIAskView: View {
             Divider()
 
             // Messages placeholder area
-<<<<<<< Updated upstream
             // Messages area
             ScrollViewReader { proxy in
                 ScrollView {
@@ -103,14 +98,6 @@ struct AIAskView: View {
                         withAnimation {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
-=======
-            ScrollView {
-                VStack(spacing: 12) {
-                    ChatBubble(text: "Ask me anything about training, programming, or nutrition.", isUser: false)
-                    
-                    if isLoading {
-                        AILoadingIndicator()
->>>>>>> Stashed changes
                     }
                 }
             }
@@ -133,15 +120,8 @@ struct AIAskView: View {
                     RoundedRectangle(cornerRadius: inputRadius, style: .continuous)
                         .stroke(Color(.separator))
                 )
-<<<<<<< Updated upstream
 	
                 Button(action: sendMessage) {
-=======
-
-                Button(action: {
-                    sendMessage()
-                }) {
->>>>>>> Stashed changes
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Constants.buttonTheme)
@@ -149,11 +129,7 @@ struct AIAskView: View {
                         .background(Circle().fill(primaryTint))
                 }
                 .buttonStyle(.plain)
-<<<<<<< Updated upstream
                 .disabled(isLoading)
-=======
-                .disabled(prompt.isEmpty || isLoading)
->>>>>>> Stashed changes
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
@@ -162,7 +138,6 @@ struct AIAskView: View {
         .navigationTitle("Ask AI")
         .toolbarTitleDisplayMode(.inline)
     }
-<<<<<<< Updated upstream
     private func sendMessage() {
         let userMessage = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !userMessage.isEmpty else { return }
@@ -183,18 +158,6 @@ struct AIAskView: View {
                 messages.append(AIMessage(text: response, isUser: false))
                 isLoading = false
             }
-=======
-    
-    private func sendMessage() {
-        guard !prompt.isEmpty else { return }
-        isLoading = true
-        
-        // TODO: Implement actual AI API call
-        // Simulate API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            isLoading = false
-            prompt = ""
->>>>>>> Stashed changes
         }
     }
 }
@@ -223,50 +186,6 @@ private struct ChatBubble: View {
                 )
                 .frame(maxWidth: 320, alignment: .leading)
             if !isUser { Spacer(minLength: 40) }
-        }
-    }
-}
-
-private struct AILoadingIndicator: View {
-    @State private var isAnimating = false
-    private let dotSize: CGFloat = 8
-    private let dotSpacing: CGFloat = 6
-    private let primaryTint = Constants.mainAppTheme
-    private let bubbleCornerRadius = Constants.cornerRadius + 4
-    private let bubblePadding = Constants.titlePadding + 5
-    
-    var body: some View {
-        HStack(alignment: .bottom) {
-            Spacer(minLength: 40)
-            HStack(spacing: dotSpacing) {
-                ForEach(0..<3) { index in
-                    Circle()
-                        .fill(primaryTint)
-                        .frame(width: dotSize, height: dotSize)
-                        .scaleEffect(isAnimating ? 1.2 : 0.8)
-                        .opacity(isAnimating ? 1.0 : 0.6)
-                        .animation(
-                            Animation.easeInOut(duration: 0.6)
-                                .repeatForever()
-                                .delay(Double(index) * 0.2),
-                            value: isAnimating
-                        )
-                }
-            }
-            .padding(.vertical, bubblePadding)
-            .padding(.horizontal, bubblePadding + 2)
-            .background(
-                RoundedRectangle(cornerRadius: bubbleCornerRadius, style: .continuous)
-                    .fill(Color(.systemGray6))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: bubbleCornerRadius, style: .continuous)
-                    .stroke(Color(.separator))
-            )
-            Spacer(minLength: 40)
-        }
-        .onAppear {
-            isAnimating = true
         }
     }
 }
