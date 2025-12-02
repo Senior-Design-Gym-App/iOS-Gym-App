@@ -16,15 +16,17 @@ struct CreateWorkoutSplitView: View {
         NavigationStack {
             List {
                 HStack {
-                    ReusedViews.SplitViews.MediumIconView(split: newSplit)
-                    VStack(alignment: .leading) {
-                        ReusedViews.Labels.SingleCardTitle(title: newSplit.name, modified: newSplit.modified)
+                    Spacer()
+                    VStack {
+                        ReusedViews.SplitViews.LargeSplitView(split: newSplit)
+                            .offset(y: Constants.largeOffset)
                         HStack {
                             ReusedViews.SplitViews.ImagePicker(split: $newSplit)
                             ReusedViews.SplitViews.ActiveSplit(split: $newSplit, allSplits: allSplits)
                             ReusedViews.Buttons.RenameButtonAlert(type: .split, oldName: $newSplit.name)
                         }
                     }
+                    Spacer()
                 }.padding(.bottom)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -39,8 +41,11 @@ struct CreateWorkoutSplitView: View {
                 }
             }
             .sheet(isPresented: $showAddSheet) {
-                ReusedViews.SplitViews.SplitControls(saveAction: {}, newWorkouts: selectedWorkouts, showAddSheet: $showAddSheet, oldWorkouts: $selectedWorkouts)
+                ReusedViews.SplitViews.SplitControls(newWorkouts: selectedWorkouts, showAddSheet: $showAddSheet, split: $newSplit)
             }
+            .navigationTitle(newSplit.name)
+            .navigationSubtitle("Created Now")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
@@ -55,7 +60,6 @@ struct CreateWorkoutSplitView: View {
     }
     
     private func SaveSplit() {
-        newSplit.workouts = selectedWorkouts
         context.insert(newSplit)
         try? context.save()
         dismiss()

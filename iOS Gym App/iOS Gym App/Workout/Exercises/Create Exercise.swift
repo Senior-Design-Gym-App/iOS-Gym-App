@@ -19,14 +19,16 @@ struct CreateExerciseView: View {
         NavigationStack {
             List {
                 HStack {
-                    ReusedViews.ExerciseViews.ExerciseLabel(exercise: newExercise)
-                    VStack(alignment: .leading) {
-                        ReusedViews.Labels.SingleCardTitle(title: newExercise.name, modified: newExercise.modified)
+                    Spacer()
+                    VStack {
+                        ReusedViews.ExerciseViews.LargeExerciseLabel(exercise: newExercise)
+                            .offset(y: Constants.largeOffset)
                         HStack {
                             ReusedViews.ExerciseViews.ExerciseCustomization(selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
                             ReusedViews.Buttons.RenameButtonAlert(type: .exercise, oldName: $newExercise.name)
                         }
                     }
+                    Spacer()
                 }.padding(.bottom)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -49,6 +51,9 @@ struct CreateExerciseView: View {
             .sheet(isPresented: $showAddSheet) {
                 ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet, restTime: defaultRestTime, reps: defaultRepCount)
             }
+            .navigationTitle(newExercise.name)
+            .navigationSubtitle("Created Now")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     

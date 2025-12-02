@@ -93,20 +93,6 @@
 			);
 			target = E4F362A92E8C32B2000A0DEE /* iOS Gym App */;
 		};
-		7CC94B2E2ECF907D007BE13A /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Config.xcconfig,
-			);
-			target = E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */;
-		};
-		7CC94B2F2ECF907D007BE13A /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Config.xcconfig,
-			);
-			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
-		};
 		E40F0B842EAA991B00618BB9 /* Exceptions for "Live Activity Timer" folder in "Live Activity TimerExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -134,8 +120,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
-				7CC94B2E2ECF907D007BE13A /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */,
-				7CC94B2F2ECF907D007BE13A /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */,
 			);
 			path = "iOS Gym App";
 			sourceTree = "<group>";

@@ -21,16 +21,18 @@ struct EditExerciseView: View {
         NavigationStack {
             List {
                 HStack {
-                    ReusedViews.ExerciseViews.ExerciseLabel(exercise: exercise)
-                    VStack(alignment: .leading) {
-                        ReusedViews.Labels.SingleCardTitle(title: exercise.name, modified: exercise.modified)
+                    Spacer()
+                    VStack {
+                        ReusedViews.ExerciseViews.LargeExerciseLabel(exercise: exercise)
+                            .offset(y: Constants.largeOffset)
                         HStack {
                             ReusedViews.ExerciseViews.ExerciseCustomization(selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
-                                ReusedViews.Buttons.RenameButtonAlert(type: .exercise, oldName: $exercise.name)
-                                ReusedViews.Buttons.DeleteButtonConfirmation(type: .exercise, deleteAction: Delete)
+                            ReusedViews.Buttons.RenameButtonAlert(type: .exercise, oldName: $exercise.name)
+                            ReusedViews.Buttons.DeleteButtonConfirmation(type: .exercise, deleteAction: Delete)
                             
                         }
                     }
+                    Spacer()
                 }.padding(.bottom)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -46,6 +48,9 @@ struct EditExerciseView: View {
             .sheet(isPresented: $showAddSheet) {
                 ReusedViews.ExerciseViews.SetControls(exercise: exercise, saveAction: SaveExercise, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet, restTime: defaultRestTime, reps: defaultRepCount)
             }
+            .navigationTitle(exercise.name)
+            .navigationSubtitle("Edited \(DateHandler().RelativeTime(from: exercise.modified))")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
@@ -53,7 +58,7 @@ struct EditExerciseView: View {
         Section {
             ForEach(exercise.workouts ?? [], id: \.self) { workout in
                 NavigationLink {
-                    EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                    EditWorkoutView(selectedWorkout: workout)
                 } label: {
                     ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
                 }

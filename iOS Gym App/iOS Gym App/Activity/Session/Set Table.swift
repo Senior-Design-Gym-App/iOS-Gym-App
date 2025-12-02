@@ -35,6 +35,9 @@ struct SetTable: View {
         exercise.closestUpdate(date: session.started)?.setData.count ?? 0
     }
     
+    @AppStorage("setTableType") private var displayType: DonutDisplayType = .volume
+    @Environment(ProgressManager.self) private var hkm
+    
     var body: some View {
         NavigationStack {
             List {
@@ -42,6 +45,7 @@ struct SetTable: View {
                     ForEach(ChartGraphType.allCases, id: \.self) { type in
                         LabelType(type: type)
                     }
+                    ReusedViews.Pickers.DisplayTypePicker(type: $displayType, exempt: .sets)
                 } header: {
                     Text("Label")
                 }
@@ -60,7 +64,7 @@ struct SetTable: View {
                 if setNumber <= entrySetCount {
                     BarMark(
                         x: .value("Type", ChartGraphType.session.rawValue),
-                        y: .value("Weight", entry.setEntry[index].weight)
+                        y: .value("Weight", GenerateYValue(setData: entry.setEntry, index: index))
                     )
                     .cornerRadius(Constants.smallRadius)
                     .foregroundStyle(ChartGraphType.session.color)
@@ -68,7 +72,7 @@ struct SetTable: View {
                 if setNumber <= expectedSets {
                     BarMark(
                         x: .value("Type", ChartGraphType.expected.rawValue),
-                        y: .value("Weight",  exercise.closestUpdate(date: session.started)!.setData[index].weight)
+                        y: .value("Weight",  GenerateYValue(setData: exercise.closestUpdate(date: session.started)!.setData, index: index))
                     )
                     .cornerRadius(Constants.smallRadius)
                     .foregroundStyle(ChartGraphType.expected.color)
@@ -76,7 +80,7 @@ struct SetTable: View {
                 if setNumber <= exerciseSetCount {
                     BarMark(
                         x: .value("Type", ChartGraphType.average.rawValue),
-                        y: .value("Weight", avgSetData[index].weight)
+                        y: .value("Weight", GenerateYValue(setData: avgSetData, index: index))
                     )
                     .cornerRadius(Constants.smallRadius)
                     .foregroundStyle(ChartGraphType.average.color)
@@ -84,7 +88,7 @@ struct SetTable: View {
                 if setNumber <= recentSetDataCount {
                     BarMark(
                         x: .value("Type", ChartGraphType.current.rawValue),
-                        y: .value("Weight", recent!.mostRecentSetData.setData[index].weight)
+                        y: .value("Weight", GenerateYValue(setData: recent!.mostRecentSetData.setData, index: index))
                     )
                     .cornerRadius(Constants.smallRadius)
                     .foregroundStyle(ChartGraphType.current.color)
@@ -129,8 +133,14 @@ struct SetTable: View {
     
     private func SetLabel(data: SetData) -> some View {
         VStack(alignment: .leading) {
-            Text("\(data.weight, specifier: "%.1f") kg")
-            Text("\(data.reps) reps")
+            switch displayType {
+            case .reps:
+                Text("\(data.reps) reps")
+            case .weight:
+                Text("\(data.weight, specifier: "%.1f") \(hkm.weightUnitString)")
+            case .volume, .sets:
+                Text("\(data.setVolume, specifier: "%.1f") \(hkm.weightUnitString)")
+            }
         }
     }
     
@@ -140,6 +150,17 @@ struct SetTable: View {
         } icon: {
             Image(systemName: "circle.fill")
                 .foregroundStyle(type.color)
+        }
+    }
+    
+    private func GenerateYValue(setData: [SetData], index: Int) -> Double {
+        switch displayType {
+        case .reps:
+            Double(setData[index].reps)
+        case .weight:
+            setData[index].weight
+        case .volume, .sets:
+            setData[index].setVolume
         }
     }
     

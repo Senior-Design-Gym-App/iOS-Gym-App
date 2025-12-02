@@ -38,7 +38,7 @@ struct AllWorkoutsView: View {
             }
             .navigationTitle("Workouts")
             .sheet(isPresented: $showCreateDay) {
-                CreateWorkoutView(allExercises: allExercises)
+                CreateWorkoutView()
             }
             .toolbar {
                 ToolbarItem {
@@ -55,7 +55,7 @@ struct AllWorkoutsView: View {
         List {
             ForEach(sortedWorkouts, id: \.self) { workout in
                 NavigationLink {
-                    EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                    EditWorkoutView(selectedWorkout: workout)
                 } label: {
                     ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
                 }
@@ -68,11 +68,11 @@ struct AllWorkoutsView: View {
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(sortedWorkouts, id: \.self) { workout in
                     NavigationLink {
-                        EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                        EditWorkoutView(selectedWorkout: workout)
                             .navigationTransition(.zoom(sourceID: workout.id, in: namespace))
                     } label: {
                         ReusedViews.WorkoutViews.HorizontalListPreview(workout: workout)
-                    }
+                    }.buttonStyle(.plain)
                     .matchedTransitionSource(id: workout.id, in: namespace)
                 }
             }

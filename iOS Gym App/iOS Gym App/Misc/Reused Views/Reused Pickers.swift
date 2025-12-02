@@ -29,6 +29,16 @@ extension ReusedViews {
             }
         }
         
+        static func DisplayTypePicker(type: Binding<DonutDisplayType>, exempt: DonutDisplayType) -> some View {
+            Picker("Displayed Data", selection: type) {
+                ForEach(DonutDisplayType.allCases, id: \.self) { type in
+                    if type != exempt {
+                        Text(type.rawValue).tag(type)
+                    }
+                }
+            }.pickerStyle(.segmented)
+        }
+        
     }
     
 }

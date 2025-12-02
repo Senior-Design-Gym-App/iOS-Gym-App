@@ -3,25 +3,26 @@ import SwiftData
 
 struct EditWorkoutView: View {
     
-    @State var selectedExercises: [Exercise]
     @State var selectedWorkout: Workout
     @State private var showRename: Bool = false
     @State private var showAddSheet: Bool = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-    
+
     var body: some View {
         NavigationStack {
             List {
                 HStack {
-                    ReusedViews.Labels.MediumIconSize(color: selectedWorkout.color)
-                    VStack(alignment: .leading) {
-                        ReusedViews.Labels.SingleCardTitle(title: selectedWorkout.name, modified: selectedWorkout.modified)
+                    Spacer()
+                    VStack {
+                        ReusedViews.Labels.LargeIconSize(color: selectedWorkout.color)
+                            .offset(y: Constants.largeOffset)
                         HStack {
                             ReusedViews.Buttons.RenameButtonAlert(type: .workout, oldName: $selectedWorkout.name)
                             ReusedViews.Buttons.DeleteButtonConfirmation(type: .workout, deleteAction: Delete)
                         }
                     }
+                    Spacer()
                 }.padding(.bottom)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -29,14 +30,17 @@ struct EditWorkoutView: View {
                 WorkoutSplitsList()
             }
             .sheet(isPresented: $showAddSheet) {
-                ReusedViews.WorkoutViews.WorkoutControls(saveAction: Save, newExercises: selectedExercises, showAddSheet: $showAddSheet, oldExercises: $selectedExercises)
+                ReusedViews.WorkoutViews.WorkoutControls(newExercises: selectedWorkout.sortedExercises, showAddSheet: $showAddSheet, workout: $selectedWorkout)
             }
+            .navigationTitle(selectedWorkout.name)
+            .navigationSubtitle("Edited \(DateHandler().RelativeTime(from: selectedWorkout.modified))")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
     private func SelectedExerciseList() -> some View {
         Section {
-            ForEach(selectedExercises, id: \.self) { exercise in
+            ForEach(selectedWorkout.sortedExercises, id: \.self) { exercise in
                 NavigationLink {
                     EditExerciseView(exercise: exercise, setData: exercise.recentSetData.setData, selectedMuscle: exercise.muscle, selectedEquipment: exercise.workoutEquipment)
                 } label: {
@@ -44,7 +48,7 @@ struct EditWorkoutView: View {
                 }
             }
         } header: {
-            ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .workout, items: selectedExercises)
+            ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .workout, items: selectedWorkout.sortedExercises)
         }
     }
     
@@ -52,7 +56,7 @@ struct EditWorkoutView: View {
         Section {
             if let split = selectedWorkout.split {
                 NavigationLink {
-                    EditSplitView(selectedSplit: split, selectedWorkouts: split.workouts ?? [])
+                    EditSplitView(selectedSplit: split)
                 } label: {
                     ReusedViews.SplitViews.ListPreview(split: split)
                 }
@@ -62,12 +66,6 @@ struct EditWorkoutView: View {
         } header: {
             Text("Split")
         }
-    }
-    
-    private func Save() {
-        selectedWorkout.exercises = selectedExercises
-        selectedWorkout.modified = Date()
-        try? context.save()
     }
     
     private func Delete() {

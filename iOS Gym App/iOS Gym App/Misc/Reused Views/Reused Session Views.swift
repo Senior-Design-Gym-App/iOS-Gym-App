@@ -23,7 +23,7 @@ extension ReusedViews {
                 Spacer()
                 Menu {
                     Section {
-                        ForEach(workout.exercises ?? [], id: \.self) { exercise in
+                        ForEach(workout.sortedExercises, id: \.self) { exercise in
                             Label {
                                 Text(exercise.name)
                                 Text("\(exercise.recentSetData.setData.count) Set\(exercise.recentSetData.setData.count == 1 ? "" : "s")")
@@ -34,14 +34,14 @@ extension ReusedViews {
                     } header: {
                         Text(workout.name)
                     }
-                    if workout.exercises?.count == 0 {
+                    if workout.sortedExercises.count == 0 {
                         Text("You must add exercises to start.")
                     } else {
                         Button {
                             start(workout)
                         } label: {
                             Label("Start Session", systemImage: "play")
-                        }.disabled(workout.exercises?.count == 0)
+                        }.disabled(workout.sortedExercises.count == 0)
                     }
                 } label: {
                     Image(systemName: "play.circle.fill")

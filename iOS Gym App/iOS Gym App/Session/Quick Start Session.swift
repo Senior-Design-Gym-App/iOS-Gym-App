@@ -88,16 +88,14 @@ struct SessionHomeView: View {
                     .font(.caption)
                     .fontWeight(.light)
             }.padding(.bottom)
-            if let exercises = workout.exercises {
-                ForEach(exercises, id: \.self) { exercise in
-                    HStack {
-                        Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
-                            .resizable()
-                            .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
-                        Text("\(exercise.name) (\(exercise.recentSetData.setData.count))")
-                            .fontWeight(.medium)
-                        Spacer()
-                    }
+            ForEach(workout.sortedExercises, id: \.self) { exercise in
+                HStack {
+                    Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                        .resizable()
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                    Text("\(exercise.name) (\(exercise.recentSetData.setData.count))")
+                        .fontWeight(.medium)
+                    Spacer()
                 }
             }
         }.listRowBackground(workout.color)
@@ -123,11 +121,11 @@ struct SessionHomeView: View {
                 }
                 if let workout = session.workout {
                     Section {
-                        ForEach(workout.exercises?.filter { workoutExercise in
+                        ForEach(workout.sortedExercises.filter { workoutExercise in
                             session.exercises?.contains(where: { sessionEntry in
                                 sessionEntry.exercise?.id == workoutExercise.id
                             }) == false
-                        } ?? [], id: \.self) { exercise in
+                        }, id: \.self) { exercise in
                             Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                         }
                     } header: {
@@ -160,7 +158,7 @@ struct SessionHomeView: View {
             return
         }
         let newSession = WorkoutSession(name: workout.name, started: Date(), workout: workout)
-        for exercise in workout.exercises ?? [] {
+        for exercise in workout.sortedExercises {
             sm.QueueExercise(exercise: exercise)
         }
         context.insert(newSession)
@@ -172,7 +170,7 @@ struct SessionHomeView: View {
             
             sm.completedExercises = incomplete.exercises ?? []
             
-            for exercise in workout.exercises ?? [] {
+            for exercise in workout.sortedExercises {
                 let hasEntry = incomplete.exercises?.contains(where: { entry in
                     entry.exercise == exercise
                 }) ?? false

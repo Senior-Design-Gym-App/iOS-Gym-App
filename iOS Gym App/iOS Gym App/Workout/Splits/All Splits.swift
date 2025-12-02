@@ -57,12 +57,12 @@ struct AllWorkoutSplitsView: View {
             LazyVGrid(columns: columns) {
                 ForEach(sortedSplits, id: \.self) { split in
                     NavigationLink {
-                        EditSplitView(selectedImage: split.image, selectedSplit: split, selectedWorkouts: split.workouts ?? [])
+                        EditSplitView(selectedImage: split.image, selectedSplit: split)
                             .navigationTransition(.zoom(sourceID: split.id, in: namespace))
                     } label: {
                         ReusedViews.SplitViews.HorizontalListPreview(split: split)
                             .matchedTransitionSource(id: split.id, in: namespace)
-                    }
+                    }.buttonStyle(.plain)
                 }
             }
         }
@@ -73,7 +73,7 @@ struct AllWorkoutSplitsView: View {
         List {
             ForEach(sortedSplits, id: \.self) { split in
                 NavigationLink {
-                    EditSplitView(selectedImage: split.image, selectedSplit: split, selectedWorkouts: split.workouts ?? [])
+                    EditSplitView(selectedImage: split.image, selectedSplit: split)
                 } label: {
                     ReusedViews.SplitViews.ListPreview(split: split)
                 }

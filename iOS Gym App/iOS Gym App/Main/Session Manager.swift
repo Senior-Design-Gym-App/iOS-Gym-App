@@ -12,6 +12,7 @@ class SessionManager {
     var elapsedTime: TimeInterval = 0
     var timer: Timer? = nil
     @ObservationIgnored @AppStorage("timerType") private var timerType: TimerType = .liveActivities
+    @ObservationIgnored @AppStorage("autoAdjustWeights") private var autoAdjustWeights: Bool = true
     
     // MARK: Session Logic
     var session: WorkoutSession?
@@ -124,7 +125,10 @@ class SessionManager {
             }
             
             if nextSetIndex < currentExercise.exercise.recentSetData.setData.count {
-                weight = currentExercise.exercise.recentSetData.setData[nextSetIndex].weight
+                let newWeight = currentExercise.exercise.recentSetData.setData[nextSetIndex].weight
+                if nextSetIndex > 0, weight != newWeight, autoAdjustWeights {
+                    weight = newWeight
+                }
             }
             
             if nextSetIndex < currentExercise.exercise.recentSetData.setData.count {

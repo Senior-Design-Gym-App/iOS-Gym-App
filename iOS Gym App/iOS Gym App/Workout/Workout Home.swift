@@ -129,7 +129,7 @@ struct WorkoutHome: View {
     
     private func RecentWorkout(workout: Workout) -> some View {
         NavigationLink {
-            EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+            EditWorkoutView(selectedWorkout: workout)
                 .navigationTransition(.zoom(sourceID: workout.id, in: namespace))
         } label: {
             ReusedViews.WorkoutViews.HorizontalListPreview(workout: workout)
@@ -139,7 +139,7 @@ struct WorkoutHome: View {
     
     private func RecentSplit(split: Split) -> some View {
         NavigationLink {
-            EditSplitView(selectedSplit: split, selectedWorkouts: split.workouts ?? [])
+            EditSplitView(selectedSplit: split)
                 .navigationTransition(.zoom(sourceID: split.id, in: namespace))
         } label: {
             ReusedViews.SplitViews.HorizontalListPreview(split: split)
