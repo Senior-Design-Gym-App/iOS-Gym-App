@@ -4,7 +4,7 @@ import SwiftUI
 extension ReusedViews {
     
     struct Charts {
-        
+                
         static func BarChart(data: [WeightEntry], color: Color) -> some View {
             Chart {
                 ForEach(data, id: \.self) { progress in
@@ -48,38 +48,45 @@ extension ReusedViews {
                 .cornerRadius(Constants.smallRadius)
         }
         
-        static func SetRecapChart(sessions: [WorkoutSession]) -> some View {
-            HStack {
-                Chart(CalculateSessionSets(sessions: sessions)) { group in
-                    SectorMark(
-                        angle: .value("Sets", group.sets),
-                        innerRadius: .ratio(0.6),
-                        angularInset: 1.5
-                    )
-                    .foregroundStyle(group.muscle.colorPalette)
-                }
-                VStack(alignment: .leading, spacing: 5) {
-                    ForEach(CalculateSessionSets(sessions: sessions)) { group in
-                        HStack {
-                            Circle()
-                                .fill(group.muscle.colorPalette)
-                                .frame(width: 25, height: 25)
-                            VStack(alignment: .leading) {
-                                Text(group.muscle.rawValue)
-                                Text("\(group.sets) Set\(group.sets == 1 ? "" : "s")")
-                                    .font(.caption2)
-                                    .fontWeight(.thin)
+        func DataRecapPieChart(sessions: [WorkoutSession], type: DonutDisplayType) -> some View {
+            VStack {
+                HStack {
+                    Chart(CalculateSessionSets(sessions: sessions, displayType: type)) { group in
+                        SectorMark(
+                            angle: .value("Sets", group.sets),
+                            innerRadius: .ratio(0.6),
+                            angularInset: 1.5
+                        )
+                        .foregroundStyle(group.muscle.colorPalette)
+                    }
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(CalculateSessionSets(sessions: sessions, displayType: type)) { group in
+                            HStack {
+                                Circle()
+                                    .fill(group.muscle.colorPalette)
+                                    .frame(width: 25, height: 25)
+                                VStack(alignment: .leading) {
+                                    Text(group.muscle.rawValue)
+                                    Group {
+                                        if type == .reps || type == .sets {
+                                            Text("\(group.sets) \(type.unit)\(group.sets == 1 ? "" : "s")")
+                                        } else {
+                                            Text("\(group.sets) \(type.unit)")
+                                        }
+                                    }                                        .font(.caption2)
+                                        .fontWeight(.thin)
+                                }
                             }
                         }
                     }
                 }
-            }
+            }.listRowSeparator(.hidden)
         }
         
-        static private func CalculateSessionSets(sessions: [WorkoutSession]) -> [DonutData] {
+        private func CalculateSessionSets(sessions: [WorkoutSession], displayType: DonutDisplayType) -> [DonutData] {
             var muscleSetDict: [MuscleGroup: Int] = [:]
-            
             for session in sessions {
+                
                 guard let exercises = session.exercises else { continue }
                 
                 for entry in exercises {
@@ -92,8 +99,20 @@ extension ReusedViews {
                         group = .unknown
                     }
                     
-                    let setCount = entry.setEntry.count
-                    muscleSetDict[group, default: 0] += setCount
+                    let value: Int
+                    
+                    switch displayType {
+                    case .sets:
+                        value = entry.setEntry.count
+                    case .reps:
+                        value = entry.reps.reduce(0, +)
+                    case .weight:
+                        value = entry.weight.reduce(0) { $0 + Int($1) }
+                    case .volume:
+                        value = entry.setEntry.reduce(into: 0) { $0 += Int($1.setVolume) }
+                    }
+                    
+                    muscleSetDict[group, default: 0] += value
                 }
             }
             

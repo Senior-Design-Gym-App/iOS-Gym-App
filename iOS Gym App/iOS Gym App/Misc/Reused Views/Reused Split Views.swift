@@ -24,10 +24,19 @@ extension ReusedViews {
             }
         }
         
+        @ViewBuilder
+        static func LargeSplitView(split: Split) -> some View {
+            if let splitImage = split.image {
+                SplitPreview(splitImage: splitImage, size: Constants.largeIconSize)
+            } else {
+                Labels.LargeIconSize(color: split.color)
+            }
+        }
+        
         static func HorizontalListPreview(split: Split) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 MediumIconView(split: split)
-                Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split, extend: false)
+                Labels.TypeListDescription(name: split.name, items: split.sortedWorkouts, type: .split, extend: false)
             }
         }
         
@@ -46,7 +55,7 @@ extension ReusedViews {
                 } else {
                     Labels.SmallIconSize(color: split.color)
                 }
-                Labels.TypeListDescription(name: split.name, items: split.workouts ?? [], type: .split, extend: true)
+                Labels.TypeListDescription(name: split.name, items: split.sortedWorkouts, type: .split, extend: true)
             }
         }
         
@@ -66,10 +75,9 @@ extension ReusedViews {
         struct SplitControls: View {
             
             @Query private var allWorkouts: [Workout]
-            let saveAction: () -> Void
             @State var newWorkouts: [Workout]
             @Binding var showAddSheet: Bool
-            @Binding var oldWorkouts: [Workout]
+            @Binding var split: Split
             
             var body: some View {
                 NavigationStack {
@@ -121,8 +129,12 @@ extension ReusedViews {
             }
             
             private func SaveOptions() {
-                oldWorkouts = newWorkouts
-                saveAction()
+//                split.workouts = newWorkouts
+//                if let workouts = split.workouts {
+//                    let newIDs = workouts.map { $0.persistentModelID }
+//                    split.encodeIDs(ids: newIDs)
+//                }
+                split.modified = Date()
                 showAddSheet = false
             }
             

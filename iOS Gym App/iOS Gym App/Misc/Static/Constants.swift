@@ -43,5 +43,6 @@ struct Constants {
     static let mediumIconSize: CGFloat = 100
     static let largeIconSize: CGFloat = 200
     static let smallRadius: CGFloat = 5
+    static let largeOffset: CGFloat = -15
     
 }

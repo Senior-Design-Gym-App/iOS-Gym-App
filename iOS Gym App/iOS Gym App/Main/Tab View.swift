@@ -8,7 +8,7 @@ struct TabHome: View {
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house") {
-                HomeView(title: ActivityLabels.RandomGymGreeting())
+                MonthlyProgressView()
             }
             Tab("Workout", systemImage: "dumbbell") {
                 WorkoutHome()

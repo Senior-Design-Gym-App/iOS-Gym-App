@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct SessionCover: View {
     
@@ -7,15 +6,12 @@ struct SessionCover: View {
     @Environment(\.dismiss) private var dismiss
     @State var session: WorkoutSession
     @Environment(SessionManager.self) private var sessionManager: SessionManager
-    //    @State private var sessionManager = SessionManager()
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 10)
             Capsule()
-            //                .padding(.top, 20)
                 .frame(width: 65, height: 5)
-//                .background(Color.clear)
             TabView {
                 Tab("Current", systemImage: "circle") {
                     SessionInfo(session: session)
@@ -24,23 +20,23 @@ struct SessionCover: View {
                     SessionWorkoutQueueView()
                 }
             }
-            
             .tabViewStyle(.page(indexDisplayMode: .always))
             VStack {
                 SessionCurrentExerciseView(sessionManager: sessionManager)
                     .padding(.top)
                 SessionSetControlView(sessionName: session.name, endAction: EndSession, deleteAction: DeleteSession, renameAction: RenameSession, sessionManager: sessionManager)
-//                    .padding(.horizontal)
+                    .padding(.horizontal, 5)
             }
-            
             .background(
                 Rectangle()
-                    .fill(.regularMaterial)
+                    .fill(colorScheme == .light ? Color.white : Color(uiColor: .systemGroupedBackground))
                     .clipShape(.rect(corners: .concentric, isUniform: true))
             )
-            .padding()
+            .padding(.bottom)
+            .padding(.horizontal)
         }
         .ignoresSafeArea(edges: .bottom)
+        .background(Color(uiColor: .systemGroupedBackground))
     }
     
     private func EndSession() -> Void {

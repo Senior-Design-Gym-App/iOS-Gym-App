@@ -8,24 +8,23 @@ extension ReusedViews {
         static func WorkoutListPreview(workout: Workout) -> some View {
             HStack {
                 Labels.SmallIconSize(color: workout.color)
-                Labels.TypeListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout, extend: true)
+                Labels.TypeListDescription(name: workout.name, items: workout.sortedExercises, type: .workout, extend: true)
             }
         }
         
         static func HorizontalListPreview(workout: Workout) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 Labels.MediumIconSize(color: workout.color)
-                Labels.TypeListDescription(name: workout.name, items: workout.exercises ?? [], type: .workout, extend: false)
+                Labels.TypeListDescription(name: workout.name, items: workout.sortedExercises, type: .workout, extend: false)
             }
         }
         
         struct WorkoutControls: View {
             
             @Query private var allExercises: [Exercise]
-            let saveAction: () -> Void
             @State var newExercises: [Exercise]
             @Binding var showAddSheet: Bool
-            @Binding var oldExercises: [Exercise]
+            @Binding var workout: Workout
             
             var body: some View {
                 NavigationStack {
@@ -44,7 +43,9 @@ extension ReusedViews {
                             Text("Current Exercises")
                         }
                         Section {
-                            ForEach(allExercises.filter({ !newExercises.contains($0) }), id: \.self) { exercise in
+                            ForEach(allExercises.filter { !newExercises.contains($0) }
+                                .sorted { $0.name < $1.name }
+                                    , id: \.self) { exercise in
                                 HStack {
                                     ExerciseViews.ExerciseListPreview(exercise: exercise)
                                     Spacer()
@@ -55,10 +56,10 @@ extension ReusedViews {
                                     } label: {
                                         Image(systemName: "plus.circle")
                                     }
-                                }
+                                }.id(exercise.id)
                             }
                         } header: {
-                            
+                            Text("All Exercises")
                         }
                     }
                     .environment(\.editMode, .constant(.active))
@@ -74,8 +75,12 @@ extension ReusedViews {
             }
             
             private func SaveOptions() {
-                oldExercises = newExercises
-                saveAction()
+                workout.exercises = newExercises
+                if let exercises = workout.exercises {
+                    let newIDs = exercises.map { $0.persistentModelID }
+                    workout.encodeIDs(ids: newIDs)
+                }
+                workout.modified = Date()
                 showAddSheet = false
             }
             

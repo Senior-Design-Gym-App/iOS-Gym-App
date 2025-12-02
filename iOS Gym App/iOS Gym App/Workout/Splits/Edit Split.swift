@@ -6,7 +6,6 @@ struct EditSplitView: View {
     @Query private var allSplits: [Split]
     @State var selectedImage: UIImage?
     @State var selectedSplit: Split
-    @State var selectedWorkouts: [Workout]
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -19,9 +18,10 @@ struct EditSplitView: View {
         NavigationStack {
             List {
                 HStack {
-                    ReusedViews.SplitViews.MediumIconView(split: selectedSplit)
-                    VStack(alignment: .leading) {
-                        ReusedViews.Labels.SingleCardTitle(title: selectedSplit.name, modified: selectedSplit.modified)
+                    Spacer()
+                    VStack {
+                        ReusedViews.SplitViews.LargeSplitView(split: selectedSplit)
+                            .offset(y: Constants.largeOffset)
                         HStack {
                             ReusedViews.SplitViews.ImagePicker(split: $selectedSplit)
                             ReusedViews.SplitViews.ActiveSplit(split: $selectedSplit, allSplits: allSplits)
@@ -29,28 +29,32 @@ struct EditSplitView: View {
                             ReusedViews.Buttons.DeleteButtonConfirmation(type: .split, deleteAction: Delete)
                         }
                     }
+                    Spacer()
                 }.padding(.bottom)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
                 SelectedWorkoutsList()
             }
             .sheet(isPresented: $showAddSheet) {
-                ReusedViews.SplitViews.SplitControls(saveAction: SaveSplit, newWorkouts: selectedWorkouts, showAddSheet: $showAddSheet, oldWorkouts: $selectedWorkouts)
+                ReusedViews.SplitViews.SplitControls(newWorkouts: selectedSplit.sortedWorkouts, showAddSheet: $showAddSheet, split: $selectedSplit)
             }
+            .navigationTitle(selectedSplit.name)
+            .navigationSubtitle("Edited \(DateHandler().RelativeTime(from: selectedSplit.modified))")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
     private func SelectedWorkoutsList() -> some View {
         Section {
-            ForEach(selectedWorkouts, id: \.self) { workout in
+            ForEach(selectedSplit.sortedWorkouts, id: \.self) { workout in
                 NavigationLink {
-                    EditWorkoutView(selectedExercises: workout.exercises ?? [], selectedWorkout: workout)
+                    EditWorkoutView(selectedWorkout: workout)
                 } label: {
                     ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
                 }
             }
         } header: {
-            ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .split, items: selectedWorkouts)
+            ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .split, items: selectedSplit.sortedWorkouts)
         }
     }
     
@@ -58,12 +62,6 @@ struct EditSplitView: View {
         Toggle(isOn: $selectedSplit.active) {
             Label("Pin", systemImage: "pin")
         }
-    }
-    
-    private func SaveSplit() {
-        selectedSplit.modified = Date()
-        selectedSplit.workouts = selectedWorkouts
-        try? context.save()
     }
     
     private func Delete() {

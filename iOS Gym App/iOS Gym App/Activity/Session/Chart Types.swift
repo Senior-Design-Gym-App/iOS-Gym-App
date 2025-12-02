@@ -31,12 +31,10 @@ struct RecentExerciseData: Identifiable, Hashable {
     
 }
 
-struct DonutData: Identifiable, Hashable {
-    
-    let id = UUID()
+struct DonutData: Identifiable {
+    var id: MuscleGroup { muscle }  // Use muscle as the stable ID
     let muscle: MuscleGroup
-    var sets: Int
-    
+    let sets: Int
 }
 
 enum ChartGraphType: String, CaseIterable, Identifiable {
@@ -71,6 +69,28 @@ enum ChartGraphType: String, CaseIterable, Identifiable {
             WorkoutCharColors.zomp2.color
         case .current:
             WorkoutCharColors.pineGreen.color
+        }
+    }
+    
+}
+
+enum DonutDisplayType: String, Identifiable, CaseIterable {
+    
+    case sets = "Sets"
+    case reps = "Reps"
+    case weight = "Weight"
+    case volume = "Volume"
+    
+    var id: String { self.rawValue }
+    
+    var unit: String {
+        switch self {
+        case .sets:
+            "Set"
+        case .reps:
+            "Rep"
+        case .volume, .weight:
+            Locale.current.measurementSystem == .metric ? "kg" : "lb"
         }
     }
     

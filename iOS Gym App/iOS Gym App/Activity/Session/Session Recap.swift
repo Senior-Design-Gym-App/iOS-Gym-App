@@ -8,15 +8,17 @@ struct SessionRecap: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @State private var selectedSection: DonutData?
+    @AppStorage("donutDisplayType") private var displayType: DonutDisplayType = .reps
     
     var body: some View {
         NavigationStack {
             List {
                 SessionInfo()
                 Section {
-                    ReusedViews.Charts.SetRecapChart(sessions: [session])
+                    ReusedViews.Charts().DataRecapPieChart(sessions: [session], type: displayType)
+                    ReusedViews.Pickers.DisplayTypePicker(type: $displayType, exempt: .weight)
                 } header: {
-                    Text("Sets by Muscle")
+                    Text("Muscle Group Data")
                 }
                 ForEach(session.exercises ?? [], id: \.self) { sessionEntry in
                     ExerciseSection(entry: sessionEntry)

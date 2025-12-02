@@ -12,6 +12,7 @@ final class Workout: Codable {
     var split: Split?
     var created: Date = Date()
     var modified: Date = Date()
+    private var orderString: String = ""
     
     var color: Color {
         guard let exercises else {
@@ -31,6 +32,41 @@ final class Workout: Codable {
             }
         }
         return allTags
+    }
+    
+    var sortedExercises: [Exercise] {
+        guard let exercises else {
+            return []
+        }
+
+        guard !orderString.isEmpty,
+              let data = orderString.data(using: .utf8),
+              let ids = try? JSONDecoder().decode([PersistentIdentifier].self, from: data)
+        else {
+            return exercises
+        }
+
+        var ordered: [Exercise] = []
+        var usedExercises = Set<Exercise>()
+
+        for id in ids {
+            if let exercise = exercises.first(where: { $0.id == id }) {
+                ordered.append(exercise)
+                usedExercises.insert(exercise)
+            }
+        }
+
+        let remaining = exercises.filter { !usedExercises.contains($0) }
+        return ordered + remaining
+    }
+    
+    func encodeIDs(ids: [PersistentIdentifier]) {
+        do {
+            let data = try JSONEncoder().encode(ids)
+            orderString = String(decoding: data, as: UTF8.self)
+        } catch {
+            print("Failed to encode IDs:", error)
+        }
     }
     
     init(name: String, exercises: [Exercise]) {

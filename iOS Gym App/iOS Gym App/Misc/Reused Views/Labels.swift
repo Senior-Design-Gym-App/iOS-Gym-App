@@ -19,6 +19,10 @@ struct ReusedViews {
             Icon(size: Constants.smallIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
         
+        static func LargeIconSize(color: Color) -> some View {
+            Icon(size: Constants.largeIconSize, cornerRadius: Constants.cornerRadius, color: color)
+        }
+        
         static func SingleCardTitle(title: String, modified: Date) -> some View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
@@ -33,15 +37,6 @@ struct ReusedViews {
         
         static func TypeListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType, extend: Bool) -> some View {
             ListDescription(title: name, subtitle: "\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")", extend: extend)
-        }
-        
-        static func HeaderWithArrow(title: String) -> some View {
-            HStack(alignment: .top) {
-                Header(text: title)
-                Spacer()
-                Image(systemName: "chevron.forward.circle.fill")
-                    .tint(.gray)
-            }
         }
         
         static func ListDescription(title: String, subtitle: String, extend: Bool) -> some View {
@@ -87,8 +82,8 @@ struct ReusedViews {
         static func NavigationHeader(text: String) -> some View {
             HStack(spacing: 5) {
                 Text(text)
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(.headline)
+                    .fontWeight(.semibold)
                     .foregroundStyle(Constants.labelColor)
                 Image(systemName: "chevron.right")
                     .fontWeight(.medium)

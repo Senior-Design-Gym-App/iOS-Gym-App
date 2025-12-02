@@ -61,6 +61,7 @@ struct ExerciseChanges: View {
             }
             .navigationTitle(exercise.name)
             .navigationSubtitle(exercise.workoutEquipment?.rawValue ?? "No Equipment")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     

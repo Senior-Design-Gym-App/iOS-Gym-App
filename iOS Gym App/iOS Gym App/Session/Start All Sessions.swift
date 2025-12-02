@@ -41,7 +41,7 @@ struct StartAllSessionsView: View {
             return
         }
         let newSession = WorkoutSession(name: workout.name, started: Date(), workout: workout)
-        for exercise in workout.exercises ?? [] {
+        for exercise in workout.sortedExercises {
             sm.QueueExercise(exercise: exercise)
         }
         context.insert(newSession)

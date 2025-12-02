@@ -12,10 +12,12 @@ struct SessionSetControlView: View {
     @AppStorage("timerType") private var timerType: TimerType = .liveActivities
     @AppStorage("weightChangeType") private var weightChangeType: WeightChangeType = .ten
     @AppStorage("autoAdjustWeights") private var autoAdjustWeights: Bool = true
+    @AppStorage("show25Option") private var show25Option: Bool = false
     
-    @Query private var allExercises: [Exercise]
-    @State private var showRenameAlert: Bool = false
     @State private var newName: String = ""
+    @Query private var allExercises: [Exercise]
+    @State private var showDelete: Bool = false
+    @State private var showRenameAlert: Bool = false
     
     var suggestedExercises: [Exercise] {
         
@@ -56,9 +58,14 @@ struct SessionSetControlView: View {
                 newName = ""
             }
             Button(role: .cancel) {
-//                showRenameAlert = false
                 newName = ""
             }
+        }
+        .alert("Are you sure you want to delete this session?", isPresented: $showDelete) {
+            Button("Delete", role: .destructive) {
+                deleteAction()
+            }
+            Button("Cancel", role: .cancel) { }
         }
     }
     
@@ -68,10 +75,15 @@ struct SessionSetControlView: View {
             Menu {
                 Section {
                     Button(role: .destructive) {
-                        deleteAction()
+                        showDelete = true
                     } label: {
-                        Label("Discard", systemImage: "trash")
-                        Text("Discards this session and all data associated with it.")
+                        Label {
+                            Text("Delete")
+                        } icon: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                                .tint(.red)
+                        }
                     }
                     Button(role: .confirm) {
                         endAction()
@@ -82,18 +94,20 @@ struct SessionSetControlView: View {
                     Button {
                         showRenameAlert = true
                     } label: {
-                        Label("Rename Session", systemImage: "pencil")
-                        Text(sessionName)
+                        Label("Rename", systemImage: "pencil")
                     }
                 } header: {
-                    Label("Session Options", systemImage: Constants.sessionIcon)
+                    Label("\(sessionName) Options", systemImage: Constants.sessionIcon)
                 }
-                Section {
+                Menu {
                     TimerMenu()
                     Toggle(isOn: $autoAdjustWeights) {
                         Label("Auto-Adjust Weights", systemImage: "lightbulb")
                     }
-                } header: {
+                    Toggle(isOn: $show25Option) {
+                        Label("Show 25 Weight Step", systemImage: "stairs")
+                    }
+                } label: {
                     Label("Prefrences", systemImage: "paintpalette")
                 }
                 Section {
@@ -122,7 +136,9 @@ struct SessionSetControlView: View {
     private func WeightChangeSelector() -> some View {
         Picker("Weight Step Size", selection: $weightChangeType) {
             ForEach(WeightChangeType.allCases, id: \.self) { type in
-                Text(type.rawValue).tag(type)
+                if !(type == .twentyFive && !show25Option) {
+                    Text(type.rawValue).tag(type)
+                }
             }
         }.pickerStyle(.segmented)
     }
