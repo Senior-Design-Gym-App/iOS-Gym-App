@@ -2,14 +2,13 @@ import Foundation
 import SwiftUI
 import Combine
 import AWSCognitoIdentityProvider
-import AWSCognitoIdentity
-import AuthenticationServices
 
 struct AuthTokens: Codable {
     let accessToken: String
     let idToken: String
     let refreshToken: String
 }
+
 enum CognitoConfig {
     private static func getConfigValue(for key: String) -> String {
         guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
@@ -18,247 +17,198 @@ enum CognitoConfig {
         return value
     }
     
-    static let region = getConfigValue(for: "AWSRegion")
-    static let userPoolId = getConfigValue(for: "AWSUserPoolId")
-    static let clientId = getConfigValue(for: "AWSClientId")
-    static let apiBaseUrl = getConfigValue(for: "AWSAPIBaseUrl")
-    static let callbackURL = getConfigValue(for: "AWSCallbackURL")
-    static let domainURL = getConfigValue(for: "AWSDomainURL")
+    static let region = CognitoConfig.getConfigValue(for: "AWSRegion")
+    static let userPoolId = CognitoConfig.getConfigValue(for: "AWSUserPoolId")
+    static let clientId = CognitoConfig.getConfigValue(for: "AWSClientId")
+    static let identityPoolId = getConfigValue(for: "AWSIdentityPoolId")
+    static let apiBaseUrl = CognitoConfig.getConfigValue(for: "AWSAPIBaseUrl")
 }
 
-class CognitoManager: NSObject, ObservableObject{
+class CognitoManager: NSObject, ObservableObject {
 
     private let client: CognitoIdentityProviderClient
     private let userPoolId: String
     private let clientId: String
-    private let apiBaseUrl: String
-    private let callbackURL: String
-    private let domainURL: String
     
     static func create() async throws -> CognitoManager {
         let config = try await CognitoIdentityProviderClient.CognitoIdentityProviderClientConfiguration(
-            region: "us-east-1"
+            region: CognitoConfig.region
         )
         let client = CognitoIdentityProviderClient(config: config)
         
-        return CognitoManager(client:client)
+        return CognitoManager(client: client)
     }
+    
     private init(client: CognitoIdentityProviderClient) {
         self.client = client
         self.userPoolId = CognitoConfig.userPoolId
         self.clientId = CognitoConfig.clientId
-        self.apiBaseUrl = CognitoConfig.apiBaseUrl
-        self.callbackURL = CognitoConfig.callbackURL
-        self.domainURL = CognitoConfig.domainURL
         
-        print(userPoolId)
-        print(clientId)
-        print(apiBaseUrl)
-        print(callbackURL)
-        print(domainURL)
+        print("🔧 Configuration:")
+        print("   Region:", CognitoConfig.region)
+        print("   UserPoolId:", userPoolId)
+        print("   ClientId:", clientId)
     }
     
     // MARK: - Sign Up
-    func signUp(username: String, email: String, password: String) async throws {
+    func signUp(email: String, password: String, name: String) async throws {
+        print("📝 Attempting sign up for:", email)
         
-        let emailAttribute = CognitoIdentityProviderClientTypes.AttributeType(
-            name: "email",
-            value: email
-        )
+        let attributes = [
+            CognitoIdentityProviderClientTypes.AttributeType(name: "email", value: email),
+            CognitoIdentityProviderClientTypes.AttributeType(name: "name", value: name)
+        ]
+        
         let input = SignUpInput(
             clientId: clientId,
             password: password,
-            userAttributes: [emailAttribute],
-            username: username
+            userAttributes: attributes,
+            username: email
         )
         
-        let response = try await client.signUp(input: input)
-        print("Sign up successful. User confirmed: \(response.userConfirmed)")
-        
+        do {
+            let response = try await client.signUp(input: input)
+            print("✅ Sign up successful")
+            print("   User confirmed:", response.userConfirmed)
+            print("   User sub:", response.userSub ?? "N/A")
+        } catch let error as AWSCognitoIdentityProvider.UsernameExistsException {
+            print("❌ User already exists")
+            throw CognitoError.usernameExists
+        } catch let error as AWSCognitoIdentityProvider.InvalidPasswordException {
+            print("❌ Invalid password:", error.message ?? "")
+            throw CognitoError.invalidPassword
+        } catch let error as AWSCognitoIdentityProvider.InvalidParameterException {
+            print("❌ Invalid parameter:", error.message ?? "")
+            throw CognitoError.requestFailed(error.message ?? "Invalid parameter")
+        } catch {
+            print("❌ Sign up error:", error)
+            throw error
+        }
     }
     
     // MARK: - Confirm Sign Up
-    func confirmSignUp(username: String, confirmationCode: String) async throws {
+    func confirmSignUp(email: String, confirmationCode: String) async throws {
+        print("📧 Confirming sign up for:", email)
+        
         let input = ConfirmSignUpInput(
             clientId: clientId,
             confirmationCode: confirmationCode,
-            username: username
+            username: email
         )
         
-        _ = try await client.confirmSignUp(input: input)
-        
-        print("User confirmed successfully")
+        do {
+            _ = try await client.confirmSignUp(input: input)
+            print("✅ User confirmed successfully")
+        } catch let error as AWSCognitoIdentityProvider.CodeMismatchException {
+            print("❌ Invalid confirmation code")
+            throw CognitoError.codeMismatch
+        } catch let error as AWSCognitoIdentityProvider.ExpiredCodeException {
+            print("❌ Confirmation code expired")
+            throw CognitoError.codeExpired
+        } catch {
+            print("❌ Confirmation error:", error)
+            throw error
+        }
     }
     
-    // MARK: - Sign In
-    func signIn(username: String, password: String) async throws -> AuthTokens {
+    // MARK: - Sign In (USER_PASSWORD_AUTH)
+    func signIn(email: String, password: String) async throws -> AuthTokens {
+        print("🔐 Attempting sign in for:", email)
+        
         let input = InitiateAuthInput(
             authFlow: .userPasswordAuth,
             authParameters: [
-                "USERNAME": username,
+                "USERNAME": email,
                 "PASSWORD": password
             ],
             clientId: clientId
         )
         
-        let response = try await client.initiateAuth(input: input)
-        
-        guard let authResult = response.authenticationResult,
-              let accessToken = authResult.accessToken,
-              let idToken = authResult.idToken,
-              let refreshToken = authResult.refreshToken else {
-            throw CognitoError.authenticationFailed
+        do {
+            let response = try await client.initiateAuth(input: input)
+            
+            guard let authResult = response.authenticationResult,
+                  let accessToken = authResult.accessToken,
+                  let idToken = authResult.idToken,
+                  let refreshToken = authResult.refreshToken else {
+                print("❌ Missing tokens in response")
+                throw CognitoError.authenticationFailed
+            }
+            
+            print("✅ Sign in successful")
+            
+            return AuthTokens(
+                accessToken: accessToken,
+                idToken: idToken,
+                refreshToken: refreshToken
+            )
+            
+        } catch let error as AWSCognitoIdentityProvider.NotAuthorizedException {
+            print("❌ Not authorized:", error.message ?? "")
+            throw CognitoError.invalidPassword
+        } catch let error as AWSCognitoIdentityProvider.UserNotFoundException {
+            print("❌ User not found")
+            throw CognitoError.userNotFound
+        } catch let error as AWSCognitoIdentityProvider.UserNotConfirmedException {
+            print("❌ User not confirmed")
+            throw CognitoError.userNotConfirmed
+        } catch let error as AWSCognitoIdentityProvider.InvalidParameterException {
+            print("❌ Invalid parameter:", error.message ?? "")
+            throw CognitoError.requestFailed(error.message ?? "Invalid parameter - make sure USER_PASSWORD_AUTH is enabled in Cognito")
+        } catch {
+            print("❌ Sign in error:", error)
+            throw error
         }
-        
-        return AuthTokens(
-            accessToken: accessToken,
-            idToken: idToken,
-            refreshToken: refreshToken
-        )
     }
     
-    // MARK: - Apple Sign In
-    func signInWithApple() async{
-        let urlString = """
-        https://\(domainURL)/oauth2/authorize?\
-        identity_provider=Apple&\
-        redirect_uri=\(callbackURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&\
-        response_type=CODE&\
-        client_id=\(clientId)&\
-        scope=openid%20email%20profile
-        """
+    // MARK: - Get User
+    func getUser(accessToken: String) async throws -> [String: String] {
+        print("👤 Getting user info...")
         
-        guard let url = URL(string: urlString) else {
-            print("❌ Invalid URL")
-            return
-        }
+        let input = GetUserInput(accessToken: accessToken)
         
-        print("🚀 Starting authentication with URL:", url)
-        
-        let session = ASWebAuthenticationSession(
-            url: url,
-            callbackURLScheme: callbackURL.components(separatedBy: "://").first
-        ) { [weak self] callbackURL, error in
-            if let error = error {
-                print("❌ Auth session error:", error)
-                return
-            }
+        do {
+            let response = try await client.getUser(input: input)
             
-            guard let callbackURL = callbackURL else {
-                print("❌ No callback URL")
-                return
-            }
+            var userInfo: [String: String] = [:]
+            userInfo["username"] = response.username
             
-            print("✅ Received callback URL:", callbackURL)
-            
-            // Extract authorization code
-            let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)
-            
-            if let code = components?.queryItems?.first(where: { $0.name == "code" })?.value {
-                print("✅ Got authorization code")
-                Task {
-                    do {
-                        try await self?.exchangeCodeForTokens(code: code)
-                    } catch {
-                        print("❌ Token exchange failed:", error)
+            if let attributes = response.userAttributes {
+                for attr in attributes {
+                    if let name = attr.name, let value = attr.value {
+                        userInfo[name] = value
                     }
                 }
-            } else {
-                print("❌ No authorization code in callback")
             }
+            
+            print("✅ Got user info for:", response.username ?? "unknown")
+            return userInfo
+            
+        } catch {
+            print("❌ Get user error:", error)
+            throw error
         }
-        session.start()
     }
     
-    private func exchangeCodeForTokens(code: String) async throws {
-        let tokenURL = URL(string: "https://\(domainURL)/oauth2/token")!
-        var request = URLRequest(url: tokenURL)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    // MARK: - Delete User
+    func deleteUser(accessToken: String) async throws {
+        print("🗑️ Deleting user...")
         
-        let bodyParams = [
-            "grant_type": "authorization_code",
-            "client_id": clientId,
-            "code": code,
-            "redirect_uri": callbackURL
-        ]
+        let input = DeleteUserInput(accessToken: accessToken)
         
-        let body = bodyParams
-            .map { "\($0.key)=\($0.value)" }
-            .joined(separator: "&")
-        
-        request.httpBody = body.data(using: .utf8)
-        
-        print("🔄 Exchanging code for tokens...")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw CognitoError.tokenExchangeFailed
+        do {
+            _ = try await client.deleteUser(input: input)
+            print("✅ User deleted successfully")
+        } catch {
+            print("❌ Delete user error:", error)
+            throw error
         }
-        
-        print("📥 Token response status:", httpResponse.statusCode)
-        
-        if httpResponse.statusCode != 200 {
-            if let errorString = String(data: data, encoding: .utf8) {
-                print("❌ Token error response:", errorString)
-            }
-            throw CognitoError.tokenExchangeFailed
-        }
-        
-        struct TokenResponse: Codable {
-            let access_token: String
-            let id_token: String
-            let refresh_token: String
-            let token_type: String
-            let expires_in: Int
-        }
-        
-        let tokens = try JSONDecoder().decode(TokenResponse.self, from: data)
-        
-        print("✅ Successfully received tokens")
-        
-        // Parse the ID token to get user info
-        if let userInfo = parseJWT(tokens.id_token) {
-            await MainActor.run {
-                print(userInfo["sub"] ?? "aaaa")
-            }
-        }
-        
-        // TODO: Store tokens securely in Keychain
-        UserDefaults.standard.set(tokens.access_token, forKey: "accessToken")
-        UserDefaults.standard.set(tokens.id_token, forKey: "idToken")
-        UserDefaults.standard.set(tokens.refresh_token, forKey: "refreshToken")
     }
     
-    private func parseJWT(_ jwt: String) -> [String: Any]? {
-        let segments = jwt.components(separatedBy: ".")
-        guard segments.count > 1 else { return nil }
-        
-        var base64 = segments[1]
-        // Add padding if needed
-        let remainder = base64.count % 4
-        if remainder > 0 {
-            base64 += String(repeating: "=", count: 4 - remainder)
-        }
-        
-        guard let data = Data(base64Encoded: base64),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return nil
-        }
-        
-        return json
-    }
-    
-    
-    // MARK: - Sign Out
-    func signOut() async throws {
-        print("trying to sign out")
-        
-        print("Signed out successfully")
-    }
-    
+    // MARK: - Refresh Session
     func refreshSession(refreshToken: String) async throws -> AuthTokens {
+        print("🔄 Refreshing session...")
+        
         let input = InitiateAuthInput(
             authFlow: .refreshTokenAuth,
             authParameters: [
@@ -275,13 +225,19 @@ class CognitoManager: NSObject, ObservableObject{
             throw CognitoError.refreshFailed
         }
         
+        print("✅ Session refreshed")
+        
         return AuthTokens(
             accessToken: accessToken,
             idToken: idToken,
-            refreshToken: refreshToken // Keep the same refresh token
+            refreshToken: refreshToken
         )
     }
     
+    // MARK: - Sign Out
+    func signOut() async throws {
+        print("👋 Signed out successfully")
+    }
     
     // MARK: - Errors
     enum CognitoError: LocalizedError {
@@ -295,11 +251,8 @@ class CognitoManager: NSObject, ObservableObject{
         case usernameExists
         case codeExpired
         case codeMismatch
-        case invalidAppleCredential
-        case invalidAppleToken
         case refreshFailed
-        case federationFailed
-        case tokenExchangeFailed
+        case userNotConfirmed
         
         var errorDescription: String? {
             switch self {
@@ -316,77 +269,116 @@ class CognitoManager: NSObject, ObservableObject{
             case .userNotFound:
                 return "User not found"
             case .invalidPassword:
-                return "Invalid password"
+                return "Incorrect email or password"
             case .usernameExists:
-                return "Username already exists"
+                return "An account with this email already exists"
             case .codeExpired:
                 return "Verification code expired"
             case .codeMismatch:
                 return "Invalid verification code"
-            case .invalidAppleCredential:
-                return "Invalid Apple credential"
-            case .invalidAppleToken:
-                return "Invalid Apple identity token"
-            case .federationFailed:
-                return "Federation Failed"
             case .refreshFailed:
-                return "Refresh Failed"
-            case .tokenExchangeFailed:
-                return "Token Exchange Failed"
+                return "Failed to refresh session"
+            case .userNotConfirmed:
+                return "Please verify your email first"
             }
         }
     }
-
 }
+
 // MARK: - Auth Manager
 @MainActor
 class AuthManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var currentUser: String?
+    @Published var userAttributes: [String: String] = [:]
     
     private var cognitoService: CognitoManager?
     private var currentTokens: AuthTokens?
     
     func initialize() async throws {
         cognitoService = try await CognitoManager.create()
-    }
-    
-    func signIn(username: String, password: String) async throws {
-        guard let service = cognitoService else { return }
-        currentTokens = try await service.signIn(username: username, password: password)
         
-        // Store tokens securely (implement keychain storage)
-        isAuthenticated = true
-        currentUser = username
-    }
-    
-    func signUp(username: String, password: String, email: String) async throws {
-        guard let service = cognitoService else { return }
-        try await service.signUp(username: username, email: email, password: password)
-    }
-    
-    func confirmSignUp(username: String, code: String) async throws {
-        guard let service = cognitoService else { return }
-        try await service.confirmSignUp(username: username, confirmationCode: code)
-    }
-    
-    func signInWithApple(authorization: ASAuthorization) async throws {
-        guard let service = cognitoService,
-              let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
-              let identityToken = appleIDCredential.identityToken,
-              let tokenString = String(data: identityToken, encoding: .utf8) else {
-            throw CognitoManager.CognitoError.invalidAppleToken
+        // Check for existing tokens
+        if let accessToken = KeychainHelper.standard.retrieveToken(key: "accessToken"),
+           let idToken = KeychainHelper.standard.retrieveToken(key: "idToken"),
+           let refreshToken = KeychainHelper.standard.retrieveToken(key: "refreshToken") {
+            
+            currentTokens = AuthTokens(
+                accessToken: accessToken,
+                idToken: idToken,
+                refreshToken: refreshToken
+            )
+            
+            // Try to get user info
+            do {
+                let userInfo = try await cognitoService?.getUser(accessToken: accessToken)
+                userAttributes = userInfo ?? [:]
+                currentUser = userInfo?["email"] ?? userInfo?["username"]
+                isAuthenticated = true
+            } catch {
+                // Token might be expired, try to refresh
+                print("⚠️ Failed to get user info, trying to refresh token...")
+                do {
+                    let newTokens = try await cognitoService?.refreshSession(refreshToken: refreshToken)
+                    if let newTokens = newTokens {
+                        KeychainHelper.standard.storeAuthTokens(
+                            accessToken: newTokens.accessToken,
+                            idToken: newTokens.idToken,
+                            refreshToken: newTokens.refreshToken
+                        )
+                        currentTokens = newTokens
+                        
+                        let userInfo = try await cognitoService?.getUser(accessToken: newTokens.accessToken)
+                        userAttributes = userInfo ?? [:]
+                        currentUser = userInfo?["email"] ?? userInfo?["username"]
+                        isAuthenticated = true
+                    }
+                } catch {
+                    // Refresh failed, clear tokens
+                    print("❌ Refresh failed, clearing tokens")
+                    KeychainHelper.standard.deleteAuthTokens()
+                }
+            }
         }
-        print("has everything that it needs")
-        let _ = await service.signInWithApple()
-        print("successfully signed in with Apple")
+    }
+    
+    func signIn(email: String, password: String) async throws {
+        guard let service = cognitoService else { return }
+        let tokens = try await service.signIn(email: email, password: password)
+        
+        // Store tokens
+        KeychainHelper.standard.storeAuthTokens(
+            accessToken: tokens.accessToken,
+            idToken: tokens.idToken,
+            refreshToken: tokens.refreshToken
+        )
+        
+        // Get user info
+        let userInfo = try await service.getUser(accessToken: tokens.accessToken)
+        userAttributes = userInfo
+        
+        currentTokens = tokens
         isAuthenticated = true
-        currentUser = appleIDCredential.user
+        currentUser = email
     }
     
     func signOut() async throws {
+        // Clear tokens
+        KeychainHelper.standard.deleteAuthTokens()
+        
         currentTokens = nil
+        userAttributes = [:]
         isAuthenticated = false
         currentUser = nil
+    }
+    
+    func signUp(email: String, password: String, name: String) async throws {
+        guard let service = cognitoService else { return }
+        try await service.signUp(email: email, password: password, name: name)
+    }
+    
+    func confirmSignUp(email: String, code: String) async throws {
+        guard let service = cognitoService else { return }
+        try await service.confirmSignUp(email: email, confirmationCode: code)
     }
 }

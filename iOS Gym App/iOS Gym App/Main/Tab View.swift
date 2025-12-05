@@ -16,6 +16,9 @@ struct TabHome: View {
             Tab("Explore", systemImage: "safari") {
                 ExploreView()
             }
+            Tab("Cloud", systemImage: "icloud.and.arrow.down"){
+                CloudWorkoutsView()
+            }
         }
         .tabViewBottomAccessory {
             SessionTabViewWrapper()

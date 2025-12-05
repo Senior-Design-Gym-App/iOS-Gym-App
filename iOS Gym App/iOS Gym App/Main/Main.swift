@@ -14,39 +14,42 @@ struct iOS_Gym_AppApp: App {
     @State private var sessionManager = SessionManager()
     @State private var pm = ProgressManager()
     @State private var watchSync = WatchSyncViewModel()
-    func debugInfoPlist() {
-        print("===== ALL INFO.PLIST KEYS =====")
-        if let infoDictionary = Bundle.main.infoDictionary {
-            for (key, value) in infoDictionary.sorted(by: { $0.key < $1.key }) {
-                print("\(key): \(value)")
-            }
-        }
-        print("================================")
-    }
+    @StateObject private var authManager = AuthManager()
     
     init() {
         // Initialize WatchConnectivity on app launch
         _ = WatchConnectivityManager.shared
-        debugInfoPlist()
     }
-    @StateObject private var authManager = AuthManager()
     
     var body: some Scene {
         WindowGroup {
-            if authManager.isAuthenticated {
-                TabHome()
-                    .tint(Constants.mainAppTheme)
-                    .environment(pm)
-                    .environment(sessionManager)
-                    .environment(watchSync)
-                    .environmentObject(authManager)
-            } else {
-                SignInView()
-                    .environmentObject(authManager)
+            Group {
+                if authManager.isAuthenticated {
+                    TabHome()
+                        .tint(Constants.mainAppTheme)
+                        .environment(pm)
+                        .environment(sessionManager)
+                        .environment(watchSync)
+                        .environmentObject(authManager)
+                } else {
+                    SignInView()
+                        .environmentObject(authManager)
+                }
             }
-        }
-        .onChange(of: authManager.isAuthenticated) {
-            print("auth status \(authManager.isAuthenticated)")
+            .task {
+                // Initialize AuthManager
+                do {
+                    try await authManager.initialize()
+                    // Set CloudManager's auth reference
+                    CloudManager.shared.setAuthManager(authManager)
+                    print("✅ CloudManager initialized with AuthManager")
+                } catch {
+                    print("❌ Failed to initialize auth: \(error)")
+                }
+            }
+            .onChange(of: authManager.isAuthenticated) {
+                print("auth status \(authManager.isAuthenticated)")
+            }
         }
         .modelContainer(for: [Exercise.self, Workout.self, Split.self, WorkoutSession.self, WorkoutSessionEntry.self])
     }

@@ -33,19 +33,19 @@ final class Exercise: Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case name, rest, muscleWorked, weights, reps, equipment, workouts, updateDates
+        case name, rest, muscleWorked, weights, reps, equipment, updateDates
     }
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        try container.encode(rest, forKey: .rest)
+        try container.encode(rest, forKey: .rest)	
         try container.encode(muscleWorked, forKey: .muscleWorked)
         try container.encode(weights, forKey: .weights)
         try container.encode(reps, forKey: .reps)
         try container.encode(updateDates, forKey: .updateDates)
         try container.encodeIfPresent(equipment, forKey: .equipment)
-        try container.encodeIfPresent(workouts, forKey: .workouts)
+        //try container.encodeIfPresent(workouts, forKey: .workouts)
     }
     
     required init(from decoder: Decoder) throws {
@@ -58,7 +58,7 @@ final class Exercise: Codable {
         reps = try container.decode([[Int]].self, forKey: .reps)
         equipment = try container.decodeIfPresent(String.self, forKey: .equipment)
         updateDates = try container.decode([Date].self, forKey: .updateDates)
-        workouts = try container.decode([Workout].self, forKey: .workouts)
+        //workouts = try container.decode([Workout].self, forKey: .workouts)
     }
     
     var muscleGroup: MuscleGroup? {

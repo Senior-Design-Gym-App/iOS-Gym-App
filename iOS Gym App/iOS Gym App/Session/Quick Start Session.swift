@@ -88,7 +88,7 @@ struct SessionHomeView: View {
                     .font(.caption)
                     .fontWeight(.light)
             }.padding(.bottom)
-            ForEach(workout.sortedExercises, id: \.self) { exercise in
+            ForEach(workout.sortedExercises, id: \.id) { exercise in
                 HStack {
                     Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
                         .resizable()

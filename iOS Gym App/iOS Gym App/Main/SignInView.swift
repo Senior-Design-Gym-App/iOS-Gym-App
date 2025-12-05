@@ -1,17 +1,10 @@
-//
-//  SignInView.swift
-//  iOS Gym App
-//
-//  Created by Zachary Andrew Kolano on 11/13/25.
-//
 import SwiftUI
-import AuthenticationServices
 
 struct SignInView: View {
     @EnvironmentObject private var authManager: AuthManager
-    @State private var username = ""
-    @State private var password = ""
     @State private var email = ""
+    @State private var password = ""
+    @State private var name = ""  // Add this
     @State private var showingSignUp = false
     @State private var showingConfirmation = false
     @State private var confirmationCode = ""
@@ -34,6 +27,20 @@ struct SignInView: View {
                         if let user = authManager.currentUser {
                             Text("Signed in as: \(user)")
                                 .foregroundColor(.secondary)
+                        }
+                        
+                        // Show user attributes
+                        if !authManager.userAttributes.isEmpty {
+                            VStack(alignment: .leading, spacing: 5) {
+                                ForEach(Array(authManager.userAttributes.keys.sorted()), id: \.self) { key in
+                                    if let value = authManager.userAttributes[key] {
+                                        Text("\(key): \(value)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .padding()
                         }
                         
                         Button("Sign Out") {
@@ -92,10 +99,11 @@ struct SignInView: View {
     // MARK: - Sign In View
     private var signInView: some View {
         VStack(spacing: 20) {
-            // Username field
-            TextField("Username", text: $username)
+            // Email field
+            TextField("Email", text: $email)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .autocapitalization(.none)
+                .keyboardType(.emailAddress)
                 .disableAutocorrection(true)
             
             // Password field
@@ -111,33 +119,7 @@ struct SignInView: View {
                     .foregroundColor(.white)
                     .cornerRadius(10)
             }
-            .disabled(username.isEmpty || password.isEmpty)
-            
-            // Divider
-            HStack {
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(.gray.opacity(0.3))
-                Text("or")
-                    .foregroundColor(.gray)
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(.gray.opacity(0.3))
-            }
-            .padding(.vertical, 10)
-            
-            // Sign in with Apple button
-            SignInWithAppleButton(
-                onRequest: { request in
-                    request.requestedScopes = [.email, .fullName]
-                },
-                onCompletion: { result in
-                    handleAppleSignIn(result: result)
-                }
-            )
-            .signInWithAppleButtonStyle(.black)
-            .frame(height: 50)
-            .cornerRadius(10)
+            .disabled(email.isEmpty || password.isEmpty)
             
             // Sign Up link
             Button(action: {
@@ -158,10 +140,8 @@ struct SignInView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            TextField("Username", text: $username)
+            TextField("Name", text: $name)  // Add name field
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
             
             TextField("Email", text: $email)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -171,6 +151,10 @@ struct SignInView: View {
             SecureField("Password", text: $password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
             
+            Text("Password must be at least 8 characters")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
             Button(action: handleSignUp) {
                 Text("Sign Up")
                     .frame(maxWidth: .infinity)
@@ -179,7 +163,7 @@ struct SignInView: View {
                     .foregroundColor(.white)
                     .cornerRadius(10)
             }
-            .disabled(username.isEmpty || email.isEmpty || password.isEmpty)
+            .disabled(name.isEmpty || email.isEmpty || password.isEmpty || password.count < 8)
             
             Button(action: {
                 showingSignUp = false
@@ -198,7 +182,7 @@ struct SignInView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Enter the confirmation code sent to your email")
+            Text("Enter the confirmation code sent to \(email)")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -235,9 +219,9 @@ struct SignInView: View {
         
         Task {
             do {
-                try await authManager.signIn(username: username, password: password)
+                try await authManager.signIn(email: email, password: password)
             } catch {
-                errorMessage = "Sign in failed: \(error.localizedDescription)"
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
@@ -249,11 +233,11 @@ struct SignInView: View {
         
         Task {
             do {
-                try await authManager.signUp(username: username, password: password, email: email)
+                try await authManager.signUp(email: email, password: password, name: name)
                 showingSignUp = false
                 showingConfirmation = true
             } catch {
-                errorMessage = "Sign up failed: \(error.localizedDescription)"
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
@@ -265,41 +249,14 @@ struct SignInView: View {
         
         Task {
             do {
-                try await authManager.confirmSignUp(username: username, code: confirmationCode)
+                try await authManager.confirmSignUp(email: email, code: confirmationCode)
                 showingConfirmation = false
                 // Auto sign in after confirmation
-                try await authManager.signIn(username: username, password: password)
+                try await authManager.signIn(email: email, password: password)
             } catch {
-                errorMessage = "Confirmation failed: \(error.localizedDescription)"
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
-    }
-    
-    private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
-        isLoading = true
-        errorMessage = nil
-        
-        switch result {
-        case .success(let authorization):
-            Task {
-                do {
-                    try await authManager.signInWithApple(authorization: authorization)
-                } catch {
-                    errorMessage = "Apple sign in failed: \(error.localizedDescription)"
-                }
-                isLoading = false
-            }
-        case .failure(let error):
-            errorMessage = "Apple sign in failed: \(error.localizedDescription)"
-            isLoading = false
-        }
-    }
-}
-
-// MARK: - Preview
-struct SignInView_Previews: PreviewProvider {
-    static var previews: some View {
-        SignInView()
     }
 }

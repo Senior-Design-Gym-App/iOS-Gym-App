@@ -2,21 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>AWSRegion</key>
-    <string>$(AWS_REGION)</string>
-    <key>AWSUserPoolId</key>
-    <string>$(AWS_USERPOOLID)</string>
-    <key>AWSClientId</key>
-    <string>$(AWS_CLIENTID)</string>
-    <key>AWSAPIBaseUrl</key>
-    <string>$(AWS_APIBASEURL)</string>
-    <key>AWSCallbackURL</key>
-    <string>$(AWS_CALLBACKURL)</string>
-    <key>AWSDomainURL</key>
-    <string>$(AWS_DOMAINURL)</string>
-    <key>OpenAICallback</key>
-    <string>$(OPENAI_CALLBACK)</string>
-	<key>NSHealthUpdateUsageDescription</key>	
+	<key>AWSRegion</key>
+	<string>$(AWS_REGION)</string>
+	<key>AWSUserPoolId</key>
+	<string>$(AWS_USERPOOLID)</string>
+	<key>AWSClientId</key>
+	<string>$(AWS_CLIENTID)</string>
+	<key>AWSAPIBaseUrl</key>
+	<string>$(AWS_APIBASEURL)</string>
+	<key>AWSCallbackURL</key>
+	<string>$(AWS_CALLBACKURL)</string>
+	<key>AWSDomainURL</key>
+	<string>$(AWS_DOMAINURL)</string>
+	<key>AWSIdentityPoolId</key>
+	<string>$(AWS_IDENTITYPOOLID)</string>
+	<key>OpenAICallback</key>
+	<string>$(OPENAI_CALLBACK)</string>
+	<key>NSHealthUpdateUsageDescription</key>
 	<string></string>
 	<key>NSHealthShareUsageDescription</key>
 	<string></string>

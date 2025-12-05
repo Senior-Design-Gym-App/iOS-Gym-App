@@ -79,10 +79,16 @@ final class Workout: Codable {
     }
     
     func encode(to encoder: Encoder) throws {
+        //print("ENCODING WORKOUT:", name)
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
+        //print(" -> encoded name")
+
         try container.encode(exercises, forKey: .exercises)
+        //print(" -> encoded exercises")
+
         try container.encode(split, forKey: .split)
+        //print(" -> encoded split")
     }
     
     required init(from decoder: Decoder) throws {
@@ -93,3 +99,8 @@ final class Workout: Codable {
     }
     
 }
+/*
+ Make a couple exercies
+ Different workouts into different splits
+ encode one of the splits
+ */

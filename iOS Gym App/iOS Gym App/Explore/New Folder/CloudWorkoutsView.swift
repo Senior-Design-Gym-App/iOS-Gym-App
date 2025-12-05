@@ -16,6 +16,7 @@ struct CloudWorkoutsView: View {
     @State private var isLoading = false
     @State private var cloudWorkouts: [Workout] = []
     @State private var selectedTags: Set<String> = []
+    @State private var showingUploadSheet = false
 
     @Query(sort: \Workout.name) private var localWorkouts: [Workout]
     
@@ -46,6 +47,21 @@ struct CloudWorkoutsView: View {
             }
             .padding()
             .navigationTitle("Cloud Workouts")
+            .toolbar {
+                if authManager.isAuthenticated {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showingUploadSheet = true
+                        } label: {
+                            Label("Upload", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingUploadSheet) {
+                UploadWorkoutsView()
+                    .environmentObject(authManager)
+            }
             .onAppear {
                 // Set the auth manager reference in CloudManager
                 cloudManager.setAuthManager(authManager)
@@ -128,7 +144,7 @@ struct CloudWorkoutsView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Sign in with Apple to access cloud workouts")
+            Text("Sign in to access cloud workouts")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -196,6 +212,281 @@ struct CloudWorkoutsView: View {
     }
 }
 
+// MARK: - Upload Workouts View
+
+struct UploadWorkoutsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var authManager: AuthManager
+    
+    @Query(sort: \Workout.name) private var localWorkouts: [Workout]
+    
+    @State private var selectedWorkouts: Set<Workout.ID> = []
+    @State private var uploadStatus: [Workout.ID: UploadStatus] = [:]
+    @State private var isUploading = false
+    @State private var searchText = ""
+    
+    private let cloudManager = CloudManager.shared
+    
+    enum UploadStatus {
+        case idle
+        case uploading
+        case success
+        case error(String)
+        
+        var icon: String {
+            switch self {
+            case .idle: return "circle"
+            case .uploading: return "circle.dotted"
+            case .success: return "checkmark.circle.fill"
+            case .error: return "xmark.circle.fill"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .idle: return .secondary
+            case .uploading: return .blue
+            case .success: return .green
+            case .error: return .red
+            }
+        }
+    }
+    
+    var filteredWorkouts: [Workout] {
+        if searchText.isEmpty {
+            return localWorkouts
+        } else {
+            return localWorkouts.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Status bar
+                if isUploading {
+                    uploadProgressBar
+                }
+                
+                // Workouts list
+                if filteredWorkouts.isEmpty {
+                    ContentUnavailableView(
+                        "No Local Workouts",
+                        systemImage: "figure.strengthtraining.traditional",
+                        description: Text("Create workouts locally first before uploading to cloud")
+                    )
+                } else {
+                    List(filteredWorkouts) { workout in
+                        WorkoutUploadRow(
+                            workout: workout,
+                            isSelected: selectedWorkouts.contains(workout.id),
+                            status: uploadStatus[workout.id] ?? .idle
+                        ) {
+                            toggleSelection(workout)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .searchable(text: $searchText, prompt: "Search workouts")
+                }
+            }
+            .navigationTitle("Upload Workouts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .disabled(isUploading)
+                }
+                
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        Task { await uploadSelectedWorkouts() }
+                    } label: {
+                        if isUploading {
+                            ProgressView()
+                        } else {
+                            Text("Upload (\(selectedWorkouts.count))")
+                        }
+                    }
+                    .disabled(selectedWorkouts.isEmpty || isUploading)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    HStack {
+                        Button {
+                            if selectedWorkouts.count == filteredWorkouts.count {
+                                selectedWorkouts.removeAll()
+                            } else {
+                                selectedWorkouts = Set(filteredWorkouts.map { $0.id })
+                            }
+                        } label: {
+                            Text(selectedWorkouts.count == filteredWorkouts.count ? "Deselect All" : "Select All")
+                        }
+                        
+                        Spacer()
+                        
+                        Text("\(selectedWorkouts.count) of \(filteredWorkouts.count) selected")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            cloudManager.setAuthManager(authManager)
+        }
+    }
+    
+    private var uploadProgressBar: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("Uploading...")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("\(uploadedCount)/\(selectedWorkouts.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            ProgressView(value: Double(uploadedCount), total: Double(selectedWorkouts.count))
+        }
+        .padding()
+        .background(Color(.systemBackground))
+    }
+    
+    private var uploadedCount: Int {
+        uploadStatus.values.filter { status in
+            if case .success = status { return true }
+            return false
+        }.count
+    }
+    
+    private func toggleSelection(_ workout: Workout) {
+        if selectedWorkouts.contains(workout.id) {
+            selectedWorkouts.remove(workout.id)
+        } else {
+            selectedWorkouts.insert(workout.id)
+        }
+    }
+    
+    private func uploadSelectedWorkouts() async {
+        isUploading = true
+        
+        // Reset status for selected workouts
+        for id in selectedWorkouts {
+            uploadStatus[id] = .idle
+        }
+        
+        // Upload each selected workout
+        for id in selectedWorkouts {
+            guard let workout = localWorkouts.first(where: { $0.id == id }) else { continue }
+            
+            uploadStatus[id] = .uploading
+            
+            do {
+                let workoutId = try await cloudManager.createWorkout(workout)
+                uploadStatus[id] = .success
+                print("✅ Uploaded workout: \(workout.name) with ID: \(workoutId)")
+            } catch {
+                uploadStatus[id] = .error(error.localizedDescription)
+                print("❌ Failed to upload workout: \(workout.name) - \(error)")
+            }
+            
+            // Small delay between uploads
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        }
+        
+        isUploading = false
+        
+        // Auto-dismiss after successful upload
+        let allSuccess = uploadStatus.values.allSatisfy { status in
+            if case .success = status { return true }
+            return false
+        }
+        
+        if allSuccess {
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            dismiss()
+        }
+    }
+}
+
+// MARK: - Workout Upload Row
+
+struct WorkoutUploadRow: View {
+    let workout: Workout
+    let isSelected: Bool
+    let status: UploadWorkoutsView.UploadStatus
+    let onToggle: () -> Void
+    
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 12) {
+                // Selection indicator
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .blue : .secondary)
+                    .font(.title3)
+                
+                // Workout info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(workout.name)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    if let exercises = workout.exercises {
+                        Text("\(exercises.count) exercises")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Tags
+                    if !workout.tags.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 4) {
+                                ForEach(workout.tags, id: \.self) { tag in
+                                    Text(tag.rawValue)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(tag.colorPalette.opacity(0.2))
+                                        .foregroundStyle(tag.colorPalette)
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                // Upload status
+                VStack(spacing: 4) {
+                    Image(systemName: status.icon)
+                        .foregroundStyle(status.color)
+                        .font(.title3)
+                    
+                    if case .error(let message) = status {
+                        Text("Error")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+        .disabled({
+            if case .uploading = status {
+                return true
+            }
+            return false
+        }())
+    }
+}
+
 // MARK: - Workout Cloud Row
 
 struct WorkoutCloudRow: View {
@@ -241,67 +532,6 @@ struct WorkoutCloudRow: View {
             .padding(.top, 6)
         }
         .padding(.vertical, 4)
-    }
-}
-
-// MARK: - Publish Workout Button
-
-struct PublishWorkoutButton: View {
-    let workout: Workout
-    @State private var isPublishing = false
-    @State private var message: String?
-    
-    private let cloudManager = CloudManager.shared
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button {
-                Task { await publishWorkout() }
-            } label: {
-                HStack {
-                    if isPublishing {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                    }
-                    Label("Publish to Cloud", systemImage: "cloud.fill")
-                        .font(.caption)
-                }
-            }
-            .buttonStyle(.bordered)
-            .disabled(isPublishing)
-            
-            if let message = message {
-                Text(message)
-                    .font(.caption2)
-                    .foregroundStyle(message.contains("Error") ? .red : .green)
-            }
-        }
-    }
-    
-    private func publishWorkout() async {
-        isPublishing = true
-        message = nil
-        
-        do {
-            // First create the workout in the cloud
-            let workoutId = try await cloudManager.createWorkout(workout)
-            
-            // Then publish it to make it public
-            try await cloudManager.publishWorkout(workoutId: workoutId)
-            
-            message = "✓ Published successfully"
-        } catch {
-            message = "Error: \(error.localizedDescription)"
-            print("❌ Publish error: \(error)")
-        }
-        
-        isPublishing = false
-        
-        // Clear message after 3 seconds
-        Task {
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            message = nil
-        }
     }
 }
 
