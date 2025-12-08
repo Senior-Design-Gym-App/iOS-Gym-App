@@ -9,10 +9,33 @@ struct SessionCover: View {
     @Environment(SessionManager.self) private var sessionManager: SessionManager
     @Environment(\.colorScheme) private var colorScheme
     
+    @State private var showAlternateExercise = false
+    
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
                 .frame(width: 65, height: 5)
+            
+            // ADD THIS CUSTOM HEADER WITH TAB BUTTONS
+            HStack {
+                Text("Session")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Button {
+                    showAlternateExercise = true
+                } label: {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.title3)
+                        .foregroundStyle(.blue)
+                }
+                .disabled(sessionManager.currentExercise == nil)
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
             TabView {
                 Tab("Current", systemImage: "circle") {
                     SessionInfo(session: session)
@@ -22,6 +45,7 @@ struct SessionCover: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
+            
             VStack {
                 SessionCurrentExerciseView(sessionManager: sessionManager)
                     .padding(.top)
@@ -38,6 +62,10 @@ struct SessionCover: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .background(Color(uiColor: .systemGroupedBackground))
+        .sheet(isPresented: $showAlternateExercise) {
+            AlternateExerciseView(session: session)
+                .environment(sessionManager)
+        }
     }
     
     private func EndSession() -> Void {

@@ -89,11 +89,12 @@ struct AIWorkoutGenerationSheet: View {
     @State private var errorMessage: String?
     @State private var generatedSummary: String?
     @State private var generatedTips: [String] = []
+    @State private var generatedExercises: [Exercise] = []
+    @State private var workoutName: String = ""
+    @State private var shouldApplyOnDismiss = false
+
     
     private let aiFunctions = AIFunctions()
-    
-    @State private var generatedExercises: [Exercise] = []
-
     
     var body: some View {
         NavigationStack {
@@ -198,6 +199,39 @@ struct AIWorkoutGenerationSheet: View {
                                 .background(Color(.systemGray6))
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
+                            
+                            // Show generated exercises
+                            if !generatedExercises.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Label("Exercises (\(generatedExercises.count))", systemImage: "figure.strengthtraining.traditional")
+                                        .font(.headline)
+                                    
+                                    ForEach(generatedExercises, id: \.id) { exercise in
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(exercise.name)
+                                                    .font(.callout)
+                                                    .fontWeight(.medium)
+                                                if let muscle = exercise.muscleWorked {
+                                                    Text(muscle)
+                                                        .font(.caption)
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                            }
+                                            Spacer()
+                                            if let sets = exercise.reps.first?.count {
+                                                Text("\(sets) sets")
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                        .padding(.vertical, 4)
+                                    }
+                                }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                         }
                         .padding(.horizontal)
                     }
@@ -208,16 +242,16 @@ struct AIWorkoutGenerationSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        shouldApplyOnDismiss = false  // ADD THIS
                         dismiss()
                     }
                     .disabled(isGenerating)
                 }
                 
-                if generatedSummary != nil {
+                if !generatedExercises.isEmpty {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Use Workout") {
-                            workout.name = generatedSummary ?? workout.name
-                            workout.exercises = generatedExercises
+                            shouldApplyOnDismiss = true
                             dismiss()
                         }
                     }
@@ -226,6 +260,12 @@ struct AIWorkoutGenerationSheet: View {
             .navigationTitle("AI Generator")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .interactiveDismissDisabled(!generatedExercises.isEmpty)  // ADD THIS - prevents swipe to dismiss when there's a workout
+        .onDisappear {
+            if shouldApplyOnDismiss {
+                applyWorkout()
+            }
+        }
     }
     
     private func generateWorkout() async {
@@ -233,6 +273,7 @@ struct AIWorkoutGenerationSheet: View {
         errorMessage = nil
         generatedSummary = nil
         generatedTips = []
+        generatedExercises = []
         
         do {
             let result = try await aiFunctions.generateWorkout(
@@ -244,18 +285,29 @@ struct AIWorkoutGenerationSheet: View {
                 additionalNotes: nil
             )
             
-            // Store in state, don't modify workout yet
+            // Store the workout name
+            workoutName = result.name
+            
+            // Insert exercises into context IMMEDIATELY
+            for exercise in result.exercises {
+                context.insert(exercise)
+                print("✅ Inserted exercise: \(exercise.name)")
+            }
+            
+            // Try to save context to persist them
+            do {
+                try context.save()
+                print("✅ Context saved successfully")
+            } catch {
+                print("⚠️ Context save failed: \(error)")
+            }
+            
+            // Store in state
             generatedExercises = result.exercises
             generatedSummary = result.summary
             generatedTips = result.tips
             
-            // Insert into context
-            for exercise in result.exercises {
-                context.insert(exercise)
-            }
-            
-            // Only update the workout when user taps "Use Workout"
-            print("✅ Workout generated and ready!")
+            print("✅ Workout generated with \(result.exercises.count) exercises!")
             
         } catch {
             errorMessage = "Failed to generate workout: \(error.localizedDescription)"
@@ -263,6 +315,29 @@ struct AIWorkoutGenerationSheet: View {
         }
         
         isGenerating = false
+    }
+    
+    private func applyWorkout() {
+        print("🔄 Applying workout...")
+        
+        // Update workout name
+        workout.name = workoutName
+        
+        // Assign exercises (they're already in the context)
+        workout.exercises = generatedExercises
+        
+        // Encode the order
+        if let exercises = workout.exercises {
+            let newIDs = exercises.map { $0.persistentModelID }
+            workout.encodeIDs(ids: newIDs)
+        }
+        
+        // Update modified date
+        workout.modified = Date()
+        
+        print("✅ Workout applied: \(workout.name) with \(workout.exercises?.count ?? 0) exercises")
+        
+        dismiss()
     }
 }
 

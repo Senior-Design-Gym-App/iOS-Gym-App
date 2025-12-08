@@ -36,7 +36,6 @@ class AIFunctions {
     struct AlternateExerciseResponse: Codable {
         let exercise: ExerciseResponse
         let explanation: String
-        let reasoning: String
     }
     
     struct WorkoutGenerationResponse: Codable {
@@ -111,7 +110,7 @@ class AIFunctions {
         
         if let exercises = workout.exercises {
             for exercise in exercises {
-                let setsCount = exercise.reps.count
+                let setsCount = exercise.reps.first?.count ?? 0
                 workoutContext += "- \(exercise.name): \(setsCount) sets"
                 if let muscle = exercise.muscleWorked {
                     workoutContext += " (targets \(muscle))"
@@ -141,48 +140,23 @@ class AIFunctions {
         
         Respond with ONLY valid JSON in this exact format:
         {
-          "equipment" : "Not specified",
-          "muscleWorked" : "",
-          "name" : "Test2",
-          "reps" : [
-            [
-
-            ],
-            [
-              15,
-              15,
-              15,
-              15
-            ]
-          ],
-          "rest" : [
-            [
-
-            ],
-            [
-              65,
-              65,
-              65,
-              65
-            ]
-          ],
-          "weights" : [
-            [
-
-            ],
-            [
-              0,
-              0,
-              0,
-              0
-            ]
-          ]
+          "exercise": {
+            "name": "Dumbbell Bench Press",
+            "muscleWorked": "Chest",
+            "equipment": "Dumbbells",
+            "reps": [[10, 10, 10]],
+            "weights": [[50, 50, 50]],
+            "rest": [[90, 90, 90]]
+          },
+          "explanation": "This exercise targets the same muscle groups and provides a similar movement pattern."
         }
         
         Important notes:
-        - rest, weights, and reps are nested arrays where outer array = sets, inner array = values per set
+        - rest, weights, and reps are nested arrays where outer array = workout sessions, inner array = sets
         - For 3 sets, use [[val1, val2, val3]]
         - muscleWorked should be a specific muscle name (e.g., "Chest", "Quadriceps", "Biceps")
+        - equipment should be specific (e.g., "Barbell", "Dumbbells", "Bodyweight")
+        - Make sure nested arrays for rest, weights, and reps are all the same length
         """
         
         let payload = MessagePayload(
@@ -190,7 +164,7 @@ class AIFunctions {
             systemPrompt: """
             You are an expert fitness trainer. You help users find alternate exercises that target similar muscle groups.
             Always respond with valid JSON following the exact schema provided.
-            Make sure nested arrays are formatted correctly.
+            Make sure nested arrays are formatted correctly and all have the same length.
             """,
             responseFormat: "json"
         )
@@ -211,26 +185,62 @@ class AIFunctions {
             throw AIError.invalidResponse
         }
         
-        // Parse response
-        guard let responseDict = try? JSONDecoder().decode([String: String].self, from: data),
-              let jsonString = responseDict["response"],
-              let jsonData = jsonString.data(using: .utf8) else {
+        print("📦 Raw response data:")
+        if let rawString = String(data: data, encoding: .utf8) {
+            print(rawString)
+        }
+        
+        // Parse as our expected response structure
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            print("❌ Failed to parse as JSON object")
             throw AIError.decodingFailed
         }
         
-        let alternateResponse = try JSONDecoder().decode(AlternateExerciseResponse.self, from: jsonData)
+        print("✅ Parsed JSON object, keys:", jsonObject.keys)
+        
+        guard let jsonString = jsonObject["response"] as? String else {
+            print("❌ No 'response' key or wrong type")
+            print("Available keys:", jsonObject.keys)
+            throw AIError.decodingFailed
+        }
+        
+        print("✅ Found response string")
+        
+        // Clean escaped characters
+        let cleanedJSON = jsonString
+            .replacingOccurrences(of: "\\n", with: "\n")
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\\t", with: "\t")
+        
+        print("📄 Cleaned JSON:")
+        print(cleanedJSON)
+        
+        guard let cleanedData = cleanedJSON.data(using: .utf8) else {
+            throw AIError.decodingFailed
+        }
+        
+        let alternateResponse = try JSONDecoder().decode(AlternateExerciseResponse.self, from: cleanedData)
+        
+        // Normalize arrays to ensure they match
+        let normalized = normalizeExerciseArrays(alternateResponse.exercise)
         
         // Convert to Exercise model
         let exercise = Exercise(
             name: alternateResponse.exercise.name,
-            rest: alternateResponse.exercise.rest,
+            rest: normalized.rest,
             muscleWorked: alternateResponse.exercise.muscleWorked,
-            weights: alternateResponse.exercise.weights,
-            reps: alternateResponse.exercise.reps,
+            weights: normalized.weights,
+            reps: normalized.reps,
             equipment: alternateResponse.exercise.equipment
         )
         
+        // Add updateDates so recentSetData works
+        exercise.updateDates = [Date()]
+        
         print("✅ Found alternate: \(exercise.name)")
+        print("   Reps: \(exercise.reps)")
+        print("   Weights: \(exercise.weights)")
+        print("   Rest: \(exercise.rest)")
         print("💡 Explanation: \(alternateResponse.explanation)")
         
         return (exercise, alternateResponse.explanation)
@@ -390,7 +400,7 @@ class AIFunctions {
             You are an expert fitness trainer and workout designer.
             Always respond with valid JSON following the exact schema provided.
             Create balanced, effective workouts appropriate for the user's fitness level.
-            Ensure nested arrays are properly formatted.
+            Ensure nested arrays are properly formatted. Make sure nested arrays for the same exercise are always the same length, i.e. rest, weights, and reps should all be equal length.
             """,
             responseFormat: "json"
         )
@@ -454,12 +464,15 @@ class AIFunctions {
         
         // Convert to Exercise objects
         let exercises = exercisesData.map { exerciseData in
+            
+            let normalized = normalizeExerciseArrays(exerciseData)
+
             let exercise = Exercise(
                 name: exerciseData.name,
-                rest: exerciseData.rest,
+                rest: normalized.rest,
                 muscleWorked: exerciseData.muscleWorked,
-                weights: exerciseData.weights,
-                reps: exerciseData.reps,
+                weights: normalized.weights,
+                reps: normalized.reps,
                 equipment: exerciseData.equipment
             )
             
@@ -467,7 +480,7 @@ class AIFunctions {
             print("   Reps: \(exercise.reps)")
             print("   Weights: \(exercise.weights)")
             print("   Rest: \(exercise.rest)")
-            
+            exercise.updateDates = [Date()]
             return exercise
         }
         
@@ -481,7 +494,7 @@ class AIFunctions {
         
         return (workoutName, exercises, summary, tips)
     }
-    
+    	
     // MARK: - Errors
     
     enum AIError: LocalizedError {
@@ -502,5 +515,68 @@ class AIFunctions {
                 return "Network error occurred"
             }
         }
+    }
+    private func normalizeExerciseArrays(_ exerciseData: ExerciseResponse) -> (reps: [[Int]], weights: [[Double]], rest: [[Int]]) {
+        let reps = exerciseData.reps
+        let weights = exerciseData.weights
+        let rest = exerciseData.rest
+        
+        // Get the structure from reps (it's the most reliable)
+        let outerCount = reps.count  // Number of workout sessions
+        
+        var normalizedWeights: [[Double]] = []
+        var normalizedRest: [[Int]] = []
+        
+        for i in 0..<outerCount {
+            let targetCount = reps[i].count  // Number of sets in this session
+            
+            // Normalize weights
+            if i < weights.count {
+                let weightSession = weights[i]
+                if weightSession.count == targetCount {
+                    // Already correct length
+                    normalizedWeights.append(weightSession)
+                } else if weightSession.isEmpty {
+                    // No weights provided, use 0
+                    normalizedWeights.append(Array(repeating: 0.0, count: targetCount))
+                } else {
+                    // Extend or truncate to match reps
+                    let lastWeight = weightSession.last ?? 0.0
+                    var newWeights = weightSession
+                    while newWeights.count < targetCount {
+                        newWeights.append(lastWeight)
+                    }
+                    normalizedWeights.append(Array(newWeights.prefix(targetCount)))
+                }
+            } else {
+                // Session doesn't exist in weights, use 0
+                normalizedWeights.append(Array(repeating: 0.0, count: targetCount))
+            }
+            
+            // Normalize rest
+            if i < rest.count {
+                let restSession = rest[i]
+                if restSession.count == targetCount {
+                    // Already correct length
+                    normalizedRest.append(restSession)
+                } else if restSession.isEmpty {
+                    // No rest provided, use default 60 seconds
+                    normalizedRest.append(Array(repeating: 60, count: targetCount))
+                } else {
+                    // Extend or truncate to match reps
+                    let lastRest = restSession.last ?? 60
+                    var newRest = restSession
+                    while newRest.count < targetCount {
+                        newRest.append(lastRest)
+                    }
+                    normalizedRest.append(Array(newRest.prefix(targetCount)))
+                }
+            } else {
+                // Session doesn't exist in rest, use default 60
+                normalizedRest.append(Array(repeating: 60, count: targetCount))
+            }
+        }
+        
+        return (reps, normalizedWeights, normalizedRest)
     }
 }

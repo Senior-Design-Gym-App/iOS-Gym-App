@@ -32,8 +32,8 @@ final class Exercise: Codable {
         self.equipment = equipment
     }
     
-    enum CodingKeys: String, CodingKey {
-        case name, rest, muscleWorked, weights, reps, equipment, updateDates
+    enum CodingKeys: String, CodingKey {	
+        case name, rest, muscleWorked, weights, reps, equipment, updateDates//, workouts
     }
     
     func encode(to encoder: Encoder) throws {

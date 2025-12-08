@@ -129,11 +129,11 @@ extension ReusedViews {
             }
             
             private func SaveOptions() {
-//                split.workouts = newWorkouts
-//                if let workouts = split.workouts {
-//                    let newIDs = workouts.map { $0.persistentModelID }
-//                    split.encodeIDs(ids: newIDs)
-//                }
+                split.workouts = newWorkouts
+                if let workouts = split.workouts {
+                    let newIDs = workouts.map { $0.persistentModelID }
+                    split.encodeIDs(ids: newIDs)
+                }
                 split.modified = Date()
                 showAddSheet = false
             }

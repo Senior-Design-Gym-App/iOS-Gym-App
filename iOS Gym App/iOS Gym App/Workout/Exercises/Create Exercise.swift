@@ -70,6 +70,8 @@ struct CreateExerciseView: View {
         newExercise.rest = [rest]
         newExercise.updateDates = [Date()]
         
+        print(newExercise)
+        
         context.insert(newExercise)
         try? context.save()
         dismiss()
