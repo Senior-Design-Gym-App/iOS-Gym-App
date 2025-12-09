@@ -75,7 +75,7 @@ final class Workout: Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case name, exercises, split
+        case name, exercises//, split
     }
     
     func encode(to encoder: Encoder) throws {
@@ -87,7 +87,7 @@ final class Workout: Codable {
         try container.encode(exercises, forKey: .exercises)
         //print(" -> encoded exercises")
 
-        try container.encode(split, forKey: .split)
+        //try container.encode(split, forKey: .split)
         //print(" -> encoded split")
     }
     
@@ -95,7 +95,7 @@ final class Workout: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
         exercises = try container.decodeIfPresent([Exercise].self, forKey: .exercises)
-        split = try container.decodeIfPresent(Split.self, forKey: .split)
+        //split = try container.decodeIfPresent(Split.self, forKey: .split)
     }
     
 }
