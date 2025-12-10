@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct WeightEntry: Hashable, Identifiable, Codable, Equatable {
-    var id: Int { index }
+    var id = UUID()
     let index: Int
     let value: Double
     let date: Date
@@ -29,18 +29,5 @@ enum DataChangeType {
     case decrease
     case same
     case firstEntry
-    
-}
-
-enum UpdateType {
-    
-    case weights
-    case reps
-    case sets
-    case setsAndReps
-    case setsAndWeight
-    case repsAndWeight
-    case all
-    case none
     
 }

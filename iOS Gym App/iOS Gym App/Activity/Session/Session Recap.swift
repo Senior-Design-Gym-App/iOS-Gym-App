@@ -7,13 +7,14 @@ struct SessionRecap: View {
     @State var session: WorkoutSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Environment(ProgressManager.self) private var hkm
     @State private var selectedSection: DonutData?
     @AppStorage("donutDisplayType") private var displayType: DonutDisplayType = .reps
     
     var body: some View {
         NavigationStack {
             List {
-                SessionInfo()
+                SessionTitleInfo(deleteSession: DeleteSession, session: $session, startDate: session.started, endDate: session.completed ?? session.started)
                 Section {
                     ReusedViews.Charts().DataRecapPieChart(sessions: [session], type: displayType)
                     ReusedViews.Pickers.DisplayTypePicker(type: $displayType, exempt: .weight)
@@ -35,35 +36,6 @@ struct SessionRecap: View {
             }
             .navigationTitle(formatMonthDayYear(session.started))
         }
-    }
-    
-    private func SessionInfo() -> some View {
-        HStack {
-            GenerateImage(for: session.started)
-                .resizable()
-                .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
-                .foregroundStyle(session.color)
-            VStack(alignment: .leading) {
-                Text(session.name)
-                    .font(.title)
-                    .fontWeight(.semibold)
-                NavigationLink {
-                    DayActivity(dayProgress: session.started)
-                } label: {
-                    Text(formatDateRange(start: session.started, end: session.completed))
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                        .fontWeight(.light)
-                }.navigationLinkIndicatorVisibility(.hidden)
-                Spacer()
-                HStack {
-                    ReusedViews.Buttons.RenameButtonAlert(type: .session, oldName: $session.name)
-                    ReusedViews.Buttons.DeleteButtonConfirmation(type: .session, deleteAction: DeleteSession)
-                }
-            }
-            Spacer()
-        }.listRowBackground(Color.clear)
-            .padding(.bottom)
     }
     
     private func WorkoutSessionSection(workout: Workout) -> some View {
@@ -107,7 +79,7 @@ struct SessionRecap: View {
                         ReusedViews.Charts.BarMarks(sets: recent.mostRecentSetData.setData, color: ChartGraphType.current.color, offset: 0.6)
                     }
                 }
-                .chartYAxisLabel("Weight (lbs)")
+                .chartYAxisLabel("Volume \(hkm.weightUnitString)")
                 .chartXAxis(.hidden)
             }.disabled(entry.exercise == nil)
                 .navigationLinkIndicatorVisibility(entry.exercise == nil ? .hidden : .visible)
@@ -124,37 +96,11 @@ struct SessionRecap: View {
         }
     }
     
-    private func formatDateRange(start: Date, end: Date?) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale.current
-        
-        guard let end = end else {
-            return "Incomplete"
-        }
-        
-        let calendar = Calendar.current
-        
-        if calendar.isDate(start, inSameDayAs: end) {
-            formatter.dateFormat = "h:mm a"
-            return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
-        } else {
-            formatter.dateFormat = "MMM d h:mm a"
-            return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
-        }
-    }
-    
     private func formatMonthDayYear(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale.current
         formatter.dateFormat = "MMM, yyyy"
         return formatter.string(from: date)
-    }
-    
-    private func GenerateImage(for date: Date) -> Image {
-        let dayNumber = Calendar.current.component(.day, from: date)
-        let imageName = "\(dayNumber).calendar"
-        
-        return Image(systemName: imageName)
     }
     
     private func DeleteSession() {

@@ -39,6 +39,49 @@ extension ReusedViews {
             }.pickerStyle(.segmented)
         }
         
+        struct WorkoutNotificationPicker: View {
+            
+            @Binding var hour: Int
+            @Binding var minute: Int
+            @Binding var period: DayPeriod
+            
+            var body: some View {
+                Group {
+                    Picker("Day Period", selection: $period) {
+                        ForEach(DayPeriod.allCases, id: \.self) { period in
+                            Text(period.rawValue).tag(period)
+                        }
+                    }
+                    switch period {
+                    case .am, .pm:
+                        HourPicker(maxHour: 13)
+                    case .day:
+                        HourPicker(maxHour: 25)
+                    }
+                    Picker("Minute", selection: $minute) {
+                        ForEach(0..<12, id: \.self) { minute in
+                            Text("\(minute * 5)").tag(minute * 5)
+                        }
+                    }
+                }.onChange(of: period) {
+                    if period == .day && hour < 12 {
+                        hour += 12
+                    } else if (period == .am || period == .pm) && hour > 12 {
+                        hour -= 12
+                    }
+                }
+            }
+            
+            private func HourPicker(maxHour: Int) -> some View {
+                Picker("Hour", selection: $hour) {
+                    ForEach(1..<maxHour, id: \.self) { hour in
+                        Text("\(hour)").tag(hour)
+                    }
+                }
+            }
+
+        }
+        
     }
     
 }

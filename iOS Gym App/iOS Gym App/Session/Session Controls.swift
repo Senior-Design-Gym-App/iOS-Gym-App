@@ -161,7 +161,7 @@ struct SessionSetControlView: View {
                 Button {
                     sessionManager.QueueExercise(exercise: exercise)
                 } label: {
-                    Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                    Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.exerciseIcon)
                     Text("\(exercise.recentSetData.setData.count) Set\(exercise.recentSetData.setData.count == 1 ? "" : "s")")
                 }.disabled(invalidExercises.contains(exercise))
             }

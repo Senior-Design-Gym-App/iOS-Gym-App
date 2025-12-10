@@ -2,31 +2,39 @@ import Foundation
 
 extension Exercise {
     
-//    var prData: [WeightEntry] {
-//        let count = min(prDates.count, prWeights.count)
-//        return (0..<count).map { i in
-//            WeightEntry(index: i, value: prWeights[i], date: prDates[i])
-//        }
-//    }
-
-    
-    var updateData: [SetChangeData] {
-        let outerCount = min(updateDates.count, min(reps.count, weights.count))
-        var allUpdates: [SetChangeData] = []
-        
-        for i in 0..<outerCount {
-            var sessionSets: [SetData] = []
-            let innerCount = min(weights[i].count, reps[i].count)
-            for j in 0..<innerCount {
-                sessionSets.append(SetData(set: j, rest: rest[i][j], reps: reps[i][j], weight: weights[i][j]))
-            }
-            allUpdates.append(SetChangeData(changeDate: updateDates[i], setData: sessionSets))
-        }
-        return allUpdates
+    var recentUpdateDate: Date {
+        let ormDates = allOneRepMaxData.compactMap { $0.entry.date }
+        let updateDates = updateDates
+        let allDates = ormDates + updateDates
+        return allDates.max() ?? Date.now
     }
     
-    var recentSetData: SetChangeData {
-        updateData.last ?? SetChangeData(changeDate: Date.distantPast, setData: [])
+    var manualOneRepMaxData: [WeightEntry] {
+        let count = min(manualOneRepMaxDates.count, manualOneRepMaxWeights.count)
+        return (0..<count).map { i in
+            WeightEntry(index: i, value: manualOneRepMaxWeights[i], date: manualOneRepMaxDates[i])
+        }
+    }
+    
+    var allOneRepMaxData: [OneRepMaxData] {
+        var allEntries: [OneRepMaxData] = []
+        for entry in manualOneRepMaxData {
+            allEntries.append(OneRepMaxData(entry: entry, session: nil))
+        }
+        
+        guard let allSessionEntries = self.sessionEntries else { return allEntries }
+        
+        for entry in allSessionEntries {
+            if let set = entry.setEntry.first(where: { $0.oneRepMax }) {
+                if let sessionDate = entry.session?.completed {
+                    allEntries.append(OneRepMaxData(entry: WeightEntry(index: 0, value: set.weight, date: sessionDate), session: entry.session))
+                }
+            }
+        }
+        
+        allEntries.sort { $0.entry.date < $1.entry.date }
+                
+        return allEntries
     }
     
     func findAverageSetData(before date: Date) -> [SetData] {
@@ -88,7 +96,11 @@ extension Exercise {
         }
         var count: Int = 0
         for session in sessions {
-            count += session.setEntry.count
+            for setEntry in session.setEntry {
+                if !setEntry.oneRepMax {
+                    count += 1
+                }
+            }
         }
         return count
     }
@@ -100,13 +112,15 @@ extension Exercise {
         var totalReps: Int = 0
         for session in sessions {
             for set in session.setEntry {
-                totalReps += set.reps
+                if !set.oneRepMax {
+                    totalReps += set.reps
+                }
             }
         }
         return totalReps
     }
     
-    var totalWeight: Double {
+    var totalVolume: Double {
         guard let sessions = sessionEntries else {
             return 0
         }
@@ -120,7 +134,21 @@ extension Exercise {
     }
     
     var averageWeight: Double {
-        return totalWeight / Double(totalReps == 0 ? 1 : totalReps)
+        guard let sessions = sessionEntries else {
+            return 0
+        }
+        var nonMaxSets: Int = 0
+        var nonMaxWeight: Double = 0
+        
+        for session in sessions {
+            for set in session.setEntry {
+                if !set.oneRepMax {
+                    nonMaxSets += 1
+                    nonMaxWeight += set.weight
+                }
+            }
+        }
+        return nonMaxWeight / Double(nonMaxSets == 0 ? 1 : nonMaxSets)
     }
     
     var maxReps: Int {
@@ -139,7 +167,24 @@ extension Exercise {
     }
     
     var averageReps: Int {
-        totalReps / ((reps.count * totalSets) == 0 ? 1 : (reps.count * totalSets))
+        guard let sessions = sessionEntries else {
+            return 0
+        }
+        var totalReps: Int = 0
+        var totalSets: Int = 0
+        for session in sessions {
+            for set in session.setEntry {
+                if !set.oneRepMax {
+                    totalReps += set.reps
+                    totalSets += 1
+                }
+            }
+        }
+        if totalSets == 0 {
+            return 0
+        } else {
+            return totalReps / totalSets
+        }
     }
     
     var maxWeight: Double {
@@ -149,7 +194,7 @@ extension Exercise {
         var max: Double = 0
         for session in sessions {
             for set in session.setEntry {
-                if set.weight > max {
+                if set.weight > max && set.reps != 1 {
                     max = set.weight
                 }
             }
@@ -203,5 +248,25 @@ extension Exercise {
         
         return nil
     }
+    
+    var avgSetVolume: [WeightEntry] {
+        var entries: [WeightEntry] = []
+        
+        for updateData in self.updateData {
+            entries.append(WeightEntry(index: 0, value: updateData.avgSetVolume, date: updateData.changeDate))
+        }
+        
+        return entries
+    }
+    
+}
+
+enum DetailedWeightEntryTypes: String, CaseIterable, Identifiable {
+    
+    case session        = "Session"
+    case oneRepMax      = "One Rep Max"
+    case workingSet     = "Working Set"
+    
+    var id: String { self.rawValue }
     
 }

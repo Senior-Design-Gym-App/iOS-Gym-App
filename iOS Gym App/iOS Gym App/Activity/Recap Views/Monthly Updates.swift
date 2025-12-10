@@ -9,11 +9,7 @@ struct MonthlyUpdates: View {
     
     var recentUpdates: [Exercise] {
         allExercises
-            .filter { exercise in
-                exercise.updateDates.contains { date in
-                    calendar.isDate(date, equalTo: viewingMonth, toGranularity: .month)
-                }
-            }
+            .sorted { $0.recentUpdateDate > $1.recentUpdateDate }
             .prefix(5)
             .map { $0 }
     }
@@ -29,13 +25,13 @@ struct MonthlyUpdates: View {
             }.scrollIndicators(.hidden)
         }
         NavigationLink {
-            UpdatesListView(allExercises: allExercises.filter { $0.updateDates.contains { calendar.isDate($0, equalTo: viewingMonth, toGranularity: .month) } } )
+            UpdatesListView(allExercises: allExercises.filter { calendar.isDate($0.recentUpdateDate, equalTo: viewingMonth, toGranularity: .month) })
         } label: {
             Label {
                 Text("This months updates")
             } icon: {
                 Image(systemName: Constants.exerciseIcon)
-                    .foregroundStyle(Constants.updateTheme)
+                    .foregroundStyle(Constants.mainAppTheme)
             }
         }
     }

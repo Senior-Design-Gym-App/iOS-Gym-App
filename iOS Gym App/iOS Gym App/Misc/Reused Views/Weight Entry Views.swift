@@ -27,3 +27,17 @@ struct WeightEntryViews {
     }
     
 }
+
+extension ReusedViews {
+    
+    struct WeightEntryView {
+        
+        static func OneRepMaxLabel(data: WeightEntry, weightLabel: String) -> some View {
+            LabeledContent("\(data.value, specifier: "%.1f") \(weightLabel)") {
+                Text(data.date.formatted())
+            }
+        }
+        
+    }
+    
+}

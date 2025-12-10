@@ -8,14 +8,12 @@ struct ExerciseTimerBannerView: View {
     
     var body: some View {
         HStack {
-            VStack {
-                Text(context.state.exerciseName)
-                    .font(.headline)
-                SetGauge(context: context)
-            }
+            CircularGauge(context: context)
+                .padding(.trailing, 30)
+            Text(context.state.currentExercise.exercise.name)
             Spacer()
-            TimerView(context: context)
-                .font(.largeTitle)
+            TimerGauge(context: context)
+                .padding(.leading, 30)
         }
     }
     

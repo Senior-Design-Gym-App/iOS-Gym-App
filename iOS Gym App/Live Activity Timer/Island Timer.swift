@@ -18,11 +18,10 @@ struct WorkoutTimerLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 ExerciseTimerExpandedView(context: context)
-                
             } compactLeading: {
-                Text(context.state.exerciseName)
+                ExerciseIcon(context: context)
             } compactTrailing: {
-                TimerGauge(context: context)
+                ElapsedTime(context: context)
             } minimal: {
             }
         }

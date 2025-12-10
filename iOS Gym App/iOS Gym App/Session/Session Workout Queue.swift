@@ -54,7 +54,7 @@ struct SessionWorkoutQueueView: View {
                     Image(systemName: exercise.workoutEquipment?.imageName ?? "dumbbell")
                         .foregroundStyle(Constants.iconColor)
                 }
-            ReusedViews.Labels.TypeListDescription(name: exercise.name, items: data.entry.weight, type: .exercise, extend: true)
+            ReusedViews.Labels.TypeListDescription(name: exercise.name, items: data.entry.weight, type: .exercise)
         }
     }
     

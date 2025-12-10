@@ -16,15 +16,6 @@ extension ReusedViews {
         }
         
         @ViewBuilder
-        static func SmallIconView(split: Split) -> some View {
-            if let image = split.image {
-                SplitPreview(splitImage: image, size: Constants.smallIconSize)
-            } else {
-                Labels.SmallIconSize(color: split.color)
-            }
-        }
-        
-        @ViewBuilder
         static func LargeSplitView(split: Split) -> some View {
             if let splitImage = split.image {
                 SplitPreview(splitImage: splitImage, size: Constants.largeIconSize)
@@ -36,7 +27,7 @@ extension ReusedViews {
         static func HorizontalListPreview(split: Split) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 MediumIconView(split: split)
-                Labels.TypeListDescription(name: split.name, items: split.sortedWorkouts, type: .split, extend: false)
+                Labels.TypeListDescription(name: split.name, items: split.sortedWorkouts, type: .split)
             }
         }
         
@@ -49,13 +40,17 @@ extension ReusedViews {
         }
         
         static func ListPreview(split: Split) -> some View {
-            HStack {
-                if let image = split.image {
-                    SplitPreview(splitImage: image, size: Constants.smallIconSize)
+            Label {
+                Text(split.name)
+                Text("\(split.sortedWorkouts.count) workout\(split.sortedWorkouts.count == 1 ? "" : "s")")
+            } icon: {
+                if let splitImage = split.image {
+                    Image(uiImage: splitImage)
+                        .resizable()
+                        .aspectRatio(1, contentMode: .fit)
                 } else {
-                    Labels.SmallIconSize(color: split.color)
+                    Labels.ListIcon(color: split.color)
                 }
-                Labels.TypeListDescription(name: split.name, items: split.sortedWorkouts, type: .split, extend: true)
             }
         }
         

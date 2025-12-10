@@ -5,16 +5,8 @@ struct ExerciseChanges: View {
     
     let exercise: Exercise
     @Environment(\.modelContext) private var context
-    
-    var recentSessions: [WorkoutSession] {
-        guard let allSessionEntries = exercise.sessionEntries else { return [] }
-        
-        let sessions = allSessionEntries
-            .compactMap { $0.session }
-            .filter { $0.started < Date() }
-            .prefix(5)
-        return Array(sessions)
-    }
+    @Environment(ProgressManager.self) private var hkm
+    @AppStorage("showTips") private var showTips: Bool = true
     
     var relatedSessions: [WorkoutSession] {
         guard let allSessionEntries = exercise.sessionEntries else { return [] }
@@ -30,22 +22,28 @@ struct ExerciseChanges: View {
             List {
                 Section {
                     LifetimeStats()
+                    ExerciseSessions()
                 } header: {
-                    Text("Lifetime Stats")
+                    Text("Session Data")
                 }
                 Section {
                     WeightInfo()
                 } header: {
-                    Text("Weight Info")
+                    Text("Working Set History")
                 }
                 Section {
-                    if relatedSessions.isEmpty {
-                        Text("No sessions containing \(exercise.name)")
-                    } else {
-                        ExerciseSessions()
-                    }
+                    GraphType(data: exercise.avgSetsWeight, type: .workingSet)
                 } header: {
-                    Text("Sessions containing \(exercise.name)")
+                    Text("Volume Change History")
+                }
+                Section {
+                    OneRepMaxInfo()
+                } header: {
+                    Text("One Rep Max History")
+                } footer: {
+                    if showTips {
+                        Text("You can manually enter a one rep max when editing an exercise. This will also be recorded when you do a one rep set in a session.")
+                    }
                 }
                 ForEach(exercise.updateData, id: \.self) { data in
                     Section {
@@ -78,8 +76,8 @@ struct ExerciseChanges: View {
             LabeledContent("Total Reps") {
                 Text("\(exercise.totalReps)")
             }
-            LabeledContent("Total Weight") {
-                Text("\(exercise.totalWeight, specifier: "%.1f")")
+            LabeledContent("Total Volume") {
+                Text("\(exercise.totalVolume, specifier: "%.1f")")
             }
             LabeledContent("Max Reps in one set") {
                 Text("\(exercise.maxReps)")
@@ -91,16 +89,41 @@ struct ExerciseChanges: View {
     }
     
     private func ExerciseSessions() -> some View {
-        Group {
-            ForEach(recentSessions, id: \.self) { session in
-                ReusedViews.SessionViews.SessionLink(session: session)
+        NavigationLink {
+            SessionsListView(allSessions: relatedSessions)
+        } label: {
+            Label {
+                Text("View related sessions")
+            } icon: {
+                Image(systemName: Constants.sessionIcon)
+                    .foregroundStyle(Constants.sessionTheme)
             }
-            if relatedSessions.count > 5 {
-                NavigationLink {
-                    SessionsListView(allSessions: relatedSessions)
-                } label: {
-                    Label("View all \(relatedSessions.count) session\(relatedSessions.count == 1 ? "" : "s")", systemImage: "list.bullet")
-                }.disabled(relatedSessions.isEmpty)
+        }.disabled(relatedSessions.isEmpty)
+    }
+    
+    private func OneRepMaxInfo() -> some View {
+        Group {
+            GraphType(data: exercise.allOneRepMaxData.map { $0.entry }, type: .oneRepMax)
+            ForEach(exercise.allOneRepMaxData, id: \.self) { entry in
+                if let session = entry.session {
+                    NavigationLink {
+                        SessionRecap(session: session)
+                    } label: {
+                        Label {
+                            ReusedViews.WeightEntryView.OneRepMaxLabel(data: entry.entry, weightLabel: hkm.weightUnitString)
+                        } icon: {
+                            Image(systemName: "square.fill")
+                                .foregroundStyle(session.color)
+                        }
+                    }
+                } else {
+                    Label {
+                        ReusedViews.WeightEntryView.OneRepMaxLabel(data: entry.entry, weightLabel: hkm.weightUnitString)
+                    } icon: {
+                        Image(systemName: "pencil.circle")
+                            .foregroundStyle(exercise.color)
+                    }
+                }
             }
         }
     }
@@ -108,8 +131,15 @@ struct ExerciseChanges: View {
     private func ChangeChartView(data: SetChangeData) -> some View {
         Group {
             Chart {
-                ReusedViews.Charts.BarMarks(sets: data.setData, color: exercise.color, offset: 0)
+                ForEach(data.setData) { set in
+                    BarMark(
+                        x: .value("Set", "\(set.set + 1)"),
+                        y: .value("Weight", set.setVolume)
+                    )
+                }.foregroundStyle(exercise.color)
+                    .cornerRadius(Constants.smallRadius)
             }
+            .chartYAxisLabel("Volume")
             ForEach(data.setData, id: \.self) { point in
                 ReusedViews.ExerciseViews.IndiidualSetInfo(setData: point, color: exercise.color, index: point.set)
             }
@@ -137,7 +167,7 @@ struct ExerciseChanges: View {
             }
             .foregroundStyle(exercise.color)
             .chartXAxis(.hidden)
-            .chartYAxisLabel("(lbs)")
+            .chartYAxisLabel("\(hkm.weightUnitString)")
             VStack(alignment: .leading) {
                 LabeledContent("Max") {
                     Text("\(exercise.maxWeight, specifier: "%.1f")")
@@ -145,17 +175,27 @@ struct ExerciseChanges: View {
                 LabeledContent("Min") {
                     Text("\(exercise.minWeight, specifier: "%.1f")")
                 }
-                LabeledContent("Average") {
+                LabeledContent("Avg") {
                     Text("\(exercise.averageWeight, specifier: "%.1f")")
                 }
             }
         }
     }
     
-    private func UpdateDate(date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+    @ViewBuilder
+    func GraphType(data: [WeightEntry], type: DetailedWeightEntryTypes) -> some View {
+        switch data.count {
+        case 0:
+            Text("No data available.")
+        case 1:
+            ReusedViews.Charts.WeightEntryBarChart(data: data, exercise: exercise, yaxisTitle: hkm.weightUnitString)
+        default:
+            NavigationLink {
+                DetailedWeightEntry(exercise: exercise, weightEntries: data, type: type)
+            } label: {
+                ReusedViews.Charts.WeightEntryBarChart(data: data, exercise: exercise, yaxisTitle: hkm.weightUnitString)
+            }
+        }
     }
     
 }

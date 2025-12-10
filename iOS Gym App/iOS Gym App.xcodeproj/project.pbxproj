@@ -7,6 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		346D9DCE2EE9CFAB00EF4D9C /* Live Activity Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */; };
+		346D9DCF2EE9CFC000EF4D9C /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
+		346D9DD02EE9CFC000EF4D9C /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
+		346D9DD52EE9D00F00EF4D9C /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
+		346D9DD62EE9D00F00EF4D9C /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
+		346D9DD72EE9D02B00EF4D9C /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
+		346D9DD82EE9D02B00EF4D9C /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
+		346D9DD92EE9D03200EF4D9C /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
+		346D9DDA2EE9D03200EF4D9C /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
+		346D9DDB2EE9D03800EF4D9C /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
+		346D9DDC2EE9D03800EF4D9C /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
 		34C582942ECF735A004E17FE /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
 		7CC94B232ECF7C91007BE13A /* AWSCognitoIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B222ECF7C91007BE13A /* AWSCognitoIdentity */; };
 		7CC94B252ECF7C91007BE13A /* AWSCognitoIdentityProvider in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B242ECF7C91007BE13A /* AWSCognitoIdentityProvider */; };
@@ -86,6 +97,22 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		346D9DD32EE9CFF400EF4D9C /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Misc/Reused Functions/Gradient Generatpr.swift",
+				Misc/Static/Constants.swift,
+			);
+			target = E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */;
+		};
+		346D9DD42EE9CFF400EF4D9C /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Misc/Reused Functions/Gradient Generatpr.swift",
+				Misc/Static/Constants.swift,
+			);
+			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
+		};
 		7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -121,6 +148,8 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
+				346D9DD32EE9CFF400EF4D9C /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */,
+				346D9DD42EE9CFF400EF4D9C /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */,
 			);
 			path = "iOS Gym App";
 			sourceTree = "<group>";
@@ -358,6 +387,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				346D9DCE2EE9CFAB00EF4D9C /* Live Activity Object.swift in Sources */,
+				346D9DDC2EE9D03800EF4D9C /* Workout Data.swift in Sources */,
+				346D9DD82EE9D02B00EF4D9C /* Session Data.swift in Sources */,
+				346D9DDA2EE9D03200EF4D9C /* Split Data.swift in Sources */,
+				346D9DD02EE9CFC000EF4D9C /* Shared Types.swift in Sources */,
+				346D9DD62EE9D00F00EF4D9C /* Exercise Data.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -365,6 +400,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				346D9DCF2EE9CFC000EF4D9C /* Shared Types.swift in Sources */,
+				346D9DD72EE9D02B00EF4D9C /* Session Data.swift in Sources */,
+				346D9DDB2EE9D03800EF4D9C /* Workout Data.swift in Sources */,
+				346D9DD92EE9D03200EF4D9C /* Split Data.swift in Sources */,
+				346D9DD52EE9D00F00EF4D9C /* Exercise Data.swift in Sources */,
 				E432B7222ECCDFCC00FCBEEA /* Transfer Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

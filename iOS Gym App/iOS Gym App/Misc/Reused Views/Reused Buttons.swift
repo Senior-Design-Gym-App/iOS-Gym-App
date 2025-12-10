@@ -55,7 +55,6 @@ extension ReusedViews {
                     Button("Delete", role: .destructive) {
                         deleteAction()
                     }
-                    Button("Cancel", role: .cancel) { }
                 } message: {
                     Text("\(type.deleteOption)")
                 }
@@ -80,15 +79,15 @@ extension ReusedViews {
         
         static func EditHeaderButton<C: Collection>(toggleEdit: Binding<Bool>, type: WorkoutItemType, items: C) -> some View {
             HStack {
-                Text(type.rawValue)
+                Text(type.listLabel)
                 Spacer()
                 Button {
                     toggleEdit.wrappedValue = true
                 } label: {
                     if items.isEmpty {
-                        Label("\(type.addType)", systemImage: "plus")
+                        Label("Add", systemImage: "plus")
                     } else {
-                        Label("\(type.editType)", systemImage: "pencil")
+                        Label("Edit", systemImage: "pencil")
                     }
                 }
             }

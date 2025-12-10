@@ -33,6 +33,7 @@ struct SessionHomeView: View {
                         ForEach(split.workouts ?? [], id: \.self) { workout in
                             if workout == predictNextWorkout() {
                                 UpNextCard(workout: workout)
+                                    .listRowSeparator(.hidden)
                             } else {
                                 ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout) })
                             }
@@ -68,7 +69,6 @@ struct SessionHomeView: View {
         }
     }
     
-    
     private func UpNextCard(workout: Workout) -> some View {
         VStack(alignment: .leading) {
             VStack(alignment: .leading, spacing: 0) {
@@ -88,15 +88,13 @@ struct SessionHomeView: View {
                     .font(.caption)
                     .fontWeight(.light)
             }.padding(.bottom)
-            ForEach(workout.sortedExercises, id: \.id) { exercise in
-                HStack {
-                    Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
-                        .resizable()
-                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+            ForEach(workout.sortedExercises, id: \.self) { exercise in
+                Label {
                     Text("\(exercise.name) (\(exercise.recentSetData.setData.count))")
                         .fontWeight(.medium)
-                    Spacer()
-                }
+                } icon: {
+                    exercise.icon
+                }.padding(.bottom, 5)
             }
         }.listRowBackground(workout.color)
             .foregroundStyle(.white)
@@ -104,14 +102,19 @@ struct SessionHomeView: View {
     
     private func IncompleteSession(session: WorkoutSession) -> some View {
         HStack {
-            ReusedViews.Labels.SmallIconSize(color: session.color)
-            ReusedViews.Labels.ListDescription(title: session.name, subtitle: "Started \(DateHandler().RelativeTime(from: session.started))", extend: true)
+            Label {
+                Text(session.name)
+                Text("Started \(DateHandler().RelativeTime(from: session.started))")
+            } icon: {
+                Image(systemName: "square.fill")
+                    .foregroundStyle(session.color)
+            }
             Spacer()
             Menu {
                 Section {
                     ForEach(session.exercises ?? [], id: \.self) { sessionData in
                         if let exercise = sessionData.exercise {
-                            Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                            Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.exerciseIcon)
                         } else {
                             Label("Unknown Exercise", systemImage: "exclamationmark.shield")
                         }
@@ -126,7 +129,7 @@ struct SessionHomeView: View {
                                 sessionEntry.exercise?.id == workoutExercise.id
                             }) == false
                         }, id: \.self) { exercise in
-                            Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                            Label(exercise.name, systemImage: exercise.workoutEquipment?.imageName ?? Constants.exerciseIcon)
                         }
                     } header: {
                         Text("Incomplete")
@@ -163,6 +166,7 @@ struct SessionHomeView: View {
         }
         context.insert(newSession)
         sm.session = newSession
+        sm.sessionStartDate = Date()
     }
     
     private func StartIncompleteSession(incomplete: WorkoutSession) {

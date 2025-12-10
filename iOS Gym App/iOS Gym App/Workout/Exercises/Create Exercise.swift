@@ -4,11 +4,15 @@ import SwiftData
 struct CreateExerciseView: View {
     
     @State private var setData: [SetData] = []
+    @State private var manualOneRepMax: [WeightEntry] = []
     @State private var selectedMuscle: Muscle?
     @State private var selectedEquipment: WorkoutEquipment?
     @State private var newExercise = Exercise(name: "New Exercise", rest: [], muscleWorked: "", weights: [], reps: [], equipment: nil)
+    
     @State private var showAddSheet: Bool = false
+    @State private var showMaxSheet: Bool = false
     @State private var showChangeNameAlert: Bool = false
+    @Environment(ProgressManager.self) private var hkm
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -30,9 +34,10 @@ struct CreateExerciseView: View {
                     }
                     Spacer()
                 }.padding(.bottom)
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 ReusedViews.ExerciseViews.SetDataInfo(setData: setData, exericse: newExercise, showAddSheet: $showAddSheet)
+                ReusedViews.ExerciseViews.OneRepMaxInfo(data: manualOneRepMax, exercise: newExercise, showMaxSheet: $showMaxSheet, label: hkm.weightUnitString)
             }
             .onChange(of: selectedMuscle) {
                 newExercise.muscleWorked = selectedMuscle?.rawValue
@@ -51,6 +56,9 @@ struct CreateExerciseView: View {
             .sheet(isPresented: $showAddSheet) {
                 ReusedViews.ExerciseViews.SetControls(exercise: newExercise, saveAction: {}, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet, restTime: defaultRestTime, reps: defaultRepCount)
             }
+            .sheet(isPresented: $showMaxSheet) {
+                ReusedViews.ExerciseViews.ManualOneRepMaxControls(saveAction: {}, oldOneRepMaxData: $manualOneRepMax, newOneRepMaxData: manualOneRepMax, showMaxSheet: $showMaxSheet)
+            }
             .navigationTitle(newExercise.name)
             .navigationSubtitle("Created Now")
             .navigationBarTitleDisplayMode(.inline)
@@ -65,12 +73,13 @@ struct CreateExerciseView: View {
         
         let rest = setData.map { $0.rest }
         
+        newExercise.manualOneRepMaxDates = manualOneRepMax.map { $0.date }
+        newExercise.manualOneRepMaxWeights = manualOneRepMax.map { $0.value }
+        
         newExercise.reps = [reps]
         newExercise.weights = [weights]
         newExercise.rest = [rest]
         newExercise.updateDates = [Date()]
-        
-        print(newExercise)
         
         context.insert(newExercise)
         try? context.save()

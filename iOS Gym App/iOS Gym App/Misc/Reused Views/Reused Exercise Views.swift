@@ -5,13 +5,12 @@ extension ReusedViews {
     struct ExerciseViews {
         
         static func ExerciseListPreview(exercise: Exercise) -> some View {
-            HStack {
-                Labels.SmallIconSize(color: exercise.color)
-                    .overlay(alignment: .center) {
-                        Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
-                            .foregroundStyle(Constants.iconColor)
-                    }
-                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise, extend: true)
+            Label {
+                Text(exercise.name)
+                Text("\(exercise.recentSetData.setData.count) set\(exercise.recentSetData.setData.count == 1 ? "" : "s")")
+            } icon: {
+                exercise.icon
+                    .foregroundStyle(exercise.color)
             }
         }
         
@@ -20,12 +19,14 @@ extension ReusedViews {
                 ExerciseLabel(exercise: exercise)
                     .aspectRatio(1.0, contentMode: .fit)
                     .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
-                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise, extend: false)
+                Labels.TypeListDescription(name: exercise.name, items: exercise.recentSetData.setData, type: .exercise)
             }
         }
         
         static func IndiidualSetInfo(setData: SetData, color: Color, index: Int) -> some View {
-            HStack {
+            Label {
+                Text("\(setData.weight, specifier: "%.1f") lbs, \(setData.reps) reps, \(setData.rest)s")
+            } icon: {
                 if index < 50 {
                     Image(systemName: "\(index + 1).circle")
                         .foregroundStyle(color)
@@ -33,8 +34,6 @@ extension ReusedViews {
                     Image(systemName: "circle")
                         .foregroundStyle(color)
                 }
-                Text("\(setData.weight, specifier: "%.1f") lbs, \(setData.reps) reps, \(setData.rest)s")
-                Spacer()
             }
         }
         
@@ -49,10 +48,21 @@ extension ReusedViews {
             }
         }
         
+        static func OneRepMaxInfo(data: [WeightEntry], exercise: Exercise, showMaxSheet: Binding<Bool>, label: String) -> some View {
+            Section {
+                ForEach(data, id: \.self) { entry in
+                    ReusedViews.WeightEntryView.OneRepMaxLabel(data: entry, weightLabel: label)
+                        .id(entry.id)
+                }
+            } header: {
+                Buttons.EditHeaderButton(toggleEdit: showMaxSheet, type: .oneRepMax, items: data)
+            }
+        }
+        
         static func ExerciseLabel(exercise: Exercise) -> some View {
             ZStack {
                 Labels.MediumIconSize(color: exercise.color)
-                Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                exercise.icon
                     .resizable()
                     .scaledToFit()
                     .frame(width: Constants.mediumIconSize - Constants.bigImagePadding, height: Constants.mediumIconSize - Constants.bigImagePadding)
@@ -64,7 +74,7 @@ extension ReusedViews {
         static func LargeExerciseLabel(exercise: Exercise) -> some View {
             ZStack {
                 Labels.LargeIconSize(color: exercise.color)
-                Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                exercise.icon
                     .resizable()
                     .scaledToFit()
                     .frame(width: Constants.largeIconSize - Constants.bigImagePadding, height: Constants.largeIconSize - Constants.bigImagePadding)
@@ -122,8 +132,9 @@ extension ReusedViews {
                             Text("None").tag(nil as Muscle?)
                             Menu {
                                 Picker("", selection: selectedMuscle) {
-                                    ForEach(Muscle.allCases.filter { $0.general == .general }) { muscle in
-                                        Text(muscle.rawValue).tag(muscle)
+                                    ForEach(Muscle.allCases.filter { $0.general == .general } .sorted(by: { $0.rawValue < $1.rawValue })) { muscle in
+                                        Label(muscle.rawValue, systemImage: "square.fill").tag(muscle)
+                                            .tint(muscle.specific.colorPalette)
                                     }
                                 }
                             } label: {
@@ -167,6 +178,77 @@ extension ReusedViews {
 
         }
         
+        struct ManualOneRepMaxControls: View {
+            
+            let saveAction: () -> Void
+            @State private var newDate = Date()
+            @Binding var oldOneRepMaxData: [WeightEntry]
+            @State var newOneRepMaxData: [WeightEntry]
+            @Binding var showMaxSheet: Bool
+            @State private var newWeight: String = ""
+            @FocusState private var focused
+            @Environment(ProgressManager.self) private var hkm
+            
+            var body: some View {
+                NavigationStack {
+                    List {
+                        Section {
+                            DatePicker("Date", selection: $newDate)
+                            TextField("Weight", text: $newWeight)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .keyboardType(.decimalPad)
+                                .focused($focused)
+                            Button {
+                                if let value = Double(newWeight) {
+                                    newOneRepMaxData.append(WeightEntry(index: 0, value: value, date: newDate))
+                                }
+                            } label: {
+                                Label("Add", systemImage: "plus")
+                            }.disabled(Double(newWeight) == nil)
+                        } header: {
+                            Text("Add Data")
+                        } footer: {
+                            Text("Do not add an entry if you record a set in a session in which you record a one rep max.")
+                        }
+                        Section {
+                            ForEach(newOneRepMaxData, id: \.self) { entry in
+                                ReusedViews.WeightEntryView.OneRepMaxLabel(data: entry, weightLabel: hkm.weightUnitString)
+                            }
+                            .onDelete { indices in
+                                newOneRepMaxData.remove(atOffsets: indices)
+                            }
+                        } header: {
+                            Text("Existing Data")
+                        }
+                    }
+                    .onAppear {
+                        focused = true
+                    }
+                    .environment(\.editMode, .constant(.active))
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            ReusedViews.Buttons.CancelButton(cancel: CancelOptions)
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            ReusedViews.Buttons.SaveButton(disabled: newOneRepMaxData.isEmpty, save: SaveOptions)
+                        }
+                    }
+                }
+            }
+            
+            private func CancelOptions() {
+                showMaxSheet = false
+            }
+            
+            private func SaveOptions() {
+                oldOneRepMaxData = newOneRepMaxData
+                saveAction()
+                showMaxSheet = false
+            }
+            
+        }
+        
         struct SetControls: View {
             
             let exercise: Exercise
@@ -178,12 +260,16 @@ extension ReusedViews {
             @State var restTime: Int
             @State var reps: Int
             @Environment(ProgressManager.self) private var hkm
+            @FocusState private var focused
             
             @State private var weightString: String = ""
             
             var body: some View {
                 NavigationStack {
                     List {
+                        Section {
+                            SetOptions()
+                        }
                         Section {
                             ForEach(newSetData, id: \.self) { set in
                                 IndiidualSetInfo(setData: set, color: exercise.color, index: newSetData.firstIndex(of: set)!)
@@ -195,9 +281,9 @@ extension ReusedViews {
                                 newSetData.remove(atOffsets: indices)
                             }
                         }
-                        Section {
-                            SetOptions()
-                        }
+                    }
+                    .onAppear {
+                        focused = true
                     }
                     .environment(\.editMode, .constant(.active))
                     .toolbar {
@@ -217,6 +303,7 @@ extension ReusedViews {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .keyboardType(.decimalPad)
+                        .focused($focused)
                     Stepper("Ideal Reps \(reps)", value: $reps, in: 0...40, step: 1)
                     Stepper("Rest \(formatSeconds(totalSeconds: restTime))", value: $restTime, in: 0...600, step: 5)
                     Button("Add Set", role: .confirm) {

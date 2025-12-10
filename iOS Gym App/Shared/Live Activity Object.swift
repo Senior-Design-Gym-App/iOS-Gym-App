@@ -7,13 +7,10 @@ struct WorkoutTimer: ActivityAttributes {
     
     public struct ContentState: Codable, Hashable {
         
-        let currentSet: Int
         let timerStart: Date
-        
-        let setEntry: SetData
-        
-        let setCount: Int
-        let exerciseName: String
+        let sessionName: String
+        let sessionStartDate: Date
+        let currentExercise: SessionData
         
     }
     

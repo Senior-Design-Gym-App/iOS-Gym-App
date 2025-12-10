@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct MonthlyCalendarView: View {
     
@@ -7,8 +6,8 @@ struct MonthlyCalendarView: View {
     @Binding var selectedDate: Date?
     @Environment(ProgressManager.self) private var hkm
     @Namespace private var namespace
-    @Query private var allExercises: [Exercise]
-    @Query private var allSessions: [WorkoutSession]
+    let allExercises: [Exercise]
+    let allSessions: [WorkoutSession]
     
     var body: some View {
         Section {
@@ -46,7 +45,6 @@ struct MonthlyCalendarView: View {
                 .foregroundStyle(ColorSwitch(eventCount: 5))
         }
     }
-
     
     private func GenerateMonthGrid(month: Date) -> [Date] {
         var days: [Date] = []
@@ -94,8 +92,13 @@ struct MonthlyCalendarView: View {
         if completedDates.contains(where: { Calendar.current.isDate($0, inSameDayAs: day) }) {
             eventCount += 1
         }
-        // dont forget to include PRs
-        //            if allExercises.contains(where: { $0. })
+        
+        let oneRepMaxDates = allExercises.flatMap { $0.allOneRepMaxData }.map { $0.entry.date }
+        
+        if oneRepMaxDates.contains(where: { Calendar.current.isDate($0, inSameDayAs: day) }) {
+            eventCount += 1
+        }
+        
         return ColorSwitch(eventCount: eventCount)
     }
     

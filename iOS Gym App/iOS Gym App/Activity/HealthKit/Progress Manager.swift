@@ -7,22 +7,20 @@ final class ProgressManager {
     var bodyFatData: [WeightEntry] = []
     var bodyWeightData: [WeightEntry] = []
     
-    var monthBodyFatData: [WeightEntry] {
-        bodyFatData.filter({ calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) })
-    }
-    
-    var monthBodyWeightData: [WeightEntry] {
-        bodyWeightData.filter({ calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) })
-    }
-    
     @ObservationIgnored private let calendar = Calendar.current
     @ObservationIgnored private let healthStore = HKHealthStore()
+    @ObservationIgnored @AppStorage("stringUpdateDate") private var stringUpdateDate = Date.distantPast
+    @ObservationIgnored @AppStorage("greetingString") private var greetingString = "Initial"
 
     init() {
         RequestAuthorization()
+        if !Calendar.current.isDate(stringUpdateDate, equalTo: Date.now, toGranularity: .day) {
+            greetingString = ActivityLabels.RandomGymGreeting()
+            stringUpdateDate = Date.now
+        }
     }
     
-    var usesMetricSystem: Bool {
+    private var usesMetricSystem: Bool {
         Locale.current.measurementSystem == .metric
     }
     

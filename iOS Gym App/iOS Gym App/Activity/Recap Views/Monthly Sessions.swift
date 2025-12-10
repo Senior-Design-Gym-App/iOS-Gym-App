@@ -9,12 +9,6 @@ struct MonthlySessions: View {
     
     var recentSessions: [WorkoutSession] {
         allSessions
-            .filter {
-                if let completedDate = $0.completed {
-                    return calendar.isDate(completedDate, equalTo: viewingMonth, toGranularity: .month)
-                }
-                return false
-            }
             .sorted { lhs, rhs in
                 guard let lhsDate = lhs.completed, let rhsDate = rhs.completed else { return false }
                 return lhsDate > rhsDate
@@ -53,7 +47,7 @@ struct MonthlySessions: View {
             VStack(alignment: .leading, spacing: 5) {
                 ReusedViews.Labels.MediumIconSize(color: session.color)
                     .matchedTransitionSource(id: session.id, in: namespace)
-                ReusedViews.Labels.ListDescription(title: session.name, subtitle: DateHandler().RelativeTime(from: session.completed!), extend: false)
+                ReusedViews.Labels.ListDescription(title: session.name, subtitle: DateHandler().RelativeTime(from: session.completed!))
             }
         }.buttonStyle(.plain)
             .navigationLinkIndicatorVisibility(.hidden)
