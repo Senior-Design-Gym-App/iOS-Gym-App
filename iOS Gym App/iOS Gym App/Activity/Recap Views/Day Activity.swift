@@ -21,31 +21,34 @@ struct DayActivity: View {
                         },
                         id: \.self
                     ) { session in
-                        SessionLink(session: session)
+                        ReusedViews.SessionViews.SessionLink(session: session)
                     }
                 } header: {
                     Text("Session")
                 }
                 Section {
                     ForEach(allExercises.filter { $0.updateData.contains { calendar.isDate($0.changeDate, inSameDayAs: dayProgress) } }, id: \.self) { update in
-                        
+                        ExerciseUpdates(exercise: update)
                     }
                 } header: {
                     Text("Progress")
                 }
                 Section {
+                    ForEach(allExercises.filter { $0.allOneRepMaxData.contains { calendar.isDate($0.entry.date, inSameDayAs: dayProgress) } }, id: \.self) { exercise in
+                        OneRepMax(exercise: exercise)
+                    }
+                } header: {
+                    Text("One Rep Max")
+                }
+                Section {
                     ForEach(hkm.bodyWeightData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
                         BodyWeightData(data: data)
                     }
-                } header: {
-                    Text("Body Weight")
-                }
-                Section {
                     ForEach(hkm.bodyFatData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) }, id: \.self) { data in
                         BodyFatData(data: data)
                     }
                 } header: {
-                    Text("Body Fat")
+                    Text("Health Data")
                 }
                 .navigationTitle(HeaderDateFormatter())
                 .navigationBarTitleDisplayMode(.inline)
@@ -53,45 +56,34 @@ struct DayActivity: View {
         }
     }
     
-//    private func PRList(update: Exercise) -> some View {
-//        ForEach(update.prData.filter { calendar.isDate($0.date, inSameDayAs: dayProgress) } ) { set in
-//            NavigationLink {
-//                WorkoutUpdateView(workout: update)
-//            } label: {
-//                Label {
-//                    //Text(AL.UpdateLabel(specificUpdate: set, allUpdates: update.updateData, workoutName: update.workout?.name ?? "Unknown Workout"))
-//                } icon: {
-//                    Image(systemName: "trophy")
-//                        .foregroundStyle(Constants.updateTheme)
-//                }
-//            }
-//        }
-//    }
+    private func OneRepMax(exercise: Exercise) -> some View {
+        ForEach(exercise.allOneRepMaxData.filter { calendar.isDate($0.entry.date, inSameDayAs: dayProgress) } ) { set in
+            NavigationLink {
+                ExerciseChanges(exercise: exercise)
+            } label: {
+                Label {
+                    Text(exercise.name)
+                    Text(ActivityLabels.OneRepMaxLabel(current: set.entry, all: exercise.allOneRepMaxData.map { $0.entry }, label: hkm.weightUnitString))
+                } icon: {
+                    exercise.icon
+                        .foregroundStyle(exercise.color)
+                }
+            }
+        }
+    }
 //
-//    private func UpdateList(update: WorkoutUpdate) -> some View {
-//        ForEach(update.updateData.filter { calendar.isDate($0.updateDate, inSameDayAs: dayProgress) } ) { set in
-//            NavigationLink {
-//                WorkoutUpdateView(workout: update)
-//            } label: {
-//                Label {
-//                    Text(AL.UpdateDataLabel(specificUpdate: set, allUpdates: update.updateData, workoutName: update.workout?.name ?? "Unknown Workout"))
-//                } icon: {
-//                    Image(systemName: "chart.dots.scatter")
-//                        .foregroundStyle(Constants.updateTheme)
-//                }
-//            }
-//        }
-//    }
-    
-    private func SessionLink(session: WorkoutSession) -> some View {
-        NavigationLink {
-            SessionRecap(session: session)
-        } label: {
-            Label {
-                Text(session.name)
-            } icon: {
-                Image(systemName: "timer")
-                    .foregroundStyle(Constants.sessionTheme)
+    private func ExerciseUpdates(exercise: Exercise) -> some View {
+        ForEach(exercise.updateData.filter { calendar.isDate($0.changeDate, inSameDayAs: dayProgress) } ) { set in
+            NavigationLink {
+                ExerciseChanges(exercise: exercise)
+            } label: {
+                Label {
+                    Text(exercise.name)
+                    Text(ActivityLabels().UpdateDataLabel(specificUpdate: set, allUpdates: exercise.updateData))
+                } icon: {
+                    exercise.icon
+                        .foregroundStyle(exercise.color)
+                }
             }
         }
     }
@@ -101,14 +93,11 @@ struct DayActivity: View {
             HealthData(type: .bodyFat)
         } label: {
             Label {
-                if data.index != 0 {
-                    Text(ActivityLabels().BodyFatLabel(currentValue: data.value, previousValue: hkm.bodyFatData[data.index - 1].value))
-                } else {
-                    Text(ActivityLabels().BodyFatLabel(currentValue: data.value, previousValue: nil))
-                }
+                Text("\(data.value, specifier: "%.1f")%")
+                Text(ActivityLabels.BodyFatLabel(current: data, all: hkm.bodyFatData))
             } icon: {
                 Image(systemName: "heart.text.clipboard")
-                    .foregroundStyle(Constants.bodyFatTheme)
+                    .foregroundStyle(Constants.healthColor)
             }
         }
     }
@@ -118,14 +107,11 @@ struct DayActivity: View {
             HealthData(type: .bodyWeight)
         } label: {
             Label {
-                if data.index != 0 {
-                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: hkm.bodyWeightData[data.index - 1].value, unit: hkm.weightUnitString))
-                } else {
-                    Text(ActivityLabels().BodyWeightLabel(currentValue: data.value, previousValue: nil, unit: hkm.weightUnitString))
-                }
+                Text("\(data.value, specifier: "%.1f") \(hkm.weightUnitString)")
+                Text(ActivityLabels.BodyWeightLabel(current: data, all: hkm.bodyWeightData, weightLabel: hkm.weightUnitString))
             } icon: {
                 Image(systemName: "heart.text.clipboard")
-                    .foregroundStyle(Constants.bodyWeightTheme)
+                    .foregroundStyle(Constants.healthColor)
             }
         }
     }

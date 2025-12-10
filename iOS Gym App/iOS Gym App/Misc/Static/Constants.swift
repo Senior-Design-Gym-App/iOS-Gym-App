@@ -26,6 +26,7 @@ struct Constants {
     static let iconColor: Color = Color.white
     static let bodyWeightTheme: Color = Color.purple
     static let bodyFatTheme: Color = Color.pink
+    static let healthColor: Color = Color.pink
     
     // MARK: SF Icons
     

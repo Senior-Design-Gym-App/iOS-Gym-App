@@ -6,16 +6,18 @@ extension ReusedViews {
     struct WorkoutViews {
         
         static func WorkoutListPreview(workout: Workout) -> some View {
-            HStack {
-                Labels.SmallIconSize(color: workout.color)
-                Labels.TypeListDescription(name: workout.name, items: workout.sortedExercises, type: .workout, extend: true)
+            Label {
+                Text(workout.name)
+                Text("\(workout.sortedExercises.count) exercises\(workout.sortedExercises.count == 1 ? "" : "s")")
+            } icon: {
+                Labels.ListIcon(color: workout.color)
             }
         }
         
         static func HorizontalListPreview(workout: Workout) -> some View {
             VStack(alignment: .leading, spacing: 5) {
                 Labels.MediumIconSize(color: workout.color)
-                Labels.TypeListDescription(name: workout.name, items: workout.sortedExercises, type: .workout, extend: false)
+                Labels.TypeListDescription(name: workout.name, items: workout.sortedExercises, type: .workout)
             }
         }
         
@@ -90,6 +92,57 @@ extension ReusedViews {
             
         }
         
+        struct NotificationDatePicker: View {
+            
+            @Binding var workout: Workout
+            @State var type: NotificationType
+            @State var period: DayPeriod
+            @State var hour: Int
+            @State var minute: Int
+            @State var weekDay: DayofWeek
+            
+            var adjustedType: WorkoutNotificationType {
+                WorkoutNotificationType(type: type, period: period, day: weekDay, minute: minute, hour: hour)
+            }
+            
+            var body: some View {
+                Menu {
+                    Section {
+                        Picker("Notificaiton Type", selection: $type) {
+                            ForEach(NotificationType.allCases, id: \.self) { type in
+                                Text(type.rawValue).tag(type)
+                            }
+                        }
+                    }
+                    Picker("Day", selection: $period) {
+                        ForEach(DayofWeek.allCases, id: \.self) { day in
+                            Text(day.rawValue.capitalized).tag(day)
+                        }
+                    }.pickerStyle(.palette)
+                    if type == .weekly {
+                        Section {
+                            ReusedViews.Pickers.WorkoutNotificationPicker(hour: $hour, minute: $minute, period: $period)
+                                .pickerStyle(.palette)
+                        }
+                    }
+                } label: {
+                    Label("Notification Time", systemImage: type != .disabled ? "bell.badge" : "bell.badge.slash")
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
+                        .labelStyle(.iconOnly)
+                }
+                .menuActionDismissBehavior(.disabled)
+                .buttonBorderShape(.circle)
+                .buttonStyle(.glass)
+                .onChange(of: adjustedType) {
+                    workout.encodeNotificationType(type: adjustedType)
+                    if let split = workout.split, adjustedType.type == .weekly {
+                        NotificationManager.instance.ScheduleNotificationsForSplit(split: split)
+                    }
+                }
+            }
+            
+        }
+        
         static func MostRecentSession(workout: Workout) -> String {
             if let sessions = workout.sessions,
                let recent = sessions.compactMap({ $0.completed }).sorted(by: { $0 > $1 }).first {
@@ -99,6 +152,14 @@ extension ReusedViews {
             }
         }
         
+    }
+    
+}
+
+extension Workout {
+    
+    func encode() {
+        notificationString = ""
     }
     
 }

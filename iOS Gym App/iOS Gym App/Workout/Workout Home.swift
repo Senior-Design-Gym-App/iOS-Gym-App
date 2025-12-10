@@ -83,7 +83,7 @@ struct WorkoutHome: View {
                             .font(.caption2)
                     }
                 } icon: {
-                    Image(systemName: Constants.sessionIcon)
+                    Image(systemName: Constants.exerciseIcon)
                 }
             }
             NavigationLink {
@@ -105,7 +105,7 @@ struct WorkoutHome: View {
                 Label {
                     Text("Splits")
                     if showTips {
-                        Text("Create a split to organize your workouts and to start a session. Favorite a split to  quickly a session from one of its workouts.")
+                        Text("Create a split to organize your workouts and to start a session. Favorite a split to  quickly a session from one of its workouts and to recieve reminders .")
                             .font(.caption2)
                     }
                 } icon: {
@@ -113,13 +113,15 @@ struct WorkoutHome: View {
                 }
             }
         } footer: {
-            Text("You can turn off tips in the settings.")
+            if showTips {
+                Text("You can turn off tips in the settings.")
+            }
         }
     }
     
     private func RecentExercise(exercise: Exercise) -> some View {
         NavigationLink {
-            EditExerciseView(exercise: exercise, setData: exercise.recentSetData.setData, selectedMuscle: exercise.muscle, selectedEquipment: exercise.workoutEquipment)
+            EditExerciseView(exercise: exercise, setData: exercise.recentSetData.setData, selectedMuscle: exercise.muscle, selectedEquipment: exercise.workoutEquipment, manualOneRepMax: exercise.manualOneRepMaxData)
                 .navigationTransition(.zoom(sourceID: exercise.id, in: namespace))
         } label: {
             ReusedViews.ExerciseViews.HorizontalListPreview(exercise: exercise)

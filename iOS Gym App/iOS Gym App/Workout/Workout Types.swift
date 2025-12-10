@@ -29,11 +29,74 @@ enum WorkoutViewTypes: String, CaseIterable, Identifiable {
     
 }
 
-struct SetChangeData: Identifiable, Hashable {
+struct WorkoutNotificationType: Codable, Equatable {
     
-    let id = UUID()
-    let changeDate: Date
-    let setData: [SetData]
+    let type: NotificationType
+    let period: DayPeriod
+    let day: DayofWeek
+    let minute: Int
+    let hour: Int
+    
+    var adjustedHour: Int {
+        switch period {
+        case .am:
+            return hour == 12 ? 0 : hour  // 12 AM is 0 (midnight)
+        case .pm:
+            return hour == 12 ? 12 : hour + 12  // 12 PM stays 12 (noon), others add 12
+        case .day:
+            return hour  // 24-hour format, use as-is
+        }
+    }
+    
+    var date: DateComponents {
+        var comps = DateComponents()
+        comps.hour = adjustedHour
+        comps.minute = minute
+        comps.weekday = day.dayNumber
+        return comps
+    }
+    
+}
+
+enum NotificationType: String, Codable, CaseIterable {
+    
+    case weekly     = "Weekly"
+    case disabled   = "Disabled"
+    
+}
+
+enum DayofWeek: String, Codable, CaseIterable, Identifiable {
+    
+    case sunday, monday, tuesday, wednesday, thursday, friday, saturday
+    
+    var id: String { rawValue }
+    
+    var dayNumber: Int {
+        switch self {
+        case .sunday:
+            return 1
+        case .monday:
+            return 2
+        case .tuesday:
+            return 3
+        case .wednesday:
+            return 4
+        case .thursday:
+            return 5
+        case .friday:
+            return 6
+        case .saturday:
+            return 7
+        }
+    }
+    
+}
+
+enum DayPeriod: String, Codable, CaseIterable {
+    
+    case am     = "AM"
+    case pm     = "PM"
+    case day    = "24 Hour"
     
 }
 
@@ -43,43 +106,20 @@ enum WorkoutItemType: String {
     case workout    = "Workout"
     case split      = "Split"
     case session    = "Session"
-    
-    var editType: String {
-        switch self {
-        case .exercise:
-            return "Edit Sets"
-        case .workout:
-            return "Edit Exercises"
-        case .split:
-            return "Edit Workouts"
-            case .session:
-            return "Edit Workouts"
-        }
-    }
-    
-    var addType: String {
-        switch self {
-        case .exercise:
-            return "Add Sets"
-        case .workout:
-            return "Add Exercises"
-        case .split:
-            return "Add Workouts"
-        case .session:
-            return "Add Session"
-        }
-    }
+    case oneRepMax  = "One Rep Max"
     
     var listLabel: String {
         switch self {
         case .exercise:
-            return "Set"
+            return "Sets"
         case .workout:
-            return "Exercise"
+            return "Exercises"
         case .split:
-            return "Workout"
+            return "Workouts"
         case .session:
             return "Sessions"
+        case .oneRepMax:
+            return "One Rep Maxes"
         }
     }
     
@@ -93,7 +133,52 @@ enum WorkoutItemType: String {
             return "This will be removed but all the workouts will still remain."
         case .session:
             return "This will be removed from your sessions and all session progress will be lost."
+        case .oneRepMax:
+            return "This will he removed from your exercise history."
         }
     }
+    
+}
+
+extension Workout {
+    
+    var notificationType: WorkoutNotificationType? {
+        guard !notificationString.isEmpty,
+              let data = notificationString.data(using: .utf8),
+              let type = try? JSONDecoder().decode(WorkoutNotificationType.self, from: data) else {
+            return nil
+        }
+        return type
+    }
+    
+    func encodeNotificationType(type: WorkoutNotificationType) {
+        do {
+            let data = try JSONEncoder().encode(type)
+            notificationString = String(decoding: data, as: UTF8.self)
+        } catch {
+            print("failed to encode notification type")
+        }
+    }
+    
+}
+
+extension Exercise {
+    
+    var icon: Image {
+        if let equipment = workoutEquipment?.imageName {
+            Image(systemName: equipment)
+        } else {
+            Image(systemName: Constants.exerciseIcon)
+        }
+    }
+    
+}
+
+struct OneRepMaxData: Identifiable, Hashable {
+    
+    let id = UUID()
+    let entry: WeightEntry
+    let session: WorkoutSession?
+    
     
 }

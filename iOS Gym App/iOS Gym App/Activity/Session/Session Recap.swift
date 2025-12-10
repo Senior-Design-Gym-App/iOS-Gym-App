@@ -7,6 +7,7 @@ struct SessionRecap: View {
     @State var session: WorkoutSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Environment(ProgressManager.self) private var hkm
     @State private var selectedSection: DonutData?
     @AppStorage("donutDisplayType") private var displayType: DonutDisplayType = .reps
     
@@ -18,6 +19,7 @@ struct SessionRecap: View {
     var body: some View {
         NavigationStack {
             List {
+                SessionTitleInfo(deleteSession: DeleteSession, session: $session, startDate: session.started, endDate: session.completed ?? session.started)
                 SessionInfo()
                 
                 // ADD THIS SUMMARY SECTION
@@ -169,7 +171,7 @@ struct SessionRecap: View {
                         ReusedViews.Charts.BarMarks(sets: recent.mostRecentSetData.setData, color: ChartGraphType.current.color, offset: 0.6)
                     }
                 }
-                .chartYAxisLabel("Weight (lbs)")
+                .chartYAxisLabel("Volume \(hkm.weightUnitString)")
                 .chartXAxis(.hidden)
             }.disabled(entry.exercise == nil)
                 .navigationLinkIndicatorVisibility(entry.exercise == nil ? .hidden : .visible)
@@ -210,13 +212,6 @@ struct SessionRecap: View {
         formatter.locale = Locale.current
         formatter.dateFormat = "MMM, yyyy"
         return formatter.string(from: date)
-    }
-    
-    private func GenerateImage(for date: Date) -> Image {
-        let dayNumber = Calendar.current.component(.day, from: date)
-        let imageName = "\(dayNumber).calendar"
-        
-        return Image(systemName: imageName)
     }
     
     private func DeleteSession() {

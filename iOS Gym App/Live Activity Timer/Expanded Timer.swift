@@ -6,35 +6,57 @@ import SwiftUI
 func ExerciseTimerExpandedView(context: ActivityViewContext<WorkoutTimer>) -> DynamicIslandExpandedContent<some View> {
     
     DynamicIslandExpandedRegion(.leading) {
-        Text(context.state.exerciseName)
-            .font(.headline)
-        SetGauge(context: context)
+        CircularGauge(context: context)
+            .padding(.trailing, 30)
+    }
+    
+    DynamicIslandExpandedRegion(.center) {
+        Text(context.state.currentExercise.exercise.name)
+            .font(.title3)
     }
     
     DynamicIslandExpandedRegion(.trailing) {
-        Spacer()
         TimerGauge(context: context)
-        TimerView(context: context)
-            .font(.largeTitle)
-        Spacer()
+            .padding(.leading, 30)
+    }
+    
+    DynamicIslandExpandedRegion(.bottom) {
+        HStack {
+            Text(context.state.sessionName)
+                .font(.caption)
+            Spacer()
+            SessionTimeLength(context: context)
+                .font(.caption)
+        }.padding(.horizontal)
     }
     
 }
 
-func TimerView(context: ActivityViewContext<WorkoutTimer>) -> some View {
-    Text(timerInterval: context.state.timerStart...Date(timeInterval: Double(context.state.setEntry.rest), since: context.state.timerStart))
+func ElapsedTime(context: ActivityViewContext<WorkoutTimer>) -> some View {
+    Text(context.state.timerStart, style: .timer)
 }
 
-func SetGauge(context: ActivityViewContext<WorkoutTimer>) -> some View {
-    VStack {
-        Text("Set \(context.state.currentSet) of \(context.state.setCount)")
-            .font(.callout)
-        Gauge(value: Float(min(context.state.currentSet, context.state.setCount)), in: 0...Float(context.state.setCount)) {
-        }.gaugeStyle(.accessoryLinearCapacity)
-            .tint(.accentColor)
+func CircularGauge(context: ActivityViewContext<WorkoutTimer>) -> some View {
+    ProgressView(value: Float(context.state.currentExercise.currentSet), total: Float(context.state.currentExercise.totalSets)) {
+        ExerciseIcon(context: context)
     }
+    .progressViewStyle(.circular)
+    .tint(context.state.currentExercise.exercise.color)
+}
+
+func ExerciseIcon(context: ActivityViewContext<WorkoutTimer>) -> some View {
+    Label("Equipment", systemImage: context.state.currentExercise.exercise.workoutEquipment?.imageName ?? "questionmark")
+        .labelStyle(.iconOnly)
+        .foregroundStyle(context.state.currentExercise.exercise.color)
 }
 
 func TimerGauge(context: ActivityViewContext<WorkoutTimer>) -> some View {
-    ProgressView(timerInterval: context.state.timerStart...Date(timeInterval: Double(context.state.setEntry.rest), since: context.state.timerStart), countsDown: true)
+    ProgressView(timerInterval: context.state.timerStart...Date(timeInterval: Double(context.state.currentExercise.exercise.recentSetData.rest[context.state.currentExercise.currentSet]), since: context.state.timerStart))
+        .progressViewStyle(.circular)
+        .foregroundStyle(context.state.currentExercise.exercise.color)
+        .tint(context.state.currentExercise.exercise.color)
+}
+
+func SessionTimeLength(context: ActivityViewContext<WorkoutTimer>) -> some View {
+    Text(context.state.sessionStartDate, style: .timer)
 }

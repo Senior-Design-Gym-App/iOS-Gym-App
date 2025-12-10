@@ -1,13 +1,5 @@
 import SwiftUI
 
-struct SessionData: Identifiable, Hashable, Equatable {
-    
-    let id = UUID()
-    let exercise: Exercise
-    var entry: WorkoutSessionEntry
-    
-}
-
 enum TimerType: String, CaseIterable, Identifiable {
     
     case liveActivities = "Live Activities"

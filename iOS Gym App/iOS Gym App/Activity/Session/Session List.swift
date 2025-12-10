@@ -41,7 +41,7 @@ struct SessionsListView: View {
                 }
             }
             .listRowSpacing(10)
-            .navigationTitle("All Sessions")
+            .navigationTitle("Completed Sessions")
         }
     }
 }

@@ -4,10 +4,13 @@ import SwiftData
 struct CreateWorkoutView: View {
     
     @State private var showAddSheet: Bool = false
-    @State private var showAISheet: Bool = false
     @State private var newWorkout = Workout(name: "New Workout", exercises: [])
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    
+    @AppStorage("defaultHour") private var defaultHour: Int = 8
+    @AppStorage("defaultMinute") private var defaultMinute: Int = 0
+    @AppStorage("defaultPeriod") private var defaultPeriod: DayPeriod = .am
     
     var body: some View {
         NavigationStack {
@@ -19,6 +22,7 @@ struct CreateWorkoutView: View {
                             .offset(y: Constants.largeOffset)
                         HStack {
                             ReusedViews.Buttons.RenameButtonAlert(type: .workout, oldName: $newWorkout.name)
+                            ReusedViews.WorkoutViews.NotificationDatePicker(workout: $newWorkout, type: newWorkout.notificationType?.type ?? .disabled, period: newWorkout.notificationType?.period ?? defaultPeriod, hour: newWorkout.notificationType?.hour ?? defaultHour, minute: newWorkout.notificationType?.minute ?? defaultMinute, weekDay: newWorkout.notificationType?.day ?? .monday)
                         }
                     }
                     Spacer()

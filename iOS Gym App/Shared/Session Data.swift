@@ -35,7 +35,7 @@ final class WorkoutSession {
 }
 
 @Model
-final class WorkoutSessionEntry {
+final class WorkoutSessionEntry: Codable {
     
     @Transient
     var id = UUID()
@@ -50,6 +50,22 @@ final class WorkoutSessionEntry {
             all.append(new)
         }
         return all
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case reps, weight
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(weight, forKey: .weight)
+        try container.encode(reps, forKey: .reps)
+    }
+    
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        reps = try container.decode([Int].self, forKey: .reps)
+        weight = try container.decode([Double].self, forKey: .weight)
     }
     
     @Relationship(deleteRule: .nullify)

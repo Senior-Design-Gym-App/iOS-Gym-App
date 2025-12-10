@@ -8,18 +8,18 @@ extension ReusedViews {
             NavigationLink {
                 SessionRecap(session: session)
             } label: {
-                HStack {
-                    ReusedViews.Labels.SmallIconSize(color: session.color)
-                    ReusedViews.Labels.Description(topText: session.name, bottomText: "\(DateHandler().RelativeTime(from: session.completed!)) ago")
-                    Spacer()
+                Label {
+                    Text(session.name)
+                    Text("\(session.exercises?.count ?? 0) exercise\(session.exercises?.count == 1 ? "" : "s")")
+                } icon: {
+                    Labels.ListIcon(color: session.color)
                 }
             }
         }
         
         static func WorkoutSessionView(workout: Workout, start: @escaping (Workout) -> Void) -> some View {
             HStack {
-                ReusedViews.Labels.SmallIconSize(color: workout.color)
-                ReusedViews.Labels.ListDescription(title: workout.name, subtitle: ReusedViews.WorkoutViews.MostRecentSession(workout: workout), extend: true)
+                ReusedViews.WorkoutViews.WorkoutListPreview(workout: workout)
                 Spacer()
                 Menu {
                     Section {
@@ -28,7 +28,7 @@ extension ReusedViews {
                                 Text(exercise.name)
                                 Text("\(exercise.recentSetData.setData.count) Set\(exercise.recentSetData.setData.count == 1 ? "" : "s")")
                             } icon: {
-                                Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                                exercise.icon
                             }
                         }
                     } header: {

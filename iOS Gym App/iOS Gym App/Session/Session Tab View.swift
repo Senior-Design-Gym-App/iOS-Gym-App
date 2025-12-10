@@ -35,7 +35,7 @@ struct SessionTabViewWrapper: View {
         } label: {
             HStack {
                 if let currentWorkout = sessionManager.currentExercise {
-                    Image(systemName: currentWorkout.exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                    Image(systemName: currentWorkout.exercise.workoutEquipment?.imageName ?? Constants.exerciseIcon)
                         .foregroundStyle(Constants.labelColor)
                     VStack(alignment: .leading) {
                         Text(currentWorkout.exercise.name)

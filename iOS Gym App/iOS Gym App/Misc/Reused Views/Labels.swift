@@ -11,6 +11,11 @@ struct ReusedViews {
                 .frame(width: size, height: size)
         }
         
+        static func ListIcon(color: Color) -> some View {
+            Image(systemName: "square.fill")
+                .foregroundStyle(color)
+        }
+        
         static func MediumIconSize(color: Color) -> some View {
             Icon(size: Constants.mediumIconSize, cornerRadius: Constants.cornerRadius, color: color)
         }
@@ -35,11 +40,11 @@ struct ReusedViews {
             }
         }
         
-        static func TypeListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType, extend: Bool) -> some View {
-            ListDescription(title: name, subtitle: "\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")", extend: extend)
+        static func TypeListDescription<C: Collection>(name: String, items: C, type: WorkoutItemType) -> some View {
+            ListDescription(title: name, subtitle: "\(items.count) \(type.listLabel)\(items.count == 1 ? "" : "s")")
         }
         
-        static func ListDescription(title: String, subtitle: String, extend: Bool) -> some View {
+        static func ListDescription(title: String, subtitle: String) -> some View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
                     .fontWeight(.semibold)
@@ -49,13 +54,7 @@ struct ReusedViews {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: extend ? .infinity : Constants.mediumIconSize, alignment: .leading)
-        }
-        
-        static func Subheader(title: String) -> some View {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            .frame(maxWidth: Constants.mediumIconSize, alignment: .leading)
         }
         
         static func Header(text: String) -> some View {
@@ -65,18 +64,6 @@ struct ReusedViews {
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundStyle(Constants.labelColor)
-        }
-        
-        static func Description(topText: String, bottomText: String) -> some View {
-            VStack(alignment: .leading) {
-                Text(topText)
-                    .foregroundStyle(Constants.labelColor)
-                    .font(.callout)
-                Text(bottomText)
-                    .foregroundStyle(Constants.labelColor)
-                    .font(.caption)
-                    .fontWeight(.thin)
-            }
         }
         
         static func NavigationHeader(text: String) -> some View {

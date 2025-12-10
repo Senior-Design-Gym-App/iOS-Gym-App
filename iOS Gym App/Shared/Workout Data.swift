@@ -13,6 +13,7 @@ final class Workout: Codable {
     var created: Date = Date()
     var modified: Date = Date()
     private var orderString: String = ""
+    var notificationString: String = ""
     
     var color: Color {
         guard let exercises else {
@@ -75,32 +76,21 @@ final class Workout: Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case name, exercises//, split
+        case name, exercises, split
     }
     
     func encode(to encoder: Encoder) throws {
-        //print("ENCODING WORKOUT:", name)
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        //print(" -> encoded name")
-
         try container.encode(exercises, forKey: .exercises)
-        //print(" -> encoded exercises")
-
-        //try container.encode(split, forKey: .split)
-        //print(" -> encoded split")
+        try container.encode(split, forKey: .split)
     }
     
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
         exercises = try container.decodeIfPresent([Exercise].self, forKey: .exercises)
-        //split = try container.decodeIfPresent(Split.self, forKey: .split)
+        split = try container.decodeIfPresent(Split.self, forKey: .split)
     }
     
 }
-/*
- Make a couple exercies
- Different workouts into different splits
- encode one of the splits
- */

@@ -28,14 +28,15 @@ struct StartAllSessionsView: View {
     private func SplitSection(split: Split) -> some View {
         Section {
             ForEach(split.workouts ?? [], id: \.self) { workout in
-                ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout) })
+                ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout, split: split) })
             }
         } header: {
             Text(split.name)
         }
     }
     
-    private func QueueWorkout(workout: Workout) {
+    private func QueueWorkout(workout: Workout, split: Split) {
+        NotificationManager.instance.ScheduleNotificationsForSplit(split: split)
         if sm.session != nil {
             showAlert = true
             return
@@ -46,6 +47,7 @@ struct StartAllSessionsView: View {
         }
         context.insert(newSession)
         sm.session = newSession
+        sm.sessionStartDate = Date()
     }
     
 }

@@ -14,6 +14,9 @@ final class Exercise: Codable {
     var reps: [[Int]] = []
     var weights: [[Double]] = []
     
+    var manualOneRepMaxDates: [Date] = []
+    var manualOneRepMaxWeights: [Double] = []
+    
     var equipment: String?
     var created = Date()
     var modified = Date()
@@ -32,20 +35,19 @@ final class Exercise: Codable {
         self.equipment = equipment
     }
     
-    enum CodingKeys: String, CodingKey {	
-        case name, rest, muscleWorked, weights, reps, equipment, updateDates//, workouts
+    enum CodingKeys: String, CodingKey {
+        case name, rest, muscleWorked, weights, reps, equipment, updateDates
     }
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        try container.encode(rest, forKey: .rest)	
+        try container.encode(rest, forKey: .rest)
         try container.encode(muscleWorked, forKey: .muscleWorked)
         try container.encode(weights, forKey: .weights)
         try container.encode(reps, forKey: .reps)
         try container.encode(updateDates, forKey: .updateDates)
         try container.encodeIfPresent(equipment, forKey: .equipment)
-        //try container.encodeIfPresent(workouts, forKey: .workouts)
     }
     
     required init(from decoder: Decoder) throws {
@@ -58,7 +60,6 @@ final class Exercise: Codable {
         reps = try container.decode([[Int]].self, forKey: .reps)
         equipment = try container.decodeIfPresent(String.self, forKey: .equipment)
         updateDates = try container.decode([Date].self, forKey: .updateDates)
-        //workouts = try container.decode([Workout].self, forKey: .workouts)
     }
     
     var muscleGroup: MuscleGroup? {
@@ -91,6 +92,25 @@ final class Exercise: Codable {
         } else {
             Constants.mainAppTheme
         }
+    }
+    
+    var updateData: [SetChangeData] {
+        let outerCount = min(updateDates.count, min(reps.count, weights.count))
+        var allUpdates: [SetChangeData] = []
+        
+        for i in 0..<outerCount {
+            var sessionSets: [SetData] = []
+            let innerCount = min(weights[i].count, reps[i].count)
+            for j in 0..<innerCount {
+                sessionSets.append(SetData(set: j, rest: rest[i][j], reps: reps[i][j], weight: weights[i][j]))
+            }
+            allUpdates.append(SetChangeData(changeDate: updateDates[i], setData: sessionSets))
+        }
+        return allUpdates
+    }
+    
+    var recentSetData: SetChangeData {
+        updateData.last ?? SetChangeData(changeDate: Date.distantPast, setData: [])
     }
         
 }

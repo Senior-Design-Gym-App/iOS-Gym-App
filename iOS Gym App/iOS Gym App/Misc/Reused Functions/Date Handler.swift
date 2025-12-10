@@ -19,7 +19,7 @@ final class DateHandler {
     
     static func MonthYearString(date: Date) -> String {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM yyyy"
+        dateFormatter.dateFormat = "MMM yyyy"
         return dateFormatter.string(from: date)
     }
     
@@ -64,6 +64,12 @@ final class DateHandler {
             return dateComponents.year == currentComponents.year &&
                    dateComponents.month == currentComponents.month
         }.count
+    }
+    
+    static func Short(date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d/yy"
+        return formatter.string(from: date)
     }
     
 }

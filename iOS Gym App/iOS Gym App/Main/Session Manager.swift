@@ -13,6 +13,7 @@ class SessionManager {
     var timer: Timer? = nil
     @ObservationIgnored @AppStorage("timerType") private var timerType: TimerType = .liveActivities
     @ObservationIgnored @AppStorage("autoAdjustWeights") private var autoAdjustWeights: Bool = true
+    var sessionStartDate: Date = Date()
     
     // MARK: Session Logic
     var session: WorkoutSession?
@@ -67,13 +68,13 @@ class SessionManager {
         let newEntry = WorkoutSessionEntry(reps: [], weight: [], session: nil, exercise: nil)
         let newQueueItem = SessionData(exercise: exercise, entry: newEntry)
         if currentExercise == nil {
+            currentExercise = newQueueItem
             if let first = exercise.recentSetData.setData.first {
                 reps = first.reps
                 weight = first.weight
                 rest = first.rest
                 StartTimer(exercise: exercise, entry: newEntry)
             }
-            currentExercise = newQueueItem
         } else {
             upcomingExercises.append(newQueueItem)
         }

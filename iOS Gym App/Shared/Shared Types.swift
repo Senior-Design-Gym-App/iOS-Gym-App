@@ -16,6 +16,35 @@ struct SetData: Identifiable, Hashable, Codable {
         Double(reps) * weight
     }
     
+    var oneRepMax: Bool {
+        reps == 1
+    }
+    
+}
+
+extension SetData: Equatable {
+    static func == (lhs: SetData, rhs: SetData) -> Bool {
+        lhs.set == rhs.set &&
+        lhs.rest == rhs.rest &&
+        lhs.reps == rhs.reps &&
+        lhs.weight == rhs.weight
+    }
+}
+
+struct SessionData: Identifiable, Hashable, Equatable, Codable {
+    
+    var id = UUID()
+    let exercise: Exercise
+    var entry: WorkoutSessionEntry
+    
+    var currentSet: Int {
+        (entry.weight.count) + 1
+    }
+    
+    var totalSets: Int {
+        max(exercise.recentSetData.setData.count, currentSet)
+    }
+    
 }
 
 enum MuscleGroup: String, CaseIterable, Identifiable {
@@ -287,4 +316,35 @@ enum EquipmentCategory: String, CaseIterable {
     case machine         = "Machine"
     case cableAttachment = "Cable Attachment"
     case accessory       = "Accessory"
+}
+
+struct SetChangeData: Identifiable, Hashable {
+    
+    let id = UUID()
+    let changeDate: Date
+    let setData: [SetData]
+    
+    var sets: Int {
+        setData.count
+    }
+    
+    var reps: [Int] {
+        setData.map { $0.reps }
+    }
+    
+    var weight: [Double] {
+        setData.map { $0.weight }
+    }
+    
+    var rest: [Int] {
+        setData.map { $0.rest }
+    }
+    
+    var avgSetVolume: Double {
+        guard !weight.isEmpty || !reps.isEmpty else { return 0 }
+        let totalWeight = weight.reduce(0, +)
+        let totalReps = reps.reduce(0, +)
+        return Double(totalWeight) / Double(totalReps)
+    }
+    
 }

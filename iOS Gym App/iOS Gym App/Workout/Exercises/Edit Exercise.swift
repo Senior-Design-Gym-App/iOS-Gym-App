@@ -4,13 +4,16 @@ import SwiftData
 struct EditExerciseView: View {
     
     @State var exercise: Exercise
-    
-    @State private var showRename: Bool = false
-    @State private var showAddSheet: Bool = false
-    @State private var showDeleteConfirmation: Bool = false
     @State var setData: [SetData]
     @State var selectedMuscle: Muscle?
     @State var selectedEquipment: WorkoutEquipment?
+    @State var manualOneRepMax: [WeightEntry]
+    
+    @State private var showRename: Bool = false
+    @State private var showMaxSheet: Bool = false
+    @State private var showAddSheet: Bool = false
+    @State private var showDeleteConfirmation: Bool = false
+    @Environment(ProgressManager.self) private var hkm
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -29,7 +32,6 @@ struct EditExerciseView: View {
                             ReusedViews.ExerciseViews.ExerciseCustomization(selectedMuscle: $selectedMuscle, selectedEquipment: $selectedEquipment)
                             ReusedViews.Buttons.RenameButtonAlert(type: .exercise, oldName: $exercise.name)
                             ReusedViews.Buttons.DeleteButtonConfirmation(type: .exercise, deleteAction: Delete)
-                            
                         }
                     }
                     Spacer()
@@ -37,6 +39,7 @@ struct EditExerciseView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
                 ReusedViews.ExerciseViews.SetDataInfo(setData: setData, exericse: exercise, showAddSheet: $showAddSheet)
+                ReusedViews.ExerciseViews.OneRepMaxInfo(data: manualOneRepMax, exercise: exercise, showMaxSheet: $showMaxSheet, label: hkm.weightUnitString)
                 ExerciseWorkouts()
             }
             .onChange(of: selectedMuscle) {
@@ -47,6 +50,9 @@ struct EditExerciseView: View {
             }
             .sheet(isPresented: $showAddSheet) {
                 ReusedViews.ExerciseViews.SetControls(exercise: exercise, saveAction: SaveExercise, newSetData: setData, oldSetData: $setData, showAddSheet: $showAddSheet, restTime: defaultRestTime, reps: defaultRepCount)
+            }
+            .sheet(isPresented: $showMaxSheet) {
+                ReusedViews.ExerciseViews.ManualOneRepMaxControls(saveAction: SaveExercise, oldOneRepMaxData: $manualOneRepMax, newOneRepMaxData: manualOneRepMax, showMaxSheet: $showMaxSheet)
             }
             .navigationTitle(exercise.name)
             .navigationSubtitle("Edited \(DateHandler().RelativeTime(from: exercise.modified))")
@@ -76,7 +82,10 @@ struct EditExerciseView: View {
         
         let rest = setData.map { $0.rest }
         
-        if Set(setData) != Set(exercise.recentSetData.setData) {
+        exercise.manualOneRepMaxDates = manualOneRepMax.map { $0.date }
+        exercise.manualOneRepMaxWeights = manualOneRepMax.map { $0.value }
+        
+        if (setData) != (exercise.recentSetData.setData) {
             exercise.reps.append(newReps)
             exercise.weights.append(newWeights)
             exercise.rest.append(rest)

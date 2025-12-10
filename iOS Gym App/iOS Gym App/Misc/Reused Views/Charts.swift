@@ -38,18 +38,48 @@ extension ReusedViews {
             }.foregroundStyle(color)
         }
         
+        static func PointMarkDay(data: [WeightEntry], color: Color, label: String) -> some View {
+            Chart {
+                ForEach(data, id: \.self) { entry in
+                    PointMark(
+                        x: .value("Date", entry.date, unit: .day),
+                        y: .value("Weight", entry.value),
+                    ).foregroundStyle(color)
+                }
+            }
+        }
+        
         static func BarMarks(sets: [SetData], color: Color, offset: Double) -> some ChartContent {
             ForEach(sets) { set in
                 BarMark(
                     x: .value("Set", set.setDouble - 1 + offset),
-                    y: .value("Weight", set.weight)
+                    y: .value("Weight", set.setVolume)
                 )
             }.foregroundStyle(color)
                 .cornerRadius(Constants.smallRadius)
         }
         
+        static func PointMarks(data: [WeightEntry], color: Color) -> some ChartContent {
+            ForEach(data) { entry in
+                PointMark(
+                    x: .value("Date", entry.date, unit: .day),
+                    y: .value("Weight", entry.value),
+                ).foregroundStyle(color)
+            }
+        }
+        
+        static func WeightEntryBarChart(data: [WeightEntry], exercise: Exercise, yaxisTitle: String) -> some View {
+            Chart {
+                ForEach(data, id: \.self) { entry in
+                    BarMark(x: .value("Date", "\(DateHandler.Short(date: entry.date))"), y: .value("One Rep Max", entry.value))
+                }
+            }
+            .foregroundStyle(exercise.color)
+            .chartYAxisLabel(yaxisTitle)
+        }
+        
         func DataRecapPieChart(sessions: [WorkoutSession], type: DonutDisplayType) -> some View {
-            VStack {
+            VStack(spacing: 0) {
                 HStack {
                     Chart(CalculateSessionSets(sessions: sessions, displayType: type)) { group in
                         SectorMark(
@@ -59,23 +89,18 @@ extension ReusedViews {
                         )
                         .foregroundStyle(group.muscle.colorPalette)
                     }
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading) {
                         ForEach(CalculateSessionSets(sessions: sessions, displayType: type)) { group in
-                            HStack {
-                                Circle()
-                                    .fill(group.muscle.colorPalette)
-                                    .frame(width: 25, height: 25)
-                                VStack(alignment: .leading) {
-                                    Text(group.muscle.rawValue)
-                                    Group {
-                                        if type == .reps || type == .sets {
-                                            Text("\(group.sets) \(type.unit)\(group.sets == 1 ? "" : "s")")
-                                        } else {
-                                            Text("\(group.sets) \(type.unit)")
-                                        }
-                                    }                                        .font(.caption2)
-                                        .fontWeight(.thin)
+                            Label {
+                                Text(group.muscle.rawValue)
+                                if type == .reps || type == .sets {
+                                    Text("\(group.sets) \(type.unit)\(group.sets == 1 ? "" : "s")")
+                                } else {
+                                    Text("\(group.sets) \(type.unit)")
                                 }
+                            } icon: {
+                                Image(systemName: "circle.fill")
+                                    .foregroundStyle(group.muscle.colorPalette)
                             }
                         }
                     }
