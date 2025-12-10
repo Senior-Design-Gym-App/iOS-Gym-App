@@ -10,6 +10,7 @@ import UIKit
 struct AccountEditView: View {
     @Binding var profile: UserProfileContent
 
+    @EnvironmentObject var authManager: AuthManager
     @State private var editingProfile: UserProfileContent = .empty
     @State private var didLoadInitialState = false
     @State private var showImageOptions: Bool = false
@@ -19,8 +20,13 @@ struct AccountEditView: View {
     @State private var showCoverImageOptions: Bool = false
     @State private var showCoverImagePicker: Bool = false
     @State private var coverPickerSource: UIImagePickerController.SourceType = .photoLibrary
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+    @State private var showError = false
     
     @Environment(\.dismiss) private var dismiss
+    
+    private let cloudManager = CloudManager.shared
     
     private let cardCornerRadius = Constants.cornerRadius
     private let accentTint = Constants.mainAppTheme
@@ -92,7 +98,7 @@ struct AccountEditView: View {
                 .padding(.vertical, 6)
                 .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                 .alignmentGuide(.listRowSeparatorTrailing) { _ in 0 }
-                TextField("Name", text: $editingProfile.username)
+                TextField("Name", text: $editingProfile.displayName)
                     .textFieldStyle(.plain)
                     .padding(.vertical, 12)
                     .padding(.horizontal, 4)
@@ -100,7 +106,7 @@ struct AccountEditView: View {
                 HStack {
                     Text("@")
                         .foregroundStyle(.secondary)
-                    TextField("Username", text: $editingProfile.displayName)
+                    TextField("Username", text: $editingProfile.username)
                         .textFieldStyle(.plain)
                 }
                 .padding(.vertical, 12)
@@ -119,15 +125,23 @@ struct AccountEditView: View {
             }
             Section {
                 Button {
-                    saveChanges()
+                    Task {
+                        await saveChanges()
+                    }
                 } label: {
-                    Text("Save Changes")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                    if isSaving {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Save Changes")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(accentTint)
+                .disabled(isSaving)
             }
         }
         .overlay(alignment: .center) {
@@ -299,17 +313,235 @@ struct AccountEditView: View {
         .onChange(of: profile) { newValue in
             editingProfile = newValue
         }
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage ?? "Failed to save changes")
+        }
+        .onAppear {
+            cloudManager.setAuthManager(authManager)
+        }
     }
     
-    private func saveChanges() {
-        profile = editingProfile
-        dismiss()
+    private func saveChanges() async {
+        isSaving = true
+        errorMessage = nil
+        
+        // Validate required fields
+        guard !editingProfile.displayName.isEmpty else {
+            await MainActor.run {
+                errorMessage = "Name cannot be empty"
+                showError = true
+                isSaving = false
+            }
+            return
+        }
+        
+        guard !editingProfile.username.isEmpty else {
+            await MainActor.run {
+                errorMessage = "Username cannot be empty"
+                showError = true
+                isSaving = false
+            }
+            return
+        }
+        
+        // Always save images to Keychain first (local storage)
+        if let profileImage = editingProfile.profileImage,
+           let imageData = profileImage.jpegData(compressionQuality: 0.8) {
+            KeychainHelper.standard.storeData(imageData, key: "userProfileImage")
+            print("✅ Saved profile image to Keychain")
+        }
+        
+        if let coverImage = editingProfile.coverImage,
+           let imageData = coverImage.jpegData(compressionQuality: 0.8) {
+            KeychainHelper.standard.storeData(imageData, key: "userCoverImage")
+            print("✅ Saved cover image to Keychain")
+        }
+        
+        // Always save to local storage first (UserDefaults and Keychain)
+        // This ensures data persists even if cloud save fails
+        UserDefaults.standard.set(editingProfile.displayName, forKey: "userProfileName")
+        UserDefaults.standard.set(editingProfile.username, forKey: "userProfileDisplayName")
+        UserDefaults.standard.set(editingProfile.bio, forKey: "userProfileBio")
+        UserDefaults.standard.set(editingProfile.location, forKey: "userProfileLocation")
+        
+        // Save timestamp to track when local data was last updated
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "userProfileLastUpdated")
+        print("✅ Saved profile data to UserDefaults")
+        
+        // Try to update profile on cloud with retry logic
+        var cloudSaveSucceeded = false
+        var lastError: Error?
+        
+        // Try update first
+        do {
+            try await cloudManager.updateUserProfile(
+                username: editingProfile.username,
+                displayName: editingProfile.displayName,
+                bio: editingProfile.bio,
+                location: editingProfile.location.isEmpty ? nil : editingProfile.location
+            )
+            cloudSaveSucceeded = true
+            print("✅ Profile updated on cloud")
+        } catch let error as CloudError {
+            lastError = error
+            // If profile doesn't exist (404), create it first
+            if case .serverError(let message) = error, message.contains("404") || message.contains("not found") {
+                print("⚠️ Profile not found, creating new profile...")
+                do {
+                    try await cloudManager.createUserProfile(
+                        username: editingProfile.username,
+                        displayName: editingProfile.displayName,
+                        bio: editingProfile.bio
+                    )
+                    // Try updating again with location
+                    if !editingProfile.location.isEmpty {
+                        do {
+                            try await cloudManager.updateUserProfile(
+                                username: editingProfile.username,
+                                displayName: editingProfile.displayName,
+                                bio: editingProfile.bio,
+                                location: editingProfile.location
+                            )
+                            cloudSaveSucceeded = true
+                            print("✅ Profile created and updated on cloud")
+                        } catch {
+                            print("⚠️ Failed to update profile with location: \(error)")
+                        }
+                    } else {
+                        cloudSaveSucceeded = true
+                        print("✅ Profile created on cloud")
+                    }
+                } catch {
+                    print("⚠️ Failed to create profile: \(error), but saved locally")
+                }
+            } else if case .serverError(let message) = error, message.contains("403") {
+                // 403 error - permission denied
+                print("⚠️ Cloud update failed with 403 (permission denied), but saved locally")
+                // Try to create profile as fallback
+                do {
+                    try await cloudManager.createUserProfile(
+                        username: editingProfile.username,
+                        displayName: editingProfile.displayName,
+                        bio: editingProfile.bio
+                    )
+                    cloudSaveSucceeded = true
+                    print("✅ Profile created on cloud after 403 error")
+                } catch {
+                    print("⚠️ Failed to create profile after 403: \(error)")
+                }
+            } else {
+                // For other errors, still save locally but show warning
+                print("⚠️ Cloud update failed: \(error), but saved locally")
+            }
+        } catch {
+            // For any other errors, still save locally
+            lastError = error
+            print("⚠️ Cloud update failed: \(error), but saved locally")
+        }
+        
+        // Always update local profile binding (even if cloud save failed)
+        // This ensures the UI reflects the saved changes immediately
+        await MainActor.run {
+            profile.username = editingProfile.username
+            profile.displayName = editingProfile.displayName
+            profile.bio = editingProfile.bio
+            profile.location = editingProfile.location
+            profile.profileImage = editingProfile.profileImage
+            profile.coverImage = editingProfile.coverImage
+            
+            // Show error alert if cloud save failed
+            if !cloudSaveSucceeded {
+                if let error = lastError as? CloudError,
+                   case .serverError(let message) = error, message.contains("403") {
+                    errorMessage = "Changes saved locally, but couldn't sync to cloud (permission denied). Your data is safe."
+                    showError = true
+                } else {
+                    errorMessage = "Changes saved locally, but couldn't sync to cloud. Your data is safe."
+                    showError = true
+                }
+            }
+            
+            dismiss()
+        }
+        
+        await MainActor.run {
+            isSaving = false
+        }
     }
 
     private func loadInitialState() {
         guard !didLoadInitialState else { return }
+        
+        // Always start with the profile passed from UserProfileView
         editingProfile = profile
+        
+        // Load local saved data first (UserDefaults) - this is the most recent
+        loadFromUserDefaults()
+        
+        // Load images from Keychain (they persist locally)
+        if let profileImageData = KeychainHelper.standard.retrieveData(key: "userProfileImage"),
+           let image = UIImage(data: profileImageData) {
+            editingProfile.profileImage = image
+        }
+        
+        if let coverImageData = KeychainHelper.standard.retrieveData(key: "userCoverImage"),
+           let image = UIImage(data: coverImageData) {
+            editingProfile.coverImage = image
+        }
+        
+        // Try to load from cloud as backup (only if local data is missing)
+        // But don't overwrite local data if it exists
+        if authManager.isAuthenticated {
+            Task {
+                await loadProfileFromCloud(onlyIfLocalMissing: true)
+            }
+        }
+        
         didLoadInitialState = true
+    }
+    
+    private func loadFromUserDefaults() {
+        // Load from UserDefaults (local backup - most recent)
+        if let savedName = UserDefaults.standard.string(forKey: "userProfileName"), !savedName.isEmpty {
+            editingProfile.displayName = savedName
+        }
+        if let savedUsername = UserDefaults.standard.string(forKey: "userProfileDisplayName"), !savedUsername.isEmpty {
+            editingProfile.username = savedUsername
+        }
+        if let savedBio = UserDefaults.standard.string(forKey: "userProfileBio") {
+            editingProfile.bio = savedBio
+        }
+        if let savedLocation = UserDefaults.standard.string(forKey: "userProfileLocation") {
+            editingProfile.location = savedLocation
+        }
+    }
+    
+    private func loadProfileFromCloud(onlyIfLocalMissing: Bool = false) async {
+        do {
+            let userProfile = try await cloudManager.getCurrentUserProfile()
+            let cloudProfile = UserProfileContent(from: userProfile)
+            
+            // Update editingProfile with cloud data
+            await MainActor.run {
+                // Only update if local data is missing, or if not in "onlyIfLocalMissing" mode
+                if !onlyIfLocalMissing || editingProfile.displayName.isEmpty {
+                    editingProfile.username = cloudProfile.username
+                    editingProfile.displayName = cloudProfile.displayName
+                    editingProfile.bio = cloudProfile.bio
+                    editingProfile.location = cloudProfile.location
+                    
+                    // Also update the binding so UserProfileView gets updated
+                    profile.username = cloudProfile.username
+                    profile.displayName = cloudProfile.displayName
+                    profile.bio = cloudProfile.bio
+                    profile.location = cloudProfile.location
+                }
+            }
+        } catch {
+            print("❌ Failed to load profile from cloud in edit view: \(error)")
+        }
     }
 }
 

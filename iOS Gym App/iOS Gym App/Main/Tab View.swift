@@ -19,14 +19,6 @@ struct TabHome: View {
             Tab("Feed", systemImage: "text.bubble") {
                 FeedView()
             }
-            Tab("Add Friends", systemImage: "person.badge.plus") {
-                AddFriendsView()
-            }
-            Tab("Friends", systemImage: "person.2") {
-                NavigationStack {
-                    FriendsListView()
-                }
-            }
         }
         .tabViewBottomAccessory {
             SessionTabViewWrapper()

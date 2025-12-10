@@ -10,7 +10,9 @@ import UIKit
 
 struct UserProfileView: View {
     var profile: UserProfileContent = .demo
+    var userId: String? = nil  // Optional: ID of the profile being viewed
 
+    @EnvironmentObject var authManager: AuthManager
     @State private var currentProfile: UserProfileContent = .empty
     @State private var hasLoadedProfile = false
     @State private var showProfilePreview = false
@@ -34,22 +36,31 @@ struct UserProfileView: View {
                     .padding(.top, 16)
             }
         }
-        .navigationTitle("@\(currentProfile.displayName)")
+        .navigationTitle("@\(currentProfile.username)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink {
-                    AccountEditView(
-                        profile: $currentProfile
-                    )
-                } label: {
-                    Image(systemName: "gearshape")
+            // Only show edit button if viewing own profile
+            if isOwnProfile {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink {
+                        AccountEditView(
+                            profile: $currentProfile
+                        )
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
                 }
             }
         }
         .onAppear(perform: loadProfileIfNeeded)
         .onChange(of: profile, initial: false) { _, newValue in
             currentProfile = newValue
+            // If viewing own profile, reload from cloud to get latest data
+            if isOwnProfile && authManager.isAuthenticated {
+                Task {
+                    await loadOwnProfileFromCloud()
+                }
+            }
         }
         .fullScreenCover(isPresented: $showProfilePreview) {
             ZStack {
@@ -153,7 +164,7 @@ struct UserProfileView: View {
                 }
                 .offset(y: 48)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(currentProfile.username)
+                    Text(currentProfile.displayName)
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
@@ -253,7 +264,67 @@ struct UserProfileView: View {
     private func loadProfileIfNeeded() {
         guard !hasLoadedProfile else { return }
         currentProfile = profile
+        
+        // If viewing own profile and authenticated, try to load from cloud
+        if isOwnProfile && authManager.isAuthenticated {
+            Task {
+                await loadOwnProfileFromCloud()
+            }
+        }
+        
         hasLoadedProfile = true
+    }
+    
+    private func loadOwnProfileFromCloud() async {
+        let cloudManager = CloudManager.shared
+        cloudManager.setAuthManager(authManager)
+        
+        do {
+            let userProfile = try await cloudManager.getCurrentUserProfile()
+            let cloudProfile = UserProfileContent(from: userProfile)
+            
+            // Load images from Keychain
+            if let profileImageData = KeychainHelper.standard.retrieveData(key: "userProfileImage"),
+               let image = UIImage(data: profileImageData) {
+                currentProfile.profileImage = image
+            } else {
+                currentProfile.profileImage = cloudProfile.profileImage
+            }
+            
+            if let coverImageData = KeychainHelper.standard.retrieveData(key: "userCoverImage"),
+               let image = UIImage(data: coverImageData) {
+                currentProfile.coverImage = image
+            } else {
+                currentProfile.coverImage = cloudProfile.coverImage
+            }
+            
+            // Update other fields from cloud
+            currentProfile.username = cloudProfile.username
+            currentProfile.displayName = cloudProfile.displayName
+            currentProfile.bio = cloudProfile.bio
+            currentProfile.location = cloudProfile.location
+            currentProfile.stats = cloudProfile.stats
+        } catch {
+            print("❌ Failed to load profile from cloud: \(error)")
+        }
+    }
+    
+    // Check if viewing own profile
+    private var isOwnProfile: Bool {
+        // If userId is provided, compare with current user's ID
+        if let userId = userId, let currentUserId = authManager.currentUser {
+            return userId == currentUserId
+        }
+        
+        // Otherwise, compare username/displayName with current user's attributes
+        let currentUsername = authManager.userAttributes["username"] ?? authManager.userAttributes["preferred_username"]
+        let currentDisplayName = authManager.userAttributes["name"] ?? authManager.userAttributes["displayName"]
+        
+        // Check if the profile's username or displayName matches current user
+        return currentProfile.username == currentUsername ||
+               currentProfile.displayName == currentDisplayName ||
+               currentProfile.username == currentDisplayName ||
+               currentProfile.displayName == currentUsername
     }
 }
 
@@ -261,7 +332,7 @@ struct UserProfileContent: Equatable {
     var username: String = "Demo User"
     var displayName: String = "demo_user"
     var bio: String = "Love training and tracking progress."
-    var location: String = "San Francisco, CA"
+    var location: String = "West Lafayette, IN"
     var coverImage: UIImage? = nil
     var profileImage: UIImage? = nil
     var stats: [(String, String)] = [("Workouts", "124"), ("Followers", "1.2k"), ("Following", "180")]
@@ -287,6 +358,11 @@ extension UserProfileContent {
         ]
         self.recentWorkouts = []
         self.isPrivate = !backendProfile.isPublic
+    }
+    
+    // Helper to create UserProfileContent with userId for comparison
+    static func from(_ userProfile: UserProfile) -> (content: UserProfileContent, userId: String) {
+        return (UserProfileContent(from: userProfile), userProfile.id)
     }
 }
 

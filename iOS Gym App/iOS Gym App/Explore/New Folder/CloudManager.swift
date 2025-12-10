@@ -626,6 +626,133 @@ class CloudManager{
         let x = try JSONDecoder().decode(UserProfile.self, from: data)
         return x
     }
+    
+    /// Update current user's profile
+    func updateUserProfile(username: String, displayName: String, bio: String, location: String?) async throws {
+        // Try /users/me first (standard endpoint for updating own profile)
+        var urlString = "\(apiBaseURL)/users/me"
+        guard let url = URL(string: urlString) else {
+            throw CloudError.invalidURL
+        }
+        
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        var body: [String: Any] = [
+            "username": username,
+            "displayName": displayName,
+            "bio": bio
+        ]
+        
+        if let location = location {
+            body["location"] = location
+        }
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        print("📤 Updating user profile: \(url)")
+        print("📤 Body: \(body)")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ Invalid response type")
+            throw CloudError.invalidResponse
+        }
+        
+        print("📥 Response status: \(httpResponse.statusCode)")
+        
+        // If 403 or 404, try alternative approaches
+        if httpResponse.statusCode == 403 || httpResponse.statusCode == 404 {
+            print("⚠️ /users/me returned \(httpResponse.statusCode), trying alternatives...")
+            
+            // Try PATCH method first (some APIs prefer PATCH for updates)
+            var patchRequest = URLRequest(url: url)
+            patchRequest.httpMethod = "PATCH"
+            patchRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            patchRequest.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+            patchRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
+            
+            print("📤 Trying PATCH method on /users/me...")
+            
+            let (patchData, patchResponse) = try await URLSession.shared.data(for: patchRequest)
+            
+            if let patchHttpResponse = patchResponse as? HTTPURLResponse,
+               patchHttpResponse.statusCode == 200 {
+                print("✅ PATCH method worked!")
+                return
+            }
+            
+            // If PATCH didn't work, try /users/{userId} with PUT
+            print("⚠️ PATCH didn't work, trying /users/{userId} with PUT...")
+            
+            let userId = try await getCurrentUserId()
+            urlString = "\(apiBaseURL)/users/\(userId)"
+            guard let altUrl = URL(string: urlString) else {
+                throw CloudError.invalidURL
+            }
+            
+            var altRequest = URLRequest(url: altUrl)
+            altRequest.httpMethod = "PUT"
+            altRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            altRequest.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+            altRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
+            
+            print("📤 Trying alternative endpoint: \(altUrl)")
+            
+            let (altData, altResponse) = try await URLSession.shared.data(for: altRequest)
+            
+            guard let altHttpResponse = altResponse as? HTTPURLResponse else {
+                throw CloudError.invalidResponse
+            }
+            
+            print("📥 Alternative response status: \(altHttpResponse.statusCode)")
+            
+            if altHttpResponse.statusCode != 200 {
+                if let errorString = String(data: altData, encoding: .utf8) {
+                    print("❌ Error response: \(errorString)")
+                }
+                
+                if altHttpResponse.statusCode == 401 {
+                    throw CloudError.tokenExpired
+                } else if altHttpResponse.statusCode == 403 {
+                    throw CloudError.serverError("Permission denied (403). The API may not allow updating profiles, or your account may need additional permissions.")
+                } else if altHttpResponse.statusCode == 404 {
+                    throw CloudError.serverError("User profile not found (404). Please create your profile first.")
+                } else {
+                    throw CloudError.serverError("Server returned status \(altHttpResponse.statusCode)")
+                }
+            }
+        } else if httpResponse.statusCode != 200 {
+            if let errorString = String(data: data, encoding: .utf8) {
+                print("❌ Error response: \(errorString)")
+            }
+            
+            if httpResponse.statusCode == 401 {
+                throw CloudError.tokenExpired
+            } else if httpResponse.statusCode == 403 {
+                throw CloudError.serverError("Permission denied. You may not have permission to update your profile.")
+            } else if httpResponse.statusCode == 404 {
+                throw CloudError.serverError("User profile not found. Please create your profile first.")
+            } else {
+                throw CloudError.serverError("Server returned status \(httpResponse.statusCode)")
+            }
+        }
+    }
+    
+    /// Get current user's own profile
+    func getCurrentUserProfile() async throws -> UserProfile {
+        let userId = try await getCurrentUserId()
+        return try await getUserProfile(userId: userId)
+    }
+    
     private func decodeJWTClaims(_ token: String) -> [String: Any]? {
         let parts = token.components(separatedBy: ".")
         guard parts.count == 3 else { return nil }
