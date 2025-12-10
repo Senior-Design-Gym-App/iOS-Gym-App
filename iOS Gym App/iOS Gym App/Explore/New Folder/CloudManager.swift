@@ -401,19 +401,13 @@ class CloudManager{
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
         
-        print("🌐 API Request: \(method) \(url)")
-        if let body = body {
-            print("📤 Body: \(body)")
-        }
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw CloudError.invalidResponse
         }
-        
-        print("📥 Response Status: \(httpResponse.statusCode)")
-        
+                
         // Handle 401 Unauthorized - token might be expired
         if httpResponse.statusCode == 401 {
             print("⚠️ Unauthorized - token may be expired")
@@ -489,10 +483,10 @@ class CloudManager{
             reps: repsArray,
             equipment: dict["equipment"] as? String ?? dict["weightUnit"] as? String
         )
-        print("✅ Created exercise: \(exercise.name)")
-        print("   Reps: \(exercise.reps)")
-        print("   Weights: \(exercise.weights)")
-        print("   Rest: \(exercise.rest)")
+//        print("✅ Created exercise: \(exercise.name)")
+//        print("   Reps: \(exercise.reps)")
+//        print("   Weights: \(exercise.weights)")
+//        print("   Rest: \(exercise.rest)")
         exercise.updateDates = [Date()]
         return exercise
     }
@@ -602,8 +596,8 @@ class CloudManager{
             throw CloudError.invalidURL
         }
         
-        print("📤 getUserProfile URL: \(url)")
-        print("📤 userId parameter: '\(userId)'")
+        //print("📤 getUserProfile URL: \(url)")
+        //print("📤 userId parameter: '\(userId)'")
         
         // Make sure userId isn't empty
         if userId.isEmpty {
@@ -620,10 +614,10 @@ class CloudManager{
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        print("📥 Response: \(response)")
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("📥 Body: \(responseString)")
-        }
+        //("📥 Response: \(response)")
+//        if let responseString = String(data: data, encoding: .utf8) {
+//            print("📥 Body: \(responseString)")
+//        }
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -715,17 +709,17 @@ class CloudManager{
         request.httpMethod = "GET"
         request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
         
-        print("🔍 Searching users with query: \(query)")
-        print("📤 URL: \(url)")
+        //print("🔍 Searching users with query: \(query)")
+        //print("📤 URL: \(url)")
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        print("📥 Response: \(response)")
+        //print("📥 Response: \(response)")
         
         // PRINT THE ACTUAL ERROR
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("📥 Response Body: \(responseString)")
-        }
+//        if let responseString = String(data: data, encoding: .utf8) {
+//            print("📥 Response Body: \(responseString)")
+//        }
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw CloudError.invalidResponse
@@ -770,12 +764,12 @@ class CloudManager{
         guard let url = URL(string: "\(apiBaseURL)/friends/pending") else {
             throw CloudError.invalidURL
         }
-        print("trying to get token")
+        //print("trying to get token")
         guard let idToken = getIdToken() else {
             print("❌ No ID token found in Keychain")
             throw CloudError.notAuthenticated
         }
-        print("got token")
+        //print("got token")
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
@@ -783,7 +777,7 @@ class CloudManager{
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        print("Pending FR response \(response)")
+        //print("Pending FR response \(response)")
 
         
         guard let httpResponse = response as? HTTPURLResponse,
@@ -799,12 +793,12 @@ class CloudManager{
         guard let url = URL(string: "\(apiBaseURL)/friends/accept") else {
             throw CloudError.invalidURL
         }
-        print("trying to get token")
+        //print("trying to get token")
         guard let idToken = getIdToken() else {
             print("❌ No ID token found in Keychain")
             throw CloudError.notAuthenticated
         }
-        print("got token")
+        //print("got token")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -816,7 +810,7 @@ class CloudManager{
         
         let (_, response) = try await URLSession.shared.data(for: request)
         
-        print("Accepting Response: \(response)")
+        //print("Accepting Response: \(response)")
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -840,10 +834,10 @@ class CloudManager{
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        print("📥 Response: \(response)")
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("📥 Body: \(responseString)")
-        }
+        //print("📥 Response: \(response)")
+//        if let responseString = String(data: data, encoding: .utf8) {
+//            print("📥 Body: \(responseString)")
+//        }
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {

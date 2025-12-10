@@ -17,18 +17,45 @@ struct CloudWorkoutsView: View {
     @State private var cloudWorkouts: [Workout] = []
     @State private var selectedTags: Set<String> = []
     @State private var showingUploadSheet = false
+    @State private var expandedWorkouts: Set<Workout.ID> = []
+    
+    // ADD THESE
+    @State private var searchText = ""
+    @State private var selectedMuscleFilter: MuscleGroup? = nil
+    @State private var showingFilterSheet = false
 
     @Query(sort: \Workout.name) private var localWorkouts: [Workout]
     
     private let cloudManager = CloudManager.shared
-
+    
+    // ADD THIS - Filtered workouts
+    var filteredWorkouts: [Workout] {
+        var workouts = cloudWorkouts
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            workouts = workouts.filter { workout in
+                workout.name.localizedCaseInsensitiveContains(searchText) ||
+                (workout.exercises?.contains(where: { exercise in
+                    exercise.name.localizedCaseInsensitiveContains(searchText)
+                }) ?? false)
+            }
+        }
+        
+        // Apply muscle group filter
+        if let muscleFilter = selectedMuscleFilter {
+            workouts = workouts.filter { workout in
+                workout.tags.contains(muscleFilter)
+            }
+        }
+        
+        return workouts
+    }
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 
                 // Authentication Status
-                authStatusSection
-                
                 if authManager.isAuthenticated {
                     // Status message
                     Text(status)
@@ -37,7 +64,7 @@ struct CloudWorkoutsView: View {
                         .padding(.horizontal)
                     
                     // Action buttons
-                    actionButtonsSection
+                    //actionButtonsSection
                     
                     // Workouts list
                     workoutsListSection
@@ -47,8 +74,18 @@ struct CloudWorkoutsView: View {
             }
             .padding()
             .navigationTitle("Cloud Workouts")
+            .searchable(text: $searchText, prompt: "Search workouts or exercises")  // ADD THIS
             .toolbar {
                 if authManager.isAuthenticated {
+                    // ADD THIS
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            showingFilterSheet = true
+                        } label: {
+                            Label("Filter", systemImage: selectedMuscleFilter != nil ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        }
+                    }
+                    
                     ToolbarItem(placement: .primaryAction) {
                         Button {
                             showingUploadSheet = true
@@ -62,9 +99,17 @@ struct CloudWorkoutsView: View {
                 UploadWorkoutsView()
                     .environmentObject(authManager)
             }
+            .sheet(isPresented: $showingFilterSheet) {
+                MuscleFilterSheet(selectedMuscle: $selectedMuscleFilter)
+            }
             .onAppear {
-                // Set the auth manager reference in CloudManager
                 cloudManager.setAuthManager(authManager)
+            }
+            .task {
+                // Auto-load workouts if authenticated and list is empty
+                if authManager.isAuthenticated && cloudWorkouts.isEmpty {
+                    await fetchPublicWorkouts()
+                }
             }
         }
     }
@@ -87,51 +132,95 @@ struct CloudWorkoutsView: View {
     }
     
     private var actionButtonsSection: some View {
-        HStack(spacing: 12) {
-            Button {
-                Task { await fetchPublicWorkouts() }
-            } label: {
-                HStack {
-                    if isLoading {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .scaleEffect(0.8)
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                Button {
+                    Task { await fetchPublicWorkouts() }
+                } label: {
+                    HStack {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .scaleEffect(0.8)
+                        }
+                        Text("Fetch Public Workouts")
                     }
-                    Text("Fetch Public Workouts")
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.borderedProminent)
+                .disabled(isLoading)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading)
+            .padding(.horizontal)
             
-            Button {
-                Task { await syncMyWorkouts() }
-            } label: {
-                Label("Sync My Workouts", systemImage: "arrow.triangle.2.circlepath")
-            }
-            .buttonStyle(.bordered)
-            .disabled(isLoading)
+            // Info about Fetch Public Workouts
+            Text("Browse workouts shared by other users")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
     
     private var workoutsListSection: some View {
-        List {
-            if cloudWorkouts.isEmpty {
-                ContentUnavailableView(
-                    "No Workouts",
-                    systemImage: "figure.strengthtraining.traditional",
-                    description: Text("Tap 'Fetch Public Workouts' to load workouts from the cloud")
-                )
-            } else {
-                ForEach(cloudWorkouts) { workout in
-                    WorkoutCloudRow(workout: workout) {
-                        Task { await saveToLocal(workout) }
+            List {
+                if filteredWorkouts.isEmpty {
+                    if searchText.isEmpty && selectedMuscleFilter == nil {
+                        ContentUnavailableView(
+                            "No Workouts",
+                            systemImage: "figure.strengthtraining.traditional",
+                            description: Text("Tap 'Fetch Public Workouts' to load workouts from the cloud")
+                        )
+                    } else {
+                        ContentUnavailableView(
+                            "No Results",
+                            systemImage: "magnifyingglass",
+                            description: Text("No workouts match your search or filter")
+                        )
+                    }
+                } else {
+                    ForEach(filteredWorkouts) { workout in
+                        WorkoutCloudRow(
+                            workout: workout,
+                            isExpanded: expandedWorkouts.contains(workout.id)
+                        ) {
+                            withAnimation {
+                                if expandedWorkouts.contains(workout.id) {
+                                    expandedWorkouts.remove(workout.id)
+                                } else {
+                                    expandedWorkouts.insert(workout.id)
+                                }
+                            }
+                        } onSave: {
+                            Task { await saveToLocal(workout) }
+                        }
                     }
                 }
             }
+            .listStyle(.plain)
         }
-        .listStyle(.plain)
+    private var filterChipsSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                if let muscle = selectedMuscleFilter {
+                    HStack(spacing: 4) {
+                        Text(muscle.rawValue)
+                            .font(.caption)
+                        
+                        Button {
+                            selectedMuscleFilter = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.caption)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(muscle.colorPalette.opacity(0.2))
+                    .foregroundStyle(muscle.colorPalette)
+                    .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal)
+        }
     }
     
     private var unauthenticatedView: some View {
@@ -170,28 +259,6 @@ struct CloudWorkoutsView: View {
         isLoading = false
     }
     
-    private func syncMyWorkouts() async {
-        isLoading = true
-        status = "Syncing your workouts..."
-        
-        do {
-            let remoteWorkouts = try await cloudManager.fetchMyWorkouts()
-            
-            // Update local database
-            for workout in remoteWorkouts {
-                modelContext.insert(workout)
-            }
-            
-            try modelContext.save()
-            status = "Synced \(remoteWorkouts.count) workouts"
-        } catch {
-            status = "Sync error: \(error.localizedDescription)"
-            print("❌ Sync error: \(error)")
-        }
-        
-        isLoading = false
-    }
-    
     private func saveToLocal(_ workout: Workout) async {
         status = "Saving '\(workout.name)'..."
         
@@ -211,9 +278,142 @@ struct CloudWorkoutsView: View {
         }
     }
 }
-
 // MARK: - Upload Workouts View
-
+struct WorkoutCloudRow: View {
+    let workout: Workout
+    let isExpanded: Bool
+    let onToggle: () -> Void
+    let onSave: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header - Tappable to expand/collapse
+            Button(action: onToggle) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(workout.name)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        
+                        if let exercises = workout.exercises {
+                            Text("\(exercises.count) exercises")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+            }
+            .buttonStyle(.plain)
+            
+            // Muscle group tags
+            if !workout.tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(workout.tags, id: \.self) { tag in
+                            Text(tag.rawValue)
+                                .font(.caption2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(tag.colorPalette.opacity(0.2))
+                                .foregroundStyle(tag.colorPalette)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+            
+            // Expanded exercise details
+            if isExpanded, let exercises = workout.exercises {
+                VStack(alignment: .leading, spacing: 8) {
+                    Divider()
+                    
+                    ForEach(Array(exercises.enumerated()), id: \.offset) { index, exercise in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("\(index + 1).")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20, alignment: .leading)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(exercise.name)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    
+                                    HStack(spacing: 12) {
+                                        if let muscle = exercise.muscleWorked {
+                                            Label(muscle, systemImage: "figure.arms.open")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        
+                                        if let equipment = exercise.equipment {
+                                            Label(equipment, systemImage: "dumbbell")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Show set data from most recent session
+                            let setData = exercise.recentSetData.setData
+                            if !setData.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 4) {
+                                        ForEach(Array(setData.enumerated()), id: \.offset) { setIndex, set in
+                                            VStack(spacing: 2) {
+                                                Text("Set \(setIndex + 1)")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                                
+                                                Text("\(set.reps) × \(Int(set.weight))lbs")
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                                
+                                                Text("\(set.rest)s rest")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                            .padding(6)
+                                            .background(Color(.systemGray6))
+                                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                                        }
+                                    }
+                                }
+                                .padding(.leading, 24)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        
+                        if index < exercises.count - 1 {
+                            Divider()
+                                .padding(.leading, 24)
+                        }
+                    }
+                }
+            }
+            
+            // Save button
+            Button {
+                onSave()
+            } label: {
+                Label("Save to My Workouts", systemImage: "square.and.arrow.down")
+                    .font(.callout)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .padding(.top, 6)
+        }
+        .padding(.vertical, 8)
+    }
+}
 struct UploadWorkoutsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authManager: AuthManager
@@ -486,56 +686,62 @@ struct WorkoutUploadRow: View {
         }())
     }
 }
-
-// MARK: - Workout Cloud Row
-
-struct WorkoutCloudRow: View {
-    let workout: Workout
-    let onSave: () -> Void
+struct MuscleFilterSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedMuscle: MuscleGroup?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(workout.name)
-                .font(.headline)
-            
-            if let exercises = workout.exercises {
-                Text("\(exercises.count) exercises")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            // Muscle group tags
-            if !workout.tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(workout.tags, id: \.self) { tag in
-                            Text(tag.rawValue)
-                                .font(.caption2)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(tag.colorPalette.opacity(0.2))
-                                .foregroundStyle(tag.colorPalette)
-                                .clipShape(Capsule())
+        NavigationStack {
+            List {
+                Section {
+                    Button {
+                        selectedMuscle = nil
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Text("All Workouts")
+                            Spacer()
+                            if selectedMuscle == nil {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.blue)
+                            }
+                        }
+                    }
+                }
+                
+                Section("Filter by Muscle Group") {
+                    ForEach(MuscleGroup.allCases, id: \.self) { muscle in
+                        Button {
+                            selectedMuscle = muscle
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Text(muscle.rawValue)
+                                    .foregroundStyle(muscle.colorPalette)
+                                Spacer()
+                                if selectedMuscle == muscle {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
                         }
                     }
                 }
             }
-            
-            // Save button
-            Button {
-                onSave()
-            } label: {
-                Label("Save to My Workouts", systemImage: "square.and.arrow.down")
-                    .font(.caption)
+            .navigationTitle("Filter Workouts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
             }
-            .buttonStyle(.bordered)
-            .padding(.top, 6)
         }
-        .padding(.vertical, 4)
     }
 }
-
-#Preview {
-    CloudWorkoutsView()
-        .environmentObject(AuthManager())
-}
+    
+    #Preview {
+        CloudWorkoutsView()
+            .environmentObject(AuthManager())
+    }

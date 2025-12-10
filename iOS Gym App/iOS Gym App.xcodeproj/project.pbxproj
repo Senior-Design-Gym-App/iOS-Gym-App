@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		34C582942ECF735A004E17FE /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
+		7C10A3792EE9F200000B03E9 /* Live Activity Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */; };
+		7C10A37A2EE9F21B000B03E9 /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
+		7C10A37B2EE9F222000B03E9 /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
+		7C10A37C2EE9F26F000B03E9 /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
+		7C10A37D2EE9F273000B03E9 /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
+		7C10A37E2EE9F278000B03E9 /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
 		7CC94B232ECF7C91007BE13A /* AWSCognitoIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B222ECF7C91007BE13A /* AWSCognitoIdentity */; };
 		7CC94B252ECF7C91007BE13A /* AWSCognitoIdentityProvider in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B242ECF7C91007BE13A /* AWSCognitoIdentityProvider */; };
 		7CC94B272ECF7C91007BE13A /* AWSCognitoSync in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B262ECF7C91007BE13A /* AWSCognitoSync */; };
@@ -86,6 +92,23 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7C10A3802EE9F297000B03E9 /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Activity/HealthKit/Progress Manager.swift",
+				"Activity/Labels & Data/Activity Data.swift",
+				"Activity/Labels & Data/Home Page Text.swift",
+				"Activity/Labels & Data/Update Label.swift",
+				"Activity/Recap Views/Monthly Calendar.swift",
+				"Activity/Workout Updates/Exercise Extension.swift",
+				"Misc/Reused Functions/Date Handler.swift",
+				"Misc/Reused Functions/Gradient Generatpr.swift",
+				"Misc/Reused Views/Labels.swift",
+				Misc/Static/Constants.swift,
+				"Workout/Workout Types.swift",
+			);
+			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
+		};
 		7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -121,6 +144,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
+				7C10A3802EE9F297000B03E9 /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */,
 			);
 			path = "iOS Gym App";
 			sourceTree = "<group>";
@@ -358,6 +382,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C10A37B2EE9F222000B03E9 /* Exercise Data.swift in Sources */,
+				7C10A37D2EE9F273000B03E9 /* Workout Data.swift in Sources */,
+				7C10A3792EE9F200000B03E9 /* Live Activity Object.swift in Sources */,
+				7C10A37E2EE9F278000B03E9 /* Split Data.swift in Sources */,
+				7C10A37C2EE9F26F000B03E9 /* Shared Types.swift in Sources */,
+				7C10A37A2EE9F21B000B03E9 /* Session Data.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

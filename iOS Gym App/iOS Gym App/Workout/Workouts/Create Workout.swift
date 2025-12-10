@@ -4,6 +4,7 @@ import SwiftData
 struct CreateWorkoutView: View {
     
     @State private var showAddSheet: Bool = false
+    @State private var showAISheet: Bool = false
     @State private var newWorkout = Workout(name: "New Workout", exercises: [])
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context

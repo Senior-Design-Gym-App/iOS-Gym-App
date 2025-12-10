@@ -218,5 +218,9 @@ struct SessionRecap: View {
         context.delete(session)
         dismiss()
     }
-    
+    private func GenerateImage(for date: Date) -> Image {
+        let dayNumber = Calendar.current.component(.day, from: date)
+        let imageName = "\(dayNumber).calendar"
+        return Image(systemName: imageName)
+    }
 }

@@ -47,7 +47,7 @@ private struct ExploreGrid: View {
             NavigationLink(destination: { UserSearchView() }, label: {
                 ExploreCard(title: "Users", subtitle: "Find people", systemImage: "person.2.fill")
             })
-            NavigationLink(destination: { WorkoutSearchView() }, label: {
+            NavigationLink(destination: { CloudWorkoutsView() }, label: {
                 ExploreCard(title: "Workouts", subtitle: "Discover plans", systemImage: "dumbbell.fill")
             })
             NavigationLink(destination: { AIAskView() }, label: {
