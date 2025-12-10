@@ -261,7 +261,7 @@ struct UserProfileContent: Equatable {
     var username: String = "Demo User"
     var displayName: String = "demo_user"
     var bio: String = "Love training and tracking progress."
-    var location: String = "San Francisco, CA"
+    var location: String = "West Lafayette, IN"
     var coverImage: UIImage? = nil
     var profileImage: UIImage? = nil
     var stats: [(String, String)] = [("Workouts", "124"), ("Followers", "1.2k"), ("Following", "180")]

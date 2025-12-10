@@ -32,15 +32,10 @@ struct ExploreView: View {
 
 private struct ExploreGrid: View {
     @State private var demoProfile = UserProfileContent.demo
-    private let gridSpacing = Constants.customLabelPadding * 3
-    private var columns: [GridItem] {
-        [
-            GridItem(.flexible(), spacing: gridSpacing),
-            GridItem(.flexible(), spacing: gridSpacing)
-        ]
-    }
+    private let cardSpacing = Constants.customLabelPadding * 2
+    
     var body: some View {
-        LazyVGrid(columns: columns, spacing: gridSpacing) {
+        VStack(spacing: cardSpacing) {
             NavigationLink(destination: { UserProfileView(profile: demoProfile) }, label: {
                 ExploreCard(title: "View Profile", subtitle: "Sample profile", systemImage: "person.crop.circle")
             })
@@ -66,32 +61,42 @@ private struct ExploreCard: View {
     let systemImage: String
     
     private let cardCornerRadius = Constants.homeRadius
-    private let cardPadding: CGFloat = 16
-    private let cardHeight: CGFloat = 120
-    private let iconSize: CGFloat = 32
+    private let cardPadding: CGFloat = 20
+    private let cardHeight: CGFloat = 100
+    private let iconSize: CGFloat = 28
     
     var body: some View {
-        VStack(spacing: 12) {
+        HStack(spacing: 16) {
+            // Icon
             Image(systemName: systemImage)
                 .font(.system(size: iconSize, weight: .medium))
                 .foregroundStyle(.primary)
+                .frame(width: 50, height: 50)
+                .background(
+                    Circle()
+                        .fill(Color(.systemGray5))
+                )
             
-            VStack(spacing: 4) {
+            // Text content
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
             }
+            
+            Spacer()
+            
+            // Chevron
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity)
         .frame(height: cardHeight)
-        .padding(cardPadding)
+        .padding(.horizontal, cardPadding)
         .background(
             RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
                 .fill(Color(.systemGray6))
@@ -105,3 +110,6 @@ private struct ExploreCard: View {
 
 
 
+#Preview {
+    ExploreView()
+}
