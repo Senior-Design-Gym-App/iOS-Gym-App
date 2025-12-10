@@ -123,6 +123,5 @@ struct CreateWorkoutPostView: View {
         }
         
         isPosting = false
-        sessionManager.endSession()
     }
 }
