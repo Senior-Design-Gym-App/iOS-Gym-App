@@ -13,7 +13,7 @@ final class SharedStorage {
     // MARK: - App Group Configuration
     
     // Change this to your App Group ID
-    private let appGroupID = "group.com.SeniorDesign.iOSGymApp"
+    private let appGroupID = "group.com.yourcompany.reptheset"
     
     private lazy var sharedDefaults: UserDefaults? = {
         return UserDefaults(suiteName: appGroupID)

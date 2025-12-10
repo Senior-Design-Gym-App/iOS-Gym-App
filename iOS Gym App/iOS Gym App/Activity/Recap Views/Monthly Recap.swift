@@ -13,6 +13,8 @@ struct MonthlyProgressView: View {
     @Environment(ProgressManager.self) private var hkm
     @AppStorage("donutDisplayType") private var displayType: DonutDisplayType = .reps
     @AppStorage("greetingString") private var greetingString = "Initial"
+    @Environment(\.modelContext) private var modelContext  // Add explicit context
+
     
     private var earliestDataMonth: Date {
         let allSessionDates = allSessions.map { $0.started }
@@ -37,7 +39,8 @@ struct MonthlyProgressView: View {
     }
     
     private var ActivityCount: (sessions: Int, exercise: Int, health: Int) {
-        let allSessionDates = allSessions.map { $0.started }
+        // Safely unwrap and filter dates
+        let allSessionDates = allSessions.compactMap { $0.started }
         let allUpdateDates = allExercises.flatMap { $0.updateDates }
         let bodyFatDates = hkm.bodyFatData.map { $0.date }
         let bodyweightDates = hkm.bodyWeightData.map { $0.date }
@@ -149,6 +152,13 @@ struct MonthlyProgressView: View {
                     }
                 } header: {
                     Text("More")
+                }
+            }
+            .animation(.default, value: viewingMonth)
+            .transaction { transaction in
+                // Disable animations during data updates to prevent crashes
+                if transaction.disablesAnimations {
+                    transaction.animation = nil
                 }
             }
             .navigationTitle(DateHandler.MonthYearString(date: viewingMonth))

@@ -8,6 +8,9 @@ final class WorkoutSession {
     @Transient
     var id = UUID()
     
+    /// Persistent session identifier shared between iOS and watchOS
+    var sessionId: UUID = UUID()
+    
     var name: String = ""
     var started: Date = Date()
     var completed: Date?
@@ -25,11 +28,12 @@ final class WorkoutSession {
     @Relationship(deleteRule: .cascade)
     var exercises: [WorkoutSessionEntry]? = []
     
-    init(name: String, started: Date, completed: Date? = nil, workout: Workout) {
+    init(name: String, started: Date, completed: Date? = nil, workout: Workout, sessionId: UUID = UUID()) {
         self.name = name
         self.started = started
         self.completed = completed
         self.workout = workout
+        self.sessionId = sessionId
     }
     
 }

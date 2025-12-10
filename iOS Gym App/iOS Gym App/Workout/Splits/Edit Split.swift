@@ -65,6 +65,11 @@ struct EditSplitView: View {
     }
     
     private func Delete() {
+        // Clear widget data if deleting the active split
+        if selectedSplit.active {
+            WidgetDataManager.shared.setActiveSplit(nil)
+        }
+        
         context.delete(selectedSplit)
         try? context.save()
         dismiss()

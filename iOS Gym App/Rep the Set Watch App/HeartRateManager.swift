@@ -9,6 +9,20 @@ import Foundation
 import HealthKit
 internal import Combine
 
+// Lightweight async semaphore to await a completion handler inside async context
+fileprivate actor AsyncSemaphore {
+    private var continuation: CheckedContinuation<Void, Never>?
+    func wait() async {
+        await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+            continuation = c
+        }
+    }
+    func signal() {
+        continuation?.resume()
+        continuation = nil
+    }
+}
+
 @MainActor
 @Observable
 final class HeartRateManager {
@@ -50,17 +64,41 @@ final class HeartRateManager {
         let typesToRead: Set<HKObjectType> = [heartRateType, workoutType, energyType]
         
         do {
+            // Optional: check if a prompt will appear (use completion-handler API)
+            let semaphore = AsyncSemaphore()
+            healthStore.getRequestStatusForAuthorization(toShare: typesToShare, read: typesToRead) { requestStatus, error in
+                if let error = error {
+                    print("⚠️ Failed to check authorization request status: \(error.localizedDescription)")
+                } else {
+                    switch requestStatus {
+                    case .shouldRequest:
+                        print("🔔 HealthKit will prompt for authorization")
+                    case .unnecessary:
+                        print("ℹ️ HealthKit authorization already determined (no prompt expected)")
+                    case .unknown:
+                        fallthrough
+                    @unknown default:
+                        print("❓ HealthKit authorization request status unknown")
+                    }
+                }
+                semaphore.signal()
+            }
+            await semaphore.wait()
+            
             try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
             
-            // Check if we actually got authorization for heart rate reading
-            let status = healthStore.authorizationStatus(for: heartRateType)
+            // Check share status only for shareable types
+            let workoutShareStatus = healthStore.authorizationStatus(for: workoutType)
+            let energyShareStatus = healthStore.authorizationStatus(for: energyType)
             
-            // Important: For privacy, HealthKit may return .notDetermined even after authorization
-            // We'll assume authorized unless explicitly denied
-            isAuthorized = (status != .sharingDenied)
+            // There is no reliable API to confirm read auth for heart rate. After requesting,
+            // assume read access and verify at query-time by observing samples/updates.
+            isAuthorized = true
             
-            print("✅ HealthKit authorization requested")
-            print("   Heart Rate status: \(status.rawValue) (\(statusString(status)))")
+            print("✅ HealthKit authorization request completed")
+            print("   Workout share status: \(statusString(workoutShareStatus))")
+            print("   Active Energy share status: \(statusString(energyShareStatus))")
+            print("   Heart Rate read access: assumed (verify via queries)")
             print("   Is Authorized: \(isAuthorized)")
         } catch {
             print("❌ HealthKit authorization failed: \(error.localizedDescription)")

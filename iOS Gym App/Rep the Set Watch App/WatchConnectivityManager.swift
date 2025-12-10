@@ -39,6 +39,65 @@ final class WatchConnectivityManager: NSObject {
     
     // MARK: - Send Data to iPhone
     
+    /// Send start session with workout data to iPhone
+    func sendStartSessionWithWorkout(_ workout: WorkoutTransfer, sessionId: UUID) {
+        guard WCSession.default.isReachable else {
+            print("📱 iPhone not reachable, cannot start session")
+            return
+        }
+        
+        do {
+            let workoutData = try JSONEncoder().encode(workout)
+            
+            let message: [String: Any] = [
+                "startSession": workoutData,
+                "sessionId": sessionId.uuidString
+            ]
+            
+            WCSession.default.sendMessage(message, replyHandler: nil) { error in
+                print("❌ Failed to send start session: \(error.localizedDescription)")
+            }
+            
+            print("✅ Sent start session with workout '\(workout.name)' to iPhone")
+        } catch {
+            print("❌ Failed to encode workout: \(error)")
+        }
+    }
+    
+    /// Send session action to iPhone
+    func sendSessionAction(_ action: SessionAction, sessionId: UUID) {
+        guard WCSession.default.isReachable else {
+            print("⚠️ iPhone not reachable, action not sent")
+            return
+        }
+        
+        let message: [String: Any] = [
+            "sessionAction": action.rawValue,
+            "sessionId": sessionId.uuidString
+        ]
+        
+        WCSession.default.sendMessage(message, replyHandler: nil) { error in
+            print("❌ Failed to send action: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Send live session update to iPhone
+    func sendLiveSessionUpdate(_ update: LiveSessionUpdate) {
+        // Try real-time message first
+        if WCSession.default.isReachable {
+            do {
+                let data = try JSONEncoder().encode(update)
+                let message: [String: Any] = ["liveSessionUpdate": data]
+                
+                WCSession.default.sendMessage(message, replyHandler: nil) { error in
+                    print("⚠️ Failed to send live update: \(error.localizedDescription)")
+                }
+            } catch {
+                print("❌ Failed to encode live update: \(error)")
+            }
+        }
+    }
+    
     /// Send completed session back to iPhone
     func sendCompletedSession(_ session: WorkoutSessionTransfer) {
         guard WCSession.default.isReachable else {
@@ -144,11 +203,42 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
     
-    // Handle messages from iPhone
+    // Handle messages from iPhone (without reply handler)
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        print("⌚️ Received message from iPhone")
-        
+        print("⌚️ Received message from iPhone: \(message.keys)")
+        handleIncomingMessage(message)
+    }
+    
+    // Handle messages from iPhone (with reply handler)
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+        print("⌚️ Received message with reply handler from iPhone: \(message.keys)")
+        handleIncomingMessage(message)
+        replyHandler(["status": "received"])
+    }
+    
+    // Common message handling logic
+    private func handleIncomingMessage(_ message: [String: Any]) {
         DispatchQueue.main.async {
+            // Handle start session from iPhone
+            if let workoutData = message["startSession"] as? Data,
+               let sessionIdString = message["sessionId"] as? String,
+               let sessionId = UUID(uuidString: sessionIdString) {
+                self.handleStartSession(workoutData, sessionId: sessionId)
+            }
+            
+            // Handle live session update from iPhone
+            if let updateData = message["liveSessionUpdate"] as? Data {
+                self.handleLiveSessionUpdate(updateData)
+            }
+            
+            // Handle session action from iPhone
+            if let actionString = message["sessionAction"] as? String,
+               let action = SessionAction(rawValue: actionString),
+               let sessionIdString = message["sessionId"] as? String,
+               let sessionId = UUID(uuidString: sessionIdString) {
+                self.handleSessionAction(action, sessionId: sessionId)
+            }
+            
             // Handle workouts update
             if let workoutsData = message["workouts"] as? Data {
                 do {
@@ -171,6 +261,66 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 } catch {
                     print("❌ Failed to decode split: \(error)")
                 }
+            }
+        }
+    }
+    
+    // MARK: - Session Handling
+    
+    private func handleStartSession(_ data: Data, sessionId: UUID) {
+        do {
+            let workoutTransfer = try JSONDecoder().decode(WorkoutTransfer.self, from: data)
+            print("⌚️ Received start session for workout '\(workoutTransfer.name)'")
+            
+            // Post notification for WatchSessionManager to handle
+            NotificationCenter.default.post(
+                name: .remoteSessionStarted,
+                object: nil,
+                userInfo: ["workoutTransfer": workoutTransfer, "sessionId": sessionId]
+            )
+            print("✅ Posted remoteSessionStarted notification")
+        } catch {
+            print("❌ Failed to decode workout: \(error)")
+        }
+    }
+    
+    private func handleLiveSessionUpdate(_ data: Data) {
+        do {
+            let update = try JSONDecoder().decode(LiveSessionUpdate.self, from: data)
+            NotificationCenter.default.post(
+                name: .liveSessionUpdated,
+                object: nil,
+                userInfo: ["update": update]
+            )
+            print("✅ Received live session update")
+        } catch {
+            print("❌ Failed to decode live update: \(error)")
+        }
+    }
+    
+    private func handleSessionAction(_ action: SessionAction, sessionId: UUID) {
+        NotificationCenter.default.post(
+            name: .sessionActionReceived,
+            object: nil,
+            userInfo: ["action": action, "sessionId": sessionId]
+        )
+        print("✅ Received session action: \(action)")
+    }
+    
+    // Handle user info transfer (for when devices aren't directly reachable)
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        print("⌚️ Received user info from iPhone: \(userInfo.keys)")
+        
+        DispatchQueue.main.async {
+            if let updateData = userInfo["liveSessionUpdate"] as? Data {
+                self.handleLiveSessionUpdate(updateData)
+            }
+            
+            // Also handle start session via userInfo (fallback)
+            if let workoutData = userInfo["startSession"] as? Data,
+               let sessionIdString = userInfo["sessionId"] as? String,
+               let sessionId = UUID(uuidString: sessionIdString) {
+                self.handleStartSession(workoutData, sessionId: sessionId)
             }
         }
     }

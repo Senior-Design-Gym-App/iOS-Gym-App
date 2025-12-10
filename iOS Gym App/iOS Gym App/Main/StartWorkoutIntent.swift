@@ -2,7 +2,7 @@
 //  StartWorkoutIntent.swift
 //  iOS Gym App
 //
-//  App Intent for starting workouts from widgets and Watch
+//  App Intent for starting workouts from widgets
 //
 
 import AppIntents
@@ -57,3 +57,4 @@ extension Notification.Name {
     static let startWorkoutFromWidget = Notification.Name("startWorkoutFromWidget")
     static let workoutCompletedValidateWidget = Notification.Name("workoutCompletedValidateWidget")
 }
+

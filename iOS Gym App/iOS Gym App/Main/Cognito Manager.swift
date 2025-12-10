@@ -1,6 +1,9 @@
 import Foundation
+import AuthenticationServices
+import Foundation
 import SwiftUI
-import Combine
+internal import Combine
+import UIKit
 import AWSCognitoIdentityProvider
 
 struct AuthTokens: Codable {
@@ -24,7 +27,7 @@ enum CognitoConfig {
     static let apiBaseUrl = CognitoConfig.getConfigValue(for: "AWSAPIBaseUrl")
 }
 
-class CognitoManager: NSObject, ObservableObject {
+class CognitoManager: NSObject, ObservableObject, ASWebAuthenticationPresentationContextProviding {
 
     private let client: CognitoIdentityProviderClient
     private let userPoolId: String
@@ -237,6 +240,16 @@ class CognitoManager: NSObject, ObservableObject {
     // MARK: - Sign Out
     func signOut() async throws {
         print("👋 Signed out successfully")
+    }
+    
+    // MARK: - ASWebAuthenticationPresentationContextProviding
+    
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        // Return the key window for presenting the authentication session
+        return UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? UIWindow()
     }
     
     // MARK: - Errors

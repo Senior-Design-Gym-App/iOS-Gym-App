@@ -27,7 +27,7 @@ struct StartAllSessionsView: View {
     
     private func SplitSection(split: Split) -> some View {
         Section {
-            ForEach(split.workouts ?? [], id: \.self) { workout in
+            ForEach(split.sortedWorkouts, id: \.self) { workout in
                 ReusedViews.SessionViews.WorkoutSessionView(workout: workout, start: { workout in QueueWorkout(workout: workout, split: split) })
             }
         } header: {
@@ -41,13 +41,16 @@ struct StartAllSessionsView: View {
             showAlert = true
             return
         }
-        let newSession = WorkoutSession(name: workout.name, started: Date(), workout: workout)
-        for exercise in workout.sortedExercises {
-            sm.QueueExercise(exercise: exercise)
+        
+        // Validate workout has exercises
+        guard !workout.sortedExercises.isEmpty else {
+            print("⚠️ Cannot start workout '\(workout.name)' - has no exercises")
+            // TODO: Show a user-friendly alert here
+            return
         }
-        context.insert(newSession)
-        sm.session = newSession
-        sm.sessionStartDate = Date()
+        
+        // Use SessionManager's startSession method which handles syncing to Watch
+        sm.startSession(workout: workout, context: context)
     }
     
 }

@@ -20,8 +20,12 @@
 	<string>$(OPENAI_CALLBACK)</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string></string>
+	<key>OpenAICallback</key>
+	<string>$(OPENAI_CALLBACK)</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>We need this data to update HealthKit data from workouts recorded in the app.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string></string>
+	<string>We need this permission to share the health data with HealthKit, such as heartrate and weight.</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleIdentifier</key>

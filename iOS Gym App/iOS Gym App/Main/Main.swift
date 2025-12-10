@@ -11,18 +11,58 @@ import SwiftData
 @main
 struct iOS_Gym_AppApp: App {
     
-    @State private var sessionManager = SessionManager()
+    @State private var sessionManager: SessionManager
     @State private var pm = ProgressManager()
     @State private var watchSync = WatchSyncViewModel()
     @StateObject private var authManager = AuthManager()
     
-    // ADD THESE
+    // Profile checking states
     @State private var needsProfile = false
     @State private var isCheckingProfile = true
+    
+    // Create shared model container first so we can pass it to SessionManager
+    static var sharedModelContainerInstance: ModelContainer = {
+        let schema = Schema([
+            Exercise.self,
+            Workout.self,
+            Split.self,
+            WorkoutSession.self,
+            WorkoutSessionEntry.self
+        ])
+        
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
+        }
+    }()
+    
+    func debugInfoPlist() {
+        print("===== ALL INFO.PLIST KEYS =====")
+        if let infoDictionary = Bundle.main.infoDictionary {
+            for (key, value) in infoDictionary.sorted(by: { $0.key < $1.key }) {
+                print("\(key): \(value)")
+            }
+        }
+        print("================================")
+    }
     
     init() {
         // Initialize WatchConnectivity on app launch
         _ = WatchConnectivityManager.shared
+        
+        // Initialize SessionManager with ModelContext immediately so it can handle remote notifications
+        let manager = SessionManager(modelContext: Self.sharedModelContainerInstance.mainContext)
+        _sessionManager = State(initialValue: manager)
+        print("✅ SessionManager initialized with ModelContext in App.init()")
+        
+        debugInfoPlist()
+    }
+    
+    var sharedModelContainer: ModelContainer {
+        Self.sharedModelContainerInstance
     }
     
     var body: some Scene {
@@ -43,6 +83,11 @@ struct iOS_Gym_AppApp: App {
                             .environment(sessionManager)
                             .environment(watchSync)
                             .environmentObject(authManager)
+                            .onAppear {
+                                // Give SessionManager access to ModelContext for cross-device sync
+                                sessionManager.setModelContext(sharedModelContainer.mainContext)
+                                print("✅ SessionManager configured with ModelContext")
+                            }
                     }
                 } else {
                     SignInView()
@@ -91,7 +136,7 @@ struct iOS_Gym_AppApp: App {
                 }
             }
         }
-        .modelContainer(for: [Exercise.self, Workout.self, Split.self, WorkoutSession.self, WorkoutSessionEntry.self])
+        .modelContainer(sharedModelContainer)
     }
     
     // ADD THIS FUNCTION

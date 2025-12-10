@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import WidgetKit
 
 extension ReusedViews {
     
@@ -56,7 +57,26 @@ extension ReusedViews {
         
         static func ActiveSplit(split: Binding<Split>, allSplits: [Split]) -> some View {
             Button {
+                let wasActive = split.wrappedValue.active
                 split.wrappedValue.active.toggle()
+                
+                // Update widget data when split is activated/deactivated
+                if split.wrappedValue.active {
+                    // Deactivate other splits
+                    for otherSplit in allSplits where otherSplit.id != split.wrappedValue.id {
+                        otherSplit.active = false
+                    }
+                    
+                    // Convert to transfer model and save to widget
+                    let transferSplit = split.wrappedValue.toTransfer()
+                    WidgetDataManager.shared.setActiveSplit(transferSplit)
+                    
+                    // Reset progress when activating a split
+                    WidgetDataManager.shared.resetSplitProgress()
+                } else {
+                    // Clear widget data when deactivating
+                    WidgetDataManager.shared.setActiveSplit(nil)
+                }
             } label: {
                 Label(split.wrappedValue.active ? "Favorite" : "Unfavorite", systemImage: split.wrappedValue.active ? "star.fill" : "star")
                     .labelStyle(.iconOnly)
@@ -130,6 +150,13 @@ extension ReusedViews {
                     split.encodeIDs(ids: newIDs)
                 }
                 split.modified = Date()
+                
+                // Update widget if this is the active split
+                if split.active {
+                    let transferSplit = split.toTransfer()
+                    WidgetDataManager.shared.setActiveSplit(transferSplit)
+                }
+                
                 showAddSheet = false
             }
             

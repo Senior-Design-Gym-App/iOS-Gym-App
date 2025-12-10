@@ -7,8 +7,9 @@
 
 import SwiftUI
 import SwiftData
-import Combine
+internal import Combine
 
+@MainActor
 @Observable
 final class WatchSyncViewModel {
     private var modelContext: ModelContext?
@@ -100,6 +101,7 @@ final class WatchSyncViewModel {
     private func setupNotificationObservers() {
         // Watch requested workouts
         NotificationCenter.default.publisher(for: .watchRequestedWorkouts)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.syncToWatch()
             }
@@ -107,6 +109,7 @@ final class WatchSyncViewModel {
         
         // Watch completed session
         NotificationCenter.default.publisher(for: .watchCompletedSession)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] notification in
                 guard let session = notification.userInfo?["session"] as? WorkoutSessionTransfer else { return }
                 self?.saveCompletedSession(session)
@@ -117,33 +120,63 @@ final class WatchSyncViewModel {
     private func saveCompletedSession(_ sessionTransfer: WorkoutSessionTransfer) {
         guard let context = modelContext else { return }
         
+        print("📱 ===== SAVE COMPLETED SESSION CALLED =====")
+        print("📱 Transfer session ID: \(sessionTransfer.id)")
+        print("📱 Transfer session name: \(sessionTransfer.name)")
+        print("📱 Transfer started: \(sessionTransfer.started)")
+        print("📱 Transfer completed: \(sessionTransfer.completed?.description ?? "nil")")
+        
         do {
-            // Find the workout by matching the workoutId from the transfer
-            let workoutDescriptor = FetchDescriptor<Workout>()
-            let workouts = try context.fetch(workoutDescriptor)
+            // First, try to find existing session by sessionId
+            let sessionDescriptor = FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate<WorkoutSession> { session in
+                    session.sessionId == sessionTransfer.id
+                }
+            )
+            let existingSessions = try context.fetch(sessionDescriptor)
             
-            // Try to find matching workout by name (since we generate UUIDs from hashes)
-            // This is a fallback - ideally we'd have a better ID mapping
-            guard let workout = workouts.first(where: { workout in
-                let workoutHash = abs(workout.name.hashValue ^ workout.created.timeIntervalSince1970.hashValue)
-                let transferHash = sessionTransfer.workoutId.uuidString.hashValue
-                return abs(workoutHash) == abs(transferHash) || workout.name == sessionTransfer.name
-            }) ?? workouts.first else {
-                print("❌ Could not find workout matching the session")
-                return
+            print("📱 Found \(existingSessions.count) existing sessions with matching sessionId")
+            
+            let session: WorkoutSession
+            if let existingSession = existingSessions.first {
+                // Update existing session
+                session = existingSession
+                session.completed = sessionTransfer.completed ?? Date()
+                print("✅ Found existing session with ID \(sessionTransfer.id), updating completion")
+            } else {
+                // Create new session - find the workout first
+                print("📱 No existing session found, creating new one")
+                let workoutDescriptor = FetchDescriptor<Workout>()
+                let workouts = try context.fetch(workoutDescriptor)
+                
+                // Try to find matching workout by name (since we generate UUIDs from hashes)
+                guard let workout = workouts.first(where: { workout in
+                    let workoutHash = abs(workout.name.hashValue ^ workout.created.timeIntervalSince1970.hashValue)
+                    let transferHash = sessionTransfer.workoutId.uuidString.hashValue
+                    return abs(workoutHash) == abs(transferHash) || workout.name == sessionTransfer.name
+                }) ?? workouts.first else {
+                    print("❌ Could not find workout matching the session")
+                    return
+                }
+                
+                print("🆕 Creating new session with ID \(sessionTransfer.id) for workout: \(workout.name)")
+                
+                session = WorkoutSession(
+                    name: sessionTransfer.name,
+                    started: sessionTransfer.started,
+                    completed: sessionTransfer.completed ?? Date(),
+                    workout: workout,
+                    sessionId: sessionTransfer.id  // Use the transfer's ID
+                )
+                context.insert(session)
             }
             
-            print("📱 Creating session for workout: \(workout.name)")
-            
-            // Create new session using the transfer data
-            let session = WorkoutSession(
-                name: sessionTransfer.name,
-                started: sessionTransfer.started,
-                completed: sessionTransfer.completed ?? Date(),
-                workout: workout
-            )
-            
-            context.insert(session)
+            // Clear any existing entries for this session to avoid duplicates
+            let allEntriesDescriptor = FetchDescriptor<WorkoutSessionEntry>()
+            let allEntries = try context.fetch(allEntriesDescriptor)
+            for e in allEntries where e.session === session {
+                context.delete(e)
+            }
             
             // Process each entry from the transfer
             for entryTransfer in sessionTransfer.entries {
@@ -175,7 +208,8 @@ final class WatchSyncViewModel {
             }
             
             try context.save()
-            print("✅ Saved completed session from watch with \(sessionTransfer.entries.count) entries")
+            print("✅ Saved completed session with \(sessionTransfer.entries.count) entries (sessionId: \(sessionTransfer.id))")
+            print("📱 ===== SAVE COMPLETED SESSION END =====")
             
         } catch {
             print("❌ Failed to save session: \(error)")
@@ -193,3 +227,4 @@ extension View {
         }
     }
 }
+

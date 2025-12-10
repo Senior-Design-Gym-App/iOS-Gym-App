@@ -1,0 +1,18 @@
+//
+//  Config.xcconfig
+//  iOS Gym App
+//
+//  Created by Zachary Andrew Kolano on 11/20/25.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+AWS_REGION = us-east-1
+AWS_USERPOOLID = us-east-1_CufyXN1AX
+AWS_CLIENTID = 3altkace0jjhoabhguqq4et7om
+AWS_APIBASEURL = https:/$()/mhfwd1sla9.execute-api.us-east-1.amazonaws.com/prod
+AWS_CALLBACKURL = yourapp:/$()/callback
+AWS_DOMAINURL = https:/$()/us-east-1cufyxn1ax.auth.us-east-1.amazoncognito.com
+OPENAI_CALLBACK = https:/$()/api.repthesetapi.xyz/chat
+

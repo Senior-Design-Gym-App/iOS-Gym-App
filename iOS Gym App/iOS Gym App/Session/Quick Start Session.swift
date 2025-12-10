@@ -8,6 +8,8 @@ struct SessionHomeView: View {
     @Environment(\.modelContext) private var context
     
     @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
+    @State private var navigateToSession: Bool = false
     @Environment(SessionManager.self) private var sm: SessionManager
     
     var incompleteSessions: [WorkoutSession] {
@@ -30,7 +32,7 @@ struct SessionHomeView: View {
                 }
                 if let split = allSplits.first(where: { $0.active }), incompleteSessions.isEmpty {
                     Section {
-                        ForEach(split.workouts ?? [], id: \.self) { workout in
+                        ForEach(split.sortedWorkouts, id: \.self) { workout in
                             if workout == predictNextWorkout() {
                                 UpNextCard(workout: workout)
                                     .listRowSeparator(.hidden)
@@ -64,7 +66,65 @@ struct SessionHomeView: View {
             .alert("Session Error", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Please end your current session before starting another.")
+                Text(alertMessage.isEmpty ? "Please end your current session before starting another." : alertMessage)
+            }
+            .onAppear {
+                // Validate and sync widget on app launch
+                validateAndSyncWidget()
+                
+                // Check if there's already an active session from Watch
+                if sm.session != nil, sm.currentExercise != nil {
+                    print("⌚️ Active session detected on app launch - navigating to session")
+                    navigateToSession = true
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .workoutCompletedValidateWidget)) { _ in
+                // Validate and sync widget when workout completes
+                print("📢 Received workout completion notification - validating widget...")
+                validateAndSyncWidget()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .remoteSessionStarted)) { _ in
+                // When Watch starts a session, navigate to show it
+                print("⌚️ Received remote session started notification")
+                // Small delay to ensure SessionManager has processed the session
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if sm.session != nil, sm.currentExercise != nil {
+                        print("⌚️ Watch started session - navigating to active session")
+                        navigateToSession = true
+                    }
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("remoteSessionStartFailed"))) { notification in
+                // When Watch tries to start a session but fails
+                print("⚠️ Received remote session start failed notification")
+                if let reason = notification.userInfo?["reason"] as? String {
+                    alertMessage = reason
+                    showAlert = true
+                }
+            }
+            .onChange(of: sm.session) { oldValue, newValue in
+                // Also trigger navigation when session changes from nil to non-nil
+                if oldValue == nil, newValue != nil, sm.currentExercise != nil {
+                    print("⌚️ Session became active - navigating")
+                    navigateToSession = true
+                }
+            }
+            .navigationDestination(isPresented: $navigateToSession) {
+                // Show the active session view
+                if sm.currentExercise != nil {
+                    SessionCurrentExerciseView(sessionManager: sm)
+                        .navigationTitle(sm.session?.name ?? "Active Session")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("End") {
+                                    sm.endSession()
+                                    navigateToSession = false
+                                }
+                                .foregroundStyle(.red)
+                            }
+                        }
+                }
             }
         }
     }
@@ -88,12 +148,13 @@ struct SessionHomeView: View {
                     .font(.caption)
                     .fontWeight(.light)
             }.padding(.bottom)
-            ForEach(workout.sortedExercises, id: \.self) { exercise in
-                Label {
+            ForEach(workout.sortedExercises, id: \.id) { exercise in
+                HStack {
+                    Image(systemName: exercise.workoutEquipment?.imageName ?? Constants.defaultEquipmentIcon)
+                        .resizable()
+                        .frame(width: Constants.tinyIconSIze, height: Constants.tinyIconSIze)
                     Text("\(exercise.name) (\(exercise.recentSetData.setData.count))")
                         .fontWeight(.medium)
-                } icon: {
-                    exercise.icon
                 }.padding(.bottom, 5)
             }
         }.listRowBackground(workout.color)
@@ -160,13 +221,16 @@ struct SessionHomeView: View {
             showAlert = true
             return
         }
-        let newSession = WorkoutSession(name: workout.name, started: Date(), workout: workout)
-        for exercise in workout.sortedExercises {
-            sm.QueueExercise(exercise: exercise)
+        
+        // Validate workout has exercises
+        guard !workout.sortedExercises.isEmpty else {
+            print("⚠️ Cannot start workout '\(workout.name)' - has no exercises")
+            // TODO: Show a user-friendly alert here
+            return
         }
-        context.insert(newSession)
-        sm.session = newSession
-        sm.sessionStartDate = Date()
+        
+        // Use SessionManager's startSession method which handles syncing to other devices
+        sm.startSession(workout: workout, context: context)
     }
     
     private func StartIncompleteSession(incomplete: WorkoutSession) {
@@ -191,8 +255,9 @@ struct SessionHomeView: View {
         // Find the active split
         guard let activeSplit = allSplits.first(where: { $0.active }) else { return nil }
         
-        // Get all workouts in the active split
-        guard let workouts = activeSplit.workouts, !workouts.isEmpty else { return nil }
+        // Get all workouts in the active split (respecting custom order)
+        let workouts = activeSplit.sortedWorkouts
+        guard !workouts.isEmpty else { return nil }
         
         // Find the most recently completed session across all workouts
         let mostRecentSession = findMostRecentCompletedSession(in: workouts)
@@ -238,6 +303,54 @@ struct SessionHomeView: View {
         }
         
         return mostRecentSession
+    }
+    
+    /// Validate that widget's "up next" matches the phone's prediction and sync if needed
+    private func validateAndSyncWidget() {
+        print("🔄 Validating widget 'up next' against phone prediction...")
+        
+        // Get the active split
+        guard let activeSplit = allSplits.first(where: { $0.active }) else {
+            print("⚠️ No active split - skipping widget validation")
+            return
+        }
+        
+        // Get phone's prediction for next workout
+        guard let phoneNextWorkout = predictNextWorkout() else {
+            print("⚠️ Phone could not predict next workout - skipping validation")
+            return
+        }
+        
+        // Get widget's current prediction
+        guard let widgetNextWorkout = WidgetDataManager.shared.getNextWorkoutInSplit() else {
+            print("⚠️ Widget has no next workout prediction - syncing now")
+            syncWidgetWithPhone(split: activeSplit)
+            return
+        }
+        
+        // Convert phone's workout to transfer for ID comparison
+        let phoneWorkoutTransfer = phoneNextWorkout.toTransfer()
+        
+        // Compare IDs
+        if phoneWorkoutTransfer.id != widgetNextWorkout.id {
+            print("⚠️ MISMATCH DETECTED!")
+            print("   Phone predicts: '\(phoneNextWorkout.name)' (ID: \(phoneWorkoutTransfer.id))")
+            print("   Widget shows: '\(widgetNextWorkout.name)' (ID: \(widgetNextWorkout.id))")
+            print("🔄 Forcing widget to sync with phone...")
+            
+            syncWidgetWithPhone(split: activeSplit)
+        } else {
+            print("✅ Widget 'up next' matches phone prediction: '\(phoneNextWorkout.name)'")
+        }
+    }
+    
+    /// Force widget to sync with phone's current state
+    private func syncWidgetWithPhone(split: Split) {
+        // Refresh the split in widget data
+        let transferSplit = split.toTransfer()
+        WidgetDataManager.shared.refreshActiveSplit(transferSplit)
+        
+        print("✅ Widget synced with phone - widget will now show correct 'up next'")
     }
     
 }

@@ -19,6 +19,7 @@ extension Exercise {
         let targetSets = reps.last?.count ?? 3
         let targetReps = reps.last?.first ?? 10
         let targetWeight = weights.last?.first
+        let restTimes = rest.last  // Get most recent rest times
         
         // Create UUID - use a combination of name hash for consistency
         // This avoids accessing persistentModelID which can cause crashes
@@ -32,7 +33,8 @@ extension Exercise {
             equipment: equipment,
             targetSets: targetSets,
             targetReps: targetReps,
-            targetWeight: targetWeight
+            targetWeight: targetWeight,
+            restTimes: restTimes
         )
     }
 }
@@ -60,7 +62,8 @@ extension Workout {
 extension Split {
     /// Convert SwiftData Split to Transfer model
     func toTransfer() -> SplitTransfer {
-        let workoutTransfers = (workouts ?? []).map { $0.toTransfer() }
+        // Use sortedWorkouts to respect custom order
+        let workoutTransfers = sortedWorkouts.map { $0.toTransfer() }
         
         // Create UUID - use a combination of name and created date hash
         let nameHash = abs(name.hashValue)
@@ -82,11 +85,8 @@ extension WorkoutSession {
     func toTransfer() -> WorkoutSessionTransfer? {
         guard let workout = workout else { return nil }
         
-        // Create UUIDs using name and date hashes
-        let sessionNameHash = abs(name.hashValue)
-        let sessionDateHash = abs(started.timeIntervalSince1970.hashValue)
-        let sessionCombined = sessionNameHash ^ sessionDateHash
-        let sessionUuid = UUID(uuidString: String(format: "%08X-0000-0000-0000-%012X", sessionCombined & 0xFFFFFFFF, sessionCombined)) ?? UUID()
+        // Use the persistent sessionId instead of generating one from hash
+        let sessionUuid = sessionId
         
         let workoutNameHash = abs(workout.name.hashValue)
         let workoutDateHash = abs(workout.created.timeIntervalSince1970.hashValue)

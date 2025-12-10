@@ -7,16 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		34C582942ECF735A004E17FE /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
-		7C10A3792EE9F200000B03E9 /* Live Activity Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */; };
-		7C10A37A2EE9F21B000B03E9 /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
-		7C10A37B2EE9F222000B03E9 /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
-		7C10A37C2EE9F26F000B03E9 /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C582932ECF735A004E17FE /* Shared Types.swift */; };
-		7C10A37D2EE9F273000B03E9 /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
-		7C10A37E2EE9F278000B03E9 /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
-		7CC94B232ECF7C91007BE13A /* AWSCognitoIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B222ECF7C91007BE13A /* AWSCognitoIdentity */; };
-		7CC94B252ECF7C91007BE13A /* AWSCognitoIdentityProvider in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B242ECF7C91007BE13A /* AWSCognitoIdentityProvider */; };
-		7CC94B272ECF7C91007BE13A /* AWSCognitoSync in Frameworks */ = {isa = PBXBuildFile; productRef = 7CC94B262ECF7C91007BE13A /* AWSCognitoSync */; };
 		E40F0B4A2EAA8ABF00618BB9 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = E40F0B482EAA8AB800618BB9 /* .gitignore */; };
 		E40F0B522EAA8FDA00618BB9 /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
 		E40F0B532EAA8FDA00618BB9 /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
@@ -29,6 +19,21 @@
 		E4207BB72E8C34C700061829 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = E4207BB62E8C34C700061829 /* CropViewController */; };
 		E432B7212ECCDFC700FCBEEA /* Transfer Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E432B7202ECCDFC700FCBEEA /* Transfer Models.swift */; };
 		E432B7222ECCDFCC00FCBEEA /* Transfer Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E432B7202ECCDFC700FCBEEA /* Transfer Models.swift */; };
+		E432BCE22EE1EEF900FCBEEA /* AWSCognitoIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = E432BCE12EE1EEF900FCBEEA /* AWSCognitoIdentity */; };
+		E432BCE42EE1EEF900FCBEEA /* AWSCognitoIdentityProvider in Frameworks */ = {isa = PBXBuildFile; productRef = E432BCE32EE1EEF900FCBEEA /* AWSCognitoIdentityProvider */; };
+		E432BCE82EE1F63900FCBEEA /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = E432BCE72EE1F63900FCBEEA /* Shared Types.swift */; };
+		E432BCE92EE1F63900FCBEEA /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = E432BCE72EE1F63900FCBEEA /* Shared Types.swift */; };
+		E432BCEF2EE1F6C500FCBEEA /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
+		E432BCF02EE1F6C500FCBEEA /* Exercise Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */; };
+		E432BCF32EE1F6EC00FCBEEA /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
+		E432BCF92EE1F82200FCBEEA /* Shared Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = E432BCE72EE1F63900FCBEEA /* Shared Types.swift */; };
+		E432BCFA2EE1F82600FCBEEA /* Transfer Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E432B7202ECCDFC700FCBEEA /* Transfer Models.swift */; };
+		E432BCFB2EE1F83100FCBEEA /* Live Activity Object.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */; };
+		E432BCFC2EE1F83600FCBEEA /* Session Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */; };
+		E432BCFD2EE1F83A00FCBEEA /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
+		E432BCFE2EE1F83A00FCBEEA /* Split Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */; };
+		E432BCFF2EE1F83F00FCBEEA /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
+		E432BD002EE1F83F00FCBEEA /* Workout Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */; };
 		E4BCAFBA2EA07766009133F6 /* Rep the Set Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E4BCAFB02EA07765009133F6 /* Rep the Set Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -75,7 +80,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		34C582932ECF735A004E17FE /* Shared Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Shared Types.swift"; sourceTree = "<group>"; };
 		E40F09412EA7E68800618BB9 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E40F09432EA7E68800618BB9 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E40F0B482EAA8AB800618BB9 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
@@ -85,38 +89,15 @@
 		E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Split Data.swift"; sourceTree = "<group>"; };
 		E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Workout Data.swift"; sourceTree = "<group>"; };
 		E40F0B5C2EAA914600618BB9 /* Live Activity TimerExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Live Activity TimerExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E4149E842EE76E7700BF1B7E /* Live-Activity-TimerExtension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Live-Activity-TimerExtension-Info.plist"; sourceTree = "<group>"; };
 		E432B7202ECCDFC700FCBEEA /* Transfer Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transfer Models.swift"; sourceTree = "<group>"; };
 		E432B7232ECCE0A000FCBEEA /* Live Activity TimerExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Live Activity TimerExtension.entitlements"; sourceTree = "<group>"; };
+		E432BCE72EE1F63900FCBEEA /* Shared Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Shared Types.swift"; sourceTree = "<group>"; };
 		E4BCAFB02EA07765009133F6 /* Rep the Set Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Rep the Set Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4F362AA2E8C32B2000A0DEE /* iOS Gym App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Gym App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		7C10A3802EE9F297000B03E9 /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Activity/HealthKit/Progress Manager.swift",
-				"Activity/Labels & Data/Activity Data.swift",
-				"Activity/Labels & Data/Home Page Text.swift",
-				"Activity/Labels & Data/Update Label.swift",
-				"Activity/Recap Views/Monthly Calendar.swift",
-				"Activity/Workout Updates/Exercise Extension.swift",
-				"Misc/Reused Functions/Date Handler.swift",
-				"Misc/Reused Functions/Gradient Generatpr.swift",
-				"Misc/Reused Views/Labels.swift",
-				Misc/Static/Constants.swift,
-				"Workout/Workout Types.swift",
-			);
-			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
-		};
-		7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-				"Misc/Static/Launch Screen.storyboard",
-			);
-			target = E4F362A92E8C32B2000A0DEE /* iOS Gym App */;
-		};
 		E40F0B842EAA991B00618BB9 /* Exceptions for "Live Activity Timer" folder in "Live Activity TimerExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -124,12 +105,59 @@
 			);
 			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
 		};
+		E4149F9A2EE7965200BF1B7E /* Exceptions for "Live Activity Timer" folder in "Rep the Set Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Start Workout Intent.swift",
+			);
+			target = E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */;
+		};
+		E432BCED2EE1F6AA00FCBEEA /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Activity/Labels & Data/Activity Data.swift",
+				"Main/Watch Session Manager.swift",
+				Main/WatchConnectivityNotifications.swift,
+				"Misc/Reused Functions/Gradient Generatpr.swift",
+				Misc/Static/Constants.swift,
+				"Workout/Workout Types.swift",
+			);
+			target = E4BCAFAF2EA07765009133F6 /* Rep the Set Watch App */;
+		};
+		E432BCEE2EE1F6AA00FCBEEA /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Activity/Labels & Data/Activity Data.swift",
+				"Misc/Reused Functions/Gradient Generatpr.swift",
+				Misc/Static/Constants.swift,
+				"Workout/Workout Types.swift",
+			);
+			target = E40F0B5B2EAA914600618BB9 /* Live Activity TimerExtension */;
+		};
+		E46B29DE2EEA0ADE00E15EAD /* Exceptions for "Live Activity Timer" folder in "iOS Gym App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WidgetDataManager.swift,
+			);
+			target = E4F362A92E8C32B2000A0DEE /* iOS Gym App */;
+		};
+		E4BCAFBF2EA0793D009133F6 /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				Main/HEART_RATE_AUTO_ADVANCE.md,
+				"Misc/Static/Launch Screen.storyboard",
+			);
+			target = E4F362A92E8C32B2000A0DEE /* iOS Gym App */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E40F0B5F2EAA914600618BB9 /* Live Activity Timer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				E46B29DE2EEA0ADE00E15EAD /* Exceptions for "Live Activity Timer" folder in "iOS Gym App" target */,
+				E4149F9A2EE7965200BF1B7E /* Exceptions for "Live Activity Timer" folder in "Rep the Set Watch App" target */,
 				E40F0B842EAA991B00618BB9 /* Exceptions for "Live Activity Timer" folder in "Live Activity TimerExtension" target */,
 			);
 			path = "Live Activity Timer";
@@ -143,8 +171,9 @@
 		E4F362AC2E8C32B2000A0DEE /* iOS Gym App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				7CC94B2D2ECF8E49007BE13A /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
-				7C10A3802EE9F297000B03E9 /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */,
+				E4BCAFBF2EA0793D009133F6 /* Exceptions for "iOS Gym App" folder in "iOS Gym App" target */,
+				E432BCED2EE1F6AA00FCBEEA /* Exceptions for "iOS Gym App" folder in "Rep the Set Watch App" target */,
+				E432BCEE2EE1F6AA00FCBEEA /* Exceptions for "iOS Gym App" folder in "Live Activity TimerExtension" target */,
 			);
 			path = "iOS Gym App";
 			sourceTree = "<group>";
@@ -172,10 +201,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7CC94B232ECF7C91007BE13A /* AWSCognitoIdentity in Frameworks */,
-				7CC94B272ECF7C91007BE13A /* AWSCognitoSync in Frameworks */,
+				E432BCE22EE1EEF900FCBEEA /* AWSCognitoIdentity in Frameworks */,
 				E4207BB72E8C34C700061829 /* CropViewController in Frameworks */,
-				7CC94B252ECF7C91007BE13A /* AWSCognitoIdentityProvider in Frameworks */,
+				E432BCE42EE1EEF900FCBEEA /* AWSCognitoIdentityProvider in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,13 +222,13 @@
 		E40F0B512EAA8FDA00618BB9 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				E432BCE72EE1F63900FCBEEA /* Shared Types.swift */,
 				E432B7202ECCDFC700FCBEEA /* Transfer Models.swift */,
 				E40F0B4B2EAA8FDA00618BB9 /* Exercise Data.swift */,
 				E40F0B4C2EAA8FDA00618BB9 /* Live Activity Object.swift */,
 				E40F0B4D2EAA8FDA00618BB9 /* Session Data.swift */,
 				E40F0B4E2EAA8FDA00618BB9 /* Split Data.swift */,
 				E40F0B4F2EAA8FDA00618BB9 /* Workout Data.swift */,
-				34C582932ECF735A004E17FE /* Shared Types.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -208,6 +236,7 @@
 		E4F362A12E8C32B2000A0DEE = {
 			isa = PBXGroup;
 			children = (
+				E4149E842EE76E7700BF1B7E /* Live-Activity-TimerExtension-Info.plist */,
 				E432B7232ECCE0A000FCBEEA /* Live Activity TimerExtension.entitlements */,
 				E40F0B512EAA8FDA00618BB9 /* Shared */,
 				E40F0B482EAA8AB800618BB9 /* .gitignore */,
@@ -298,9 +327,8 @@
 			name = "iOS Gym App";
 			packageProductDependencies = (
 				E4207BB62E8C34C700061829 /* CropViewController */,
-				7CC94B222ECF7C91007BE13A /* AWSCognitoIdentity */,
-				7CC94B242ECF7C91007BE13A /* AWSCognitoIdentityProvider */,
-				7CC94B262ECF7C91007BE13A /* AWSCognitoSync */,
+				E432BCE12EE1EEF900FCBEEA /* AWSCognitoIdentity */,
+				E432BCE32EE1EEF900FCBEEA /* AWSCognitoIdentityProvider */,
 			);
 			productName = "iOS Gym App";
 			productReference = E4F362AA2E8C32B2000A0DEE /* iOS Gym App.app */;
@@ -382,12 +410,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7C10A37B2EE9F222000B03E9 /* Exercise Data.swift in Sources */,
-				7C10A37D2EE9F273000B03E9 /* Workout Data.swift in Sources */,
-				7C10A3792EE9F200000B03E9 /* Live Activity Object.swift in Sources */,
-				7C10A37E2EE9F278000B03E9 /* Split Data.swift in Sources */,
-				7C10A37C2EE9F26F000B03E9 /* Shared Types.swift in Sources */,
-				7C10A37A2EE9F21B000B03E9 /* Session Data.swift in Sources */,
+				E432BCFE2EE1F83A00FCBEEA /* Split Data.swift in Sources */,
+				E432BCF92EE1F82200FCBEEA /* Shared Types.swift in Sources */,
+				E432BCFA2EE1F82600FCBEEA /* Transfer Models.swift in Sources */,
+				E432BCFB2EE1F83100FCBEEA /* Live Activity Object.swift in Sources */,
+				E432BD002EE1F83F00FCBEEA /* Workout Data.swift in Sources */,
+				E432BCFC2EE1F83600FCBEEA /* Session Data.swift in Sources */,
+				E432BCF02EE1F6C500FCBEEA /* Exercise Data.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,6 +424,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E432BCE92EE1F63900FCBEEA /* Shared Types.swift in Sources */,
+				E432BCF32EE1F6EC00FCBEEA /* Session Data.swift in Sources */,
+				E432BCFD2EE1F83A00FCBEEA /* Split Data.swift in Sources */,
+				E432BCFF2EE1F83F00FCBEEA /* Workout Data.swift in Sources */,
+				E432BCEF2EE1F6C500FCBEEA /* Exercise Data.swift in Sources */,
 				E432B7222ECCDFCC00FCBEEA /* Transfer Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -404,9 +438,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				E40F0B522EAA8FDA00618BB9 /* Exercise Data.swift in Sources */,
-				34C582942ECF735A004E17FE /* Shared Types.swift in Sources */,
 				E40F0B532EAA8FDA00618BB9 /* Split Data.swift in Sources */,
 				E432B7212ECCDFC700FCBEEA /* Transfer Models.swift in Sources */,
+				E432BCE82EE1F63900FCBEEA /* Shared Types.swift in Sources */,
 				E40F0B542EAA8FDA00618BB9 /* Session Data.swift in Sources */,
 				E40F0B562EAA8FDA00618BB9 /* Live Activity Object.swift in Sources */,
 				E40F0B572EAA8FDA00618BB9 /* Workout Data.swift in Sources */,
@@ -432,14 +466,16 @@
 		E40F0B712EAA914800618BB9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = "Live Activity TimerExtension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Live Activity Timer/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Live Activity Timer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Live-Activity-TimerExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Live Activity TimerExtension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -448,10 +484,10 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.seniordesign.iOSGymApp.Live-Activity-Timer";
+				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp.LiveActivityExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
+				SKIP_INSTALL = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -468,14 +504,16 @@
 		E40F0B722EAA914800618BB9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = "Live Activity TimerExtension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Live Activity Timer/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Live Activity Timer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Live-Activity-TimerExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Live Activity TimerExtension";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -484,10 +522,10 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.seniordesign.iOSGymApp.Live-Activity-Timer";
+				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp.LiveActivityExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
+				SKIP_INSTALL = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -514,9 +552,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rep-the-Set-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Rep the Set needs clinical records to display";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Rep the Set needs to read your heart rate and workout data to provide real-time fitness tracking during your strength training sessions.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Rep the Set needs to save your workouts, heart rate, and active energy data to the Health app so you can track your fitness progress over time.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use this data to track weight and need to share it with the app";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We use this data to update weight and heart rate.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.seniordesign.iOSGymApp;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
@@ -528,7 +565,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
+				SKIP_INSTALL = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -542,8 +579,6 @@
 		};
 		E4BCAFBD2EA07766009133F6 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E4F362AC2E8C32B2000A0DEE /* iOS Gym App */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -554,9 +589,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Rep-the-Set-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Rep the Set needs clinical records to display";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Rep the Set needs to read your heart rate and workout data to provide real-time fitness tracking during your strength training sessions.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Rep the Set needs to save your workouts, heart rate, and active energy data to the Health app so you can track your fitness progress over time.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use this data to track weight and need to share it with the app";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We use this data to update weight and heart rate.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.seniordesign.iOSGymApp;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
@@ -568,7 +602,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
+				SKIP_INSTALL = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -649,8 +683,6 @@
 		};
 		E4F362B42E8C32B3000A0DEE /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E4F362AC2E8C32B2000A0DEE /* iOS Gym App */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -712,7 +744,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = "iOS Gym App/iOS Gym App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
@@ -721,7 +752,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "iOS-Gym-App-Info.plist";
+				INFOPLIST_FILE = "iOS Gym App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use this data to track weight and need to share it with the app";
@@ -734,7 +765,6 @@
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -745,7 +775,6 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
 				NEW_SETTING = "";
-				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -765,12 +794,9 @@
 		};
 		E4F362B72E8C32B3000A0DEE /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E4F362AC2E8C32B2000A0DEE /* iOS Gym App */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = "iOS Gym App/iOS Gym App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
@@ -779,7 +805,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "iOS-Gym-App-Info.plist";
+				INFOPLIST_FILE = "iOS Gym App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rep the Set";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use this data to track weight and need to share it with the app";
@@ -792,7 +818,6 @@
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -803,7 +828,6 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
 				NEW_SETTING = "";
-				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.seniordesign.iOSGymApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -882,25 +906,20 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7CC94B222ECF7C91007BE13A /* AWSCognitoIdentity */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E4207BBA2E8C372B00061829 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCognitoIdentity;
-		};
-		7CC94B242ECF7C91007BE13A /* AWSCognitoIdentityProvider */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E4207BBA2E8C372B00061829 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCognitoIdentityProvider;
-		};
-		7CC94B262ECF7C91007BE13A /* AWSCognitoSync */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E4207BBA2E8C372B00061829 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCognitoSync;
-		};
 		E4207BB62E8C34C700061829 /* CropViewController */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E4207BB52E8C34C700061829 /* XCRemoteSwiftPackageReference "TOCropViewController" */;
 			productName = CropViewController;
+		};
+		E432BCE12EE1EEF900FCBEEA /* AWSCognitoIdentity */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E4207BBA2E8C372B00061829 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSCognitoIdentity;
+		};
+		E432BCE32EE1EEF900FCBEEA /* AWSCognitoIdentityProvider */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E4207BBA2E8C372B00061829 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSCognitoIdentityProvider;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -53,7 +53,7 @@ struct SignInView: View {
                 } else {
                     VStack(spacing: 25) {
                         // Logo or App Name
-                        Text("My App")
+                        Text("Rep the Set")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .padding(.bottom, 30)

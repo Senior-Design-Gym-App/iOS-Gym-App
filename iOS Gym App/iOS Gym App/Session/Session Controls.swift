@@ -47,7 +47,8 @@ struct SessionSetControlView: View {
         VStack {
             Divider()
                 .padding(.top)
-            StepControl(reps: $sessionManager.reps, weight: $sessionManager.weight)
+            // Use sync bindings for cross-device sync
+            StepControl(reps: sessionManager.repsBinding(), weight: sessionManager.weightBinding())
             BottomControls()
                 .padding(.bottom)
         }

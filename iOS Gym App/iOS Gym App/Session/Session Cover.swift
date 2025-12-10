@@ -95,6 +95,9 @@ struct SessionCover: View {
         
         // Show post sheet instead of dismissing immediately
         showPostSheet = true
+        
+        // Use SessionManager's endSession which handles cross-device sync
+        sessionManager.endSession()
     }
     
     private func formatDuration(_ start: Date, _ end: Date?) -> String {
@@ -112,9 +115,17 @@ struct SessionCover: View {
     }
     
     private func DeleteSession() -> Void {
+        // Send cancel action to Watch to dismiss without logging
+        let connectivityManager = WatchConnectivityManager.shared
+        connectivityManager.sendSessionAction(.cancelSession, sessionId: sessionManager.sessionId)
+        
+        // Delete session from database
         context.delete(session)
         try? context.save()
+        
+        // Clear local state
         ClearCurrentData()
+        
         dismiss()
     }
     
