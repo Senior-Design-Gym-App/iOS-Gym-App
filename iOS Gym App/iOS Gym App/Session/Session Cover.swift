@@ -97,8 +97,8 @@ struct SessionCover: View {
         // Show post sheet instead of dismissing immediately
         
         // Use SessionManager's endSession which handles cross-device sync
-        //sessionManager.endSession()
-        showPostSheet = true
+        sessionManager.endSession()
+        //showPostSheet = true
 
     }
     
