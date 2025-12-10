@@ -175,8 +175,12 @@ class WatchSessionManager {
         print("⌚️ Final state - isSessionActive: \(isSessionActive)")
         
         // Start heart rate monitoring if auto-advance is enabled
+        print("🔍 Checking auto-advance: isAutoAdvanceEnabled = \(isAutoAdvanceEnabled)")
         if isAutoAdvanceEnabled {
+            print("🔍 Calling startHeartRateMonitoring()...")
             startHeartRateMonitoring()
+        } else {
+            print("⚠️ Auto-advance is disabled, NOT starting heart rate monitoring")
         }
         
         print("⌚️ ================================================")
@@ -234,22 +238,30 @@ class WatchSessionManager {
     }
     
     private func handleRemoteSessionUpdate(_ update: LiveSessionUpdate) {
-        guard !isReceivingUpdate else { return }
+        guard !isReceivingUpdate else {
+            print("⚠️ Already receiving update, skipping")
+            return
+        }
         
         isReceivingUpdate = true
         defer { isReceivingUpdate = false }
         
-        print("⌚️ Applying remote session update")
+        print("⌚️ ========== APPLYING REMOTE SESSION UPDATE ==========")
         
         // If this is a new session, adopt it
         if sessionId == nil {
             sessionId = update.sessionId
+            print("⌚️ Adopted new session ID: \(update.sessionId)")
         }
         
-        guard update.sessionId == sessionId else { return }
+        guard update.sessionId == sessionId else {
+            print("⚠️ Session ID mismatch - ignoring update")
+            return
+        }
         
         // Update current exercise state
         if let remoteExercise = update.currentExercise {
+            print("⌚️ Updating exercise from '\(currentExerciseName)' to '\(remoteExercise.exerciseName)'")
             currentExerciseName = remoteExercise.exerciseName
             currentSet = remoteExercise.currentSet
             totalSets = remoteExercise.totalSets
@@ -263,6 +275,7 @@ class WatchSessionManager {
             completedReps = remoteExercise.completedReps
             completedWeights = remoteExercise.completedWeights
             
+            print("⌚️ Updated to: \(currentExerciseName)")
             print("⌚️ Synced: Rest \(restTime)s, Elapsed \(elapsedTime)s")
         }
         
@@ -279,6 +292,7 @@ class WatchSessionManager {
         }
         
         print("⌚️ Updated queue with \(upcomingExerciseNames.count) upcoming exercises: \(upcomingExerciseNames.joined(separator: ", "))")
+        print("⌚️ ================================================")
     }
     
     private func handleRemoteAction(_ action: SessionAction, sessionId: UUID) {
@@ -425,27 +439,46 @@ class WatchSessionManager {
             return
         }
         
+        print("🔄 Starting heart rate monitoring...")
+        
         // Start a workout session to get live heart rate data
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = .traditionalStrengthTraining
         configuration.locationType = .indoor
         
         do {
-            workoutSession = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
-            workoutBuilder = workoutSession?.associatedWorkoutBuilder()
+            let session = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
+            let builder = session.associatedWorkoutBuilder()
             
-            workoutBuilder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
+            builder.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
             
-            workoutSession?.startActivity(with: Date())
-            workoutBuilder?.beginCollection(withStart: Date()) { success, error in
+            // Store references BEFORE starting
+            self.workoutSession = session
+            self.workoutBuilder = builder
+            
+            print("✅ Created workout session and builder")
+            
+            // Start the session
+            session.startActivity(with: Date())
+            print("✅ Started workout activity")
+            
+            // Begin collection and start query
+            builder.beginCollection(withStart: Date()) { [weak self] success, error in
+                guard let self = self else { return }
+                
                 if let error = error {
                     print("❌ Failed to begin workout collection: \(error.localizedDescription)")
                     return
                 }
                 
                 if success {
-                    print("✅ Workout session started for heart rate monitoring")
-                    self.startHeartRateQuery()
+                    print("✅ Workout collection started successfully")
+                    // Start heart rate query on main thread
+                    DispatchQueue.main.async {
+                        self.startHeartRateQuery()
+                    }
+                } else {
+                    print("⚠️ Workout collection did not start successfully")
                 }
             }
         } catch {
@@ -455,8 +488,11 @@ class WatchSessionManager {
     
     private func startHeartRateQuery() {
         guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            print("❌ Heart rate type not available")
             return
         }
+        
+        print("🔄 Starting heart rate query...")
         
         let predicate = HKQuery.predicateForSamples(withStart: Date(), end: nil, options: .strictStartDate)
         
@@ -466,25 +502,55 @@ class WatchSessionManager {
             anchor: nil,
             limit: HKObjectQueryNoLimit
         ) { [weak self] query, samples, deletedObjects, anchor, error in
+            if let error = error {
+                print("❌ Heart rate query error: \(error.localizedDescription)")
+                return
+            }
+            
+            print("📊 Initial heart rate query returned \(samples?.count ?? 0) samples")
             self?.processHeartRateSamples(samples)
         }
         
         query.updateHandler = { [weak self] query, samples, deletedObjects, anchor, error in
+            if let error = error {
+                print("❌ Heart rate update error: \(error.localizedDescription)")
+                return
+            }
+            
+            print("📊 Heart rate update received \(samples?.count ?? 0) samples")
             self?.processHeartRateSamples(samples)
         }
         
         heartRateQuery = query
         healthStore.execute(query)
+        
+        print("✅ Heart rate query started and executed")
     }
     
     private func processHeartRateSamples(_ samples: [HKSample]?) {
+        print("🔍 processHeartRateSamples called with \(samples?.count ?? 0) samples")
+        
         guard let samples = samples as? [HKQuantitySample],
-              let sample = samples.last,
-              isAutoAdvanceEnabled else {
+              let sample = samples.last else {
+            print("⚠️ No heart rate samples to process (failed cast or empty)")
+            return
+        }
+        
+        print("🔍 isAutoAdvanceEnabled: \(isAutoAdvanceEnabled)")
+        
+        guard isAutoAdvanceEnabled else {
+            // Still update heart rate for display, just don't auto-advance
+            let heartRate = sample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+            print("⚠️ Auto-advance disabled, only updating display: \(Int(heartRate)) BPM")
+            DispatchQueue.main.async { [weak self] in
+                self?.currentHeartRate = heartRate
+            }
             return
         }
         
         let heartRate = sample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+        
+        print("❤️ Received heart rate: \(Int(heartRate)) BPM")
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -501,19 +567,27 @@ class WatchSessionManager {
             heartRateHistory.removeFirst()
         }
         
+        print("💓 HR History: \(heartRateHistory.map { Int($0) }) (count: \(heartRateHistory.count))")
+        
         // Need at least 5 readings to detect patterns
-        guard heartRateHistory.count >= 5 else { return }
+        guard heartRateHistory.count >= 5 else {
+            print("⏳ Waiting for more readings (\(heartRateHistory.count)/5)")
+            return
+        }
         
         // Detect if heart rate is increasing (person is performing a set)
         if !isInSet {
             let recentAverage = heartRateHistory.suffix(3).reduce(0, +) / 3.0
             let olderAverage = heartRateHistory.prefix(3).reduce(0, +) / 3.0
+            let difference = recentAverage - olderAverage
+            
+            print("📊 Not in set - Recent avg: \(Int(recentAverage)), Older avg: \(Int(olderAverage)), Diff: \(Int(difference))")
             
             // Heart rate increased by at least 5 BPM - likely starting a set
-            if recentAverage > olderAverage + 5 {
+            if difference > 5 {
                 isInSet = true
                 peakHeartRate = heartRate
-                print("💓 Set detected - HR increased to \(Int(heartRate)) BPM")
+                print("💓 🔥 SET DETECTED - HR increased to \(Int(heartRate)) BPM")
             }
         }
         // Detect if heart rate is decreasing (person finished set and is resting)
@@ -521,14 +595,18 @@ class WatchSessionManager {
             // Track peak heart rate during set
             if heartRate > peakHeartRate {
                 peakHeartRate = heartRate
+                print("📈 New peak HR: \(Int(peakHeartRate)) BPM")
             }
             
             // Check if heart rate has dropped significantly from peak
             let recoveryThreshold = peakHeartRate * heartRateThreshold
+            let percentOfPeak = (heartRate / peakHeartRate) * 100
+            
+            print("📊 In set - Current: \(Int(heartRate)) BPM, Peak: \(Int(peakHeartRate)) BPM, Threshold: \(Int(recoveryThreshold)) BPM (\(Int(percentOfPeak))% of peak)")
             
             if heartRate < recoveryThreshold {
-                print("💓 Recovery detected - HR dropped from \(Int(peakHeartRate)) to \(Int(heartRate)) BPM")
-                print("✅ Auto-advancing to next set")
+                print("💓 ✅ RECOVERY DETECTED - HR dropped from \(Int(peakHeartRate)) to \(Int(heartRate)) BPM")
+                print("✅ Auto-advancing to next set (current: \(currentSet)/\(totalSets))")
                 
                 // Play haptic feedback to notify user
                 #if os(watchOS)
@@ -543,6 +621,8 @@ class WatchSessionManager {
                 // Auto-advance to next set if not at the end
                 if currentSet < totalSets {
                     nextSet()
+                } else {
+                    print("⚠️ Already at last set, not advancing")
                 }
             }
         }

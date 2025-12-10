@@ -858,6 +858,18 @@ struct WorkoutSessionView: View {
                             .monospacedDigit()
                             .font(.caption)
                         
+                        Spacer()
+                        
+                        // Auto-advance toggle
+                        Toggle(isOn: $heartRateManager.isAutoAdvanceEnabled) {
+                            Image(systemName: heartRateManager.isAutoAdvanceEnabled ? "bolt.fill" : "bolt.slash.fill")
+                                .font(.caption)
+                                .foregroundStyle(heartRateManager.isAutoAdvanceEnabled ? .yellow : .gray)
+                        }
+                        .labelsHidden()
+                        .toggleStyle(.button)
+                        .buttonStyle(.plain)
+                        
                         if !heartRateManager.isAuthorized {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.caption2)
@@ -883,6 +895,13 @@ struct WorkoutSessionView: View {
                         Text("Waiting for heart rate...")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                    }
+                    
+                    // Show auto-advance status
+                    if heartRateManager.isAutoAdvanceEnabled && heartRateManager.isAuthorized {
+                        Text("⚡️ Auto-advance enabled")
+                            .font(.caption2)
+                            .foregroundStyle(.yellow)
                     }
                 }
                 
@@ -1057,6 +1076,30 @@ struct WorkoutSessionView: View {
         }
         .onAppear {
             model.start()
+            
+            // Set up auto-advance callback
+            heartRateManager.onAutoAdvance = { [weak model] in
+                guard let model = model else { return }
+                
+                // Check if we're not at the last set
+                let currentExercise = model.workout.exercises[model.currentExerciseIndex]
+                if model.currentSet < currentExercise.targetSets {
+                    print("💓 Auto-advance triggered - logging set and moving to next")
+                    
+                    // Log the current set first (just like the manual Next Set button)
+                    model.logSet(reps: model.repsInput, weight: model.weightInput)
+                    
+                    // Then advance to next set
+                    let outcome = model.nextSet()
+                    
+                    if case .reachedEnd = outcome {
+                        // At last set of last exercise - optionally show completion
+                        print("💓 Auto-advance: Reached end of workout")
+                    }
+                } else {
+                    print("💓 Auto-advance triggered but already at last set")
+                }
+            }
             
             // Start HealthKit workout session
             Task {

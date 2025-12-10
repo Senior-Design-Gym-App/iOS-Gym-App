@@ -76,7 +76,7 @@ struct SessionCover: View {
             ) {
                 // On post created, dismiss the session
                 ClearCurrentData()
-                dismiss()
+//                dismiss()
             }
         }
     }
