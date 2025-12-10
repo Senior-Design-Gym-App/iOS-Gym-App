@@ -7,9 +7,19 @@
 
 import SwiftUI
 
+struct AIMessage: Identifiable {
+    var id = UUID()
+    var text: String
+    var isUser: Bool
+}
+
 struct AIAskView: View {
     @State private var prompt: String = ""
+    @State private var messages: [AIMessage] = [
+        AIMessage(text: "Ask me anything about training, programming, or nutrition.", isUser: false)
+    ]
     @State private var isLoading: Bool = false
+    
     private let suggestions: [String] = [
         "Build me a 4-day push/pull split",
         "How to improve bench press?",
@@ -23,13 +33,19 @@ struct AIAskView: View {
     private let primaryTint = Constants.mainAppTheme
     private let bubbleCornerRadius = Constants.cornerRadius + 4
     
+    // Remove @State - just create the instance directly
+    private let ai = AIFunctions()
+    
     var body: some View {
         VStack(spacing: 0) {
             // Suggestions chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: chipSpacing) {
                     ForEach(suggestions, id: \.self) { item in
-                        Button(action: { prompt = item }) {
+                        Button(action: {
+                            prompt = item
+                            sendMessage()
+                        }) {
                             HStack(spacing: chipSpacing) {
                                 Image(systemName: "sparkles")
                                     .font(.footnote)
@@ -48,6 +64,7 @@ struct AIAskView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .disabled(isLoading)
                     }
                 }
                 .padding(.horizontal)
@@ -56,17 +73,32 @@ struct AIAskView: View {
 
             Divider()
 
-            // Messages placeholder area
-            ScrollView {
-                VStack(spacing: 12) {
-                    ChatBubble(text: "Ask me anything about training, programming, or nutrition.", isUser: false)
-                    
-                    if isLoading {
-                        AILoadingIndicator()
+            // Messages area
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(messages) { message in
+                            ChatBubble(text: message.text, isUser: message.isUser)
+                                .id(message.id)
+                        }
+                        
+                        // Loading indicator
+                        if isLoading {
+                            AILoadingIndicator()
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                }
+                .onChange(of: messages.count) { _, _ in
+                    // Auto-scroll to newest message
+                    if let lastMessage = messages.last {
+                        withAnimation {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 16)
             }
 
             // Input bar
@@ -76,6 +108,9 @@ struct AIAskView: View {
                         .foregroundStyle(.secondary)
                     TextField("Ask anything…", text: $prompt, axis: .vertical)
                         .textInputAutocapitalization(.sentences)
+                        .onSubmit {
+                            sendMessage()
+                        }
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 12)
@@ -88,9 +123,7 @@ struct AIAskView: View {
                         .stroke(Color(.separator))
                 )
 
-                Button(action: {
-                    sendMessage()
-                }) {
+                Button(action: sendMessage) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Constants.buttonTheme)
@@ -109,14 +142,33 @@ struct AIAskView: View {
     }
     
     private func sendMessage() {
-        guard !prompt.isEmpty else { return }
+        let userMessage = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !userMessage.isEmpty else { return }
+        
+        // Add user message
+        messages.append(AIMessage(text: userMessage, isUser: true))
+        prompt = ""
         isLoading = true
         
-        // TODO: Implement actual AI API call
-        // Simulate API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            isLoading = false
-            prompt = ""
+        // Call AI function
+        Task {
+            do {
+                let response = try await ai.genericResponse(message: userMessage)
+                print("AI Response: \(response)")
+                
+                // Add AI response
+                await MainActor.run {
+                    messages.append(AIMessage(text: response, isUser: false))
+                    isLoading = false
+                }
+            } catch {
+                // Handle error
+                await MainActor.run {
+                    messages.append(AIMessage(text: "Sorry, I encountered an error. Please try again.", isUser: false))
+                    isLoading = false
+                }
+                print("AI Error: \(error)")
+            }
         }
     }
 }
@@ -193,7 +245,8 @@ private struct AILoadingIndicator: View {
     }
 }
 
-#Preview{
-    AIAskView()
+#Preview {
+    NavigationStack {
+        AIAskView()
+    }
 }
-

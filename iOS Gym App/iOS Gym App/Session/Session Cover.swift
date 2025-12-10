@@ -10,13 +10,14 @@ struct SessionCover: View {
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var showAlternateExercise = false
+    @State private var showPostSheet = false  // ADD THIS
+    @State private var postText = ""  // ADD THIS
     
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
                 .frame(width: 65, height: 5)
             
-            // ADD THIS CUSTOM HEADER WITH TAB BUTTONS
             HStack {
                 Text("Session")
                     .font(.title2)
@@ -66,15 +67,48 @@ struct SessionCover: View {
             AlternateExerciseView(session: session)
                 .environment(sessionManager)
         }
+        // ADD THIS SHEET
+        .sheet(isPresented: $showPostSheet) {
+            CreateWorkoutPostView(
+                session: session,
+                elapsedTime: sessionManager.elapsedTime,
+                defaultText: postText
+            ) {
+                // On post created, dismiss the session
+                ClearCurrentData()
+                dismiss()
+            }
+        }
     }
     
     private func EndSession() -> Void {
         sessionManager.NextSet()
         sessionManager.NextWorkout()
+        
         session.completed = Date()
         try? context.save()
-        ClearCurrentData()
-        dismiss()
+        
+        // Generate default post text
+        let duration = formatDuration(session.started, session.completed)
+        let exerciseCount = session.exercises?.count ?? 0
+        postText = "Completed \(session.name)! 💪\n\(exerciseCount) exercises in \(duration)"
+        
+        // Show post sheet instead of dismissing immediately
+        showPostSheet = true
+    }
+    
+    private func formatDuration(_ start: Date, _ end: Date?) -> String {
+        guard let end = end else { return "0m" }
+        
+        let duration = end.timeIntervalSince(start)
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
     }
     
     private func DeleteSession() -> Void {

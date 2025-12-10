@@ -63,7 +63,7 @@ struct CreateWorkoutView: View {
             ReusedViews.Buttons.EditHeaderButton(toggleEdit: $showAddSheet, type: .workout, items: newWorkout.sortedExercises)
         }
     }
-    
+    @MainActor
     private func Save() {
         context.insert(newWorkout)
         try? context.save()
@@ -242,7 +242,7 @@ struct AIWorkoutGenerationSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        shouldApplyOnDismiss = false  // ADD THIS
+                        shouldApplyOnDismiss = false
                         dismiss()
                     }
                     .disabled(isGenerating)
@@ -260,7 +260,7 @@ struct AIWorkoutGenerationSheet: View {
             .navigationTitle("AI Generator")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .interactiveDismissDisabled(!generatedExercises.isEmpty)  // ADD THIS - prevents swipe to dismiss when there's a workout
+        .interactiveDismissDisabled(!generatedExercises.isEmpty)
         .onDisappear {
             if shouldApplyOnDismiss {
                 applyWorkout()
@@ -288,21 +288,7 @@ struct AIWorkoutGenerationSheet: View {
             // Store the workout name
             workoutName = result.name
             
-            // Insert exercises into context IMMEDIATELY
-            for exercise in result.exercises {
-                context.insert(exercise)
-                print("✅ Inserted exercise: \(exercise.name)")
-            }
-            
-            // Try to save context to persist them
-            do {
-                try context.save()
-                print("✅ Context saved successfully")
-            } catch {
-                print("⚠️ Context save failed: \(error)")
-            }
-            
-            // Store in state
+            // DON'T insert exercises into context yet - just store them
             generatedExercises = result.exercises
             generatedSummary = result.summary
             generatedTips = result.tips
@@ -320,24 +306,28 @@ struct AIWorkoutGenerationSheet: View {
     private func applyWorkout() {
         print("🔄 Applying workout...")
         
-        // Update workout name
-        workout.name = workoutName
-        
-        // Assign exercises (they're already in the context)
-        workout.exercises = generatedExercises
-        
-        // Encode the order
-        if let exercises = workout.exercises {
-            let newIDs = exercises.map { $0.persistentModelID }
-            workout.encodeIDs(ids: newIDs)
+        // Insert exercises into context NOW (only when user confirms)
+        for exercise in generatedExercises {
+            context.insert(exercise)
+            print("✅ Inserted exercise: \(exercise.name)")
         }
         
-        // Update modified date
+        // Update workout properties BEFORE it's tracked by SwiftData
+        workout.name = workoutName
+        workout.exercises = generatedExercises
         workout.modified = Date()
         
-        print("✅ Workout applied: \(workout.name) with \(workout.exercises?.count ?? 0) exercises")
+        // Encode the order
+        let newIDs = generatedExercises.map { $0.persistentModelID }
+        workout.encodeIDs(ids: newIDs)
         
-        dismiss()
+        // Save context once
+        do {
+            try context.save()
+            print("✅ Context saved: \(workout.name) with \(workout.exercises?.count ?? 0) exercises")
+        } catch {
+            print("❌ Failed to save context: \(error)")
+        }
     }
 }
 

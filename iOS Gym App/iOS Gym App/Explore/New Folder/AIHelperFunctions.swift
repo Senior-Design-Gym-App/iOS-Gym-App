@@ -17,6 +17,22 @@ class AIFunctions {
         let systemPrompt: String?
         let responseFormat: String? // "json" or "text"
     }
+    struct AIResponse: Codable {
+        let response: String
+        let metadata: ResponseMetadata
+    }
+
+    struct ResponseMetadata: Codable {
+        let model: String
+        let tokensUsed: Int
+        let format: String
+        
+        enum CodingKeys: String, CodingKey {
+            case model
+            case tokensUsed = "tokens_used"
+            case format
+        }
+    }
     
     // Simplified models that match your SwiftData structure
     struct ExerciseResponse: Codable {
@@ -86,13 +102,13 @@ class AIFunctions {
             throw AIError.invalidResponse
         }
         
-        guard let responseDict = try? JSONDecoder().decode([String: String].self, from: data),
-              let responseString = responseDict["response"] else {
-            throw AIError.decodingFailed
-        }
+        // Decode using the proper structure
+        let aiResponse = try JSONDecoder().decode(AIResponse.self, from: data)
         
-        print("📥 Response: \(responseString)")
-        return responseString
+        print("📥 Response: \(aiResponse.response)")
+        print("📊 Metadata - Model: \(aiResponse.metadata.model), Tokens: \(aiResponse.metadata.tokensUsed)")
+        
+        return aiResponse.response
     }
     
     // MARK: - Alternate Exercise Function
@@ -104,7 +120,7 @@ class AIFunctions {
     ) async throws -> (exercise: Exercise, explanation: String) {
         
         print("🔄 Getting alternate exercise for: \(exerciseName)")
-        
+        let startTime = Date()
         // Build the prompt with current workout context
         var workoutContext = "Current workout: \(workout.name)\n\nExercises:\n"
         
@@ -243,6 +259,8 @@ class AIFunctions {
         print("   Rest: \(exercise.rest)")
         print("💡 Explanation: \(alternateResponse.explanation)")
         
+        print("Generating Alternate Exercise took \(Date().timeIntervalSince(startTime)) seconds")
+        
         return (exercise, alternateResponse.explanation)
     }
     
@@ -258,7 +276,8 @@ class AIFunctions {
     ) async throws -> (name: String, exercises: [Exercise], summary: String, tips: [String]) {
         
         print("🏋️ Generating workout: \(workoutType)")
-        
+        let startTime = Date()
+
         var prompt = "Create a \(workoutType) workout"
         
         if let muscles = targetMuscles, !muscles.isEmpty {
@@ -401,6 +420,7 @@ class AIFunctions {
             Always respond with valid JSON following the exact schema provided.
             Create balanced, effective workouts appropriate for the user's fitness level.
             Ensure nested arrays are properly formatted. Make sure nested arrays for the same exercise are always the same length, i.e. rest, weights, and reps should all be equal length.
+            Make sure the schema is exactly as written with 3 outer keys of workout, summary, and tips
             """,
             responseFormat: "json"
         )
@@ -413,6 +433,8 @@ class AIFunctions {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
+        
+        print(jsonData)
         
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -491,6 +513,9 @@ class AIFunctions {
         
         print("✅ Generated workout: \(workoutName)")
         print("📝 Summary: \(summary)")
+        
+        print("Generating Workout took \(Date().timeIntervalSince(startTime)) seconds")
+
         
         return (workoutName, exercises, summary, tips)
     }
@@ -578,5 +603,148 @@ class AIFunctions {
         }
         
         return (reps, normalizedWeights, normalizedRest)
+    }
+    func generateSessionSummary(
+        for session: WorkoutSession
+    ) async throws -> String {
+        
+        print("📝 Generating summary for session: \(session.name)")
+        let startTime = Date()
+        // Build session context
+        var sessionContext = """
+        Session: \(session.name)
+        Date: \(formatDate(session.started))
+        Duration: \(calculateDuration(start: session.started, end: session.completed))
+        
+        Exercises completed:
+        """
+        
+        if let exercises = session.exercises {
+            for entry in exercises {
+                guard let exercise = entry.exercise else { continue }
+                
+                let sets = entry.reps.count
+                let totalReps = entry.reps.reduce(0, +)
+                let totalWeight = entry.weight.reduce(0, +)
+                let avgWeight = totalWeight / Double(max(sets, 1))
+                
+                sessionContext += """
+                \n- \(exercise.name): \(sets) sets, \(totalReps) total reps, avg \(String(format: "%.1f", avgWeight)) lbs
+                """
+                
+                if let muscle = exercise.muscleWorked {
+                    sessionContext += " (targets \(muscle))"
+                }
+            }
+        }
+        
+        // Add performance comparison if available
+        if let workout = session.workout, let previousSession = findPreviousSession(for: workout, before: session.started) {
+            sessionContext += "\n\nPrevious session: \(formatDate(previousSession.started))"
+        }
+        
+        let prompt = """
+        \(sessionContext)
+        
+        Create a concise 3-4 sentence summary of this workout session. Focus on:
+        1. Overall effort and performance
+        2. Key exercises or muscle groups worked
+        3. Any notable achievements or patterns
+        
+        Be encouraging and specific. Use a friendly, motivational tone.
+        """
+        
+        let payload = MessagePayload(
+            message: prompt,
+            systemPrompt: """
+            You are an expert fitness coach providing personalized workout summaries.
+            Keep summaries concise (3-4 sentences), encouraging, and specific to the workout data.
+            Highlight achievements and progress naturally.
+            """,
+            responseFormat: "text"
+        )
+        
+        guard let jsonData = try? JSONEncoder().encode(payload) else {
+            throw AIError.encodingFailed
+        }
+        
+        var request = URLRequest(url: APIURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw AIError.invalidResponse
+        }
+        
+        print("📦 Raw response data:")
+        if let rawString = String(data: data, encoding: .utf8) {
+            print(rawString)
+        }
+        
+        // Parse as our expected response structure
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            print("❌ Failed to parse as JSON object")
+            throw AIError.decodingFailed
+        }
+        
+        print("✅ Parsed JSON object, keys:", jsonObject.keys)
+        
+        guard let responseString = jsonObject["response"] as? String else {
+            print("❌ No 'response' key or wrong type")
+            print("Available keys:", jsonObject.keys)
+            throw AIError.decodingFailed
+        }
+        
+        print("✅ Found response string")
+        
+        // Clean escaped characters (even though it's text, not JSON)
+        let cleanedSummary = responseString
+            .replacingOccurrences(of: "\\n", with: "\n")
+            .replacingOccurrences(of: "\\\"", with: "\"")
+            .replacingOccurrences(of: "\\t", with: "\t")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        print("📄 Cleaned summary:")
+        print(cleanedSummary)
+        print("Generating AI Summary took \(Date().timeIntervalSince(startTime)) seconds")
+
+        print("✅ Generated summary")
+        return cleanedSummary
+    }
+
+    // MARK: - Helper Functions
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
+    private func calculateDuration(start: Date, end: Date?) -> String {
+        guard let end = end else { return "Incomplete" }
+        
+        let duration = end.timeIntervalSince(start)
+        let hours = Int(duration) / 3600
+        let minutes = Int(duration) % 3600 / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
+        }
+    }
+
+    private func findPreviousSession(for workout: Workout, before date: Date) -> WorkoutSession? {
+        guard let sessions = workout.sessions else { return nil }
+        
+        return sessions
+            .filter { $0.completed != nil && $0.started < date }
+            .sorted { $0.started > $1.started }
+            .first
     }
 }

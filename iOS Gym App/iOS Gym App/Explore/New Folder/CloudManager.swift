@@ -23,21 +23,78 @@ class CloudManager{
         self.apiBaseURL = CognitoConfig.apiBaseUrl
     }
     
-    /// Set the auth manager reference
-    func setAuthManager(_ manager: AuthManager) {
-        self.authManager = manager
-    }
-    
-    // MARK: - Token Management
-    
     /// Get current ID token from Keychain
     private func getIdToken() -> String? {
         return KeychainHelper.standard.retrieveToken(key: "idToken")
     }
     
-    /// Get current access token from Keychain
-    private func getAccessToken() -> String? {
-        return KeychainHelper.standard.retrieveToken(key: "accessToken")
+    // ADD THIS
+    func setAuthManager(_ authManager: AuthManager) {
+        self.authManager = authManager
+    }
+    
+    // UPDATE THIS
+    private func getAccessToken() -> String {
+        return KeychainHelper.standard.retrieveToken(key: "accessToken") ?? ""
+    }
+    
+    // ADD THIS - Get current user ID
+    func getCurrentUserId() async throws -> String {
+        // Get from AuthManager first
+        if let userId = authManager?.currentUser, !userId.isEmpty {
+            print("✅ Got userId from AuthManager: \(userId)")
+            return userId
+        }
+        
+        // Decode from token
+        let token = KeychainHelper.standard.retrieveToken(key: "idToken") ?? ""
+        guard !token.isEmpty else {
+            print("❌ No ID token found")
+            throw CloudError.unauthorized
+        }
+        
+        let parts = token.components(separatedBy: ".")
+        guard parts.count == 3 else {
+            throw CloudError.invalidToken
+        }
+        
+        var base64 = parts[1]
+        let remainder = base64.count % 4
+        if remainder > 0 {
+            base64 = base64.padding(toLength: base64.count + 4 - remainder, withPad: "=", startingAt: 0)
+        }
+        
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let userId = json["sub"] as? String else {
+            print("❌ Could not decode userId from token")
+            throw CloudError.invalidToken
+        }
+        
+        print("✅ Got userId from token: \(userId)")
+        return userId
+    }
+    
+    private func decodeUserIdFromToken(_ token: String) throws -> String {
+        let parts = token.components(separatedBy: ".")
+        guard parts.count == 3 else {
+            throw CloudError.invalidToken
+        }
+        
+        var base64 = parts[1]
+        // Add padding if needed
+        let remainder = base64.count % 4
+        if remainder > 0 {
+            base64 = base64.padding(toLength: base64.count + 4 - remainder, withPad: "=", startingAt: 0)
+        }
+        
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let userId = json["sub"] as? String else {
+            throw CloudError.invalidToken
+        }
+        
+        return userId
     }
     
     /// Check if user is authenticated
@@ -85,8 +142,16 @@ class CloudManager{
         guard let workoutsArray = response["workouts"] as? [[String: Any]] else {
             throw CloudError.invalidResponse
         }
-        
-        return try workoutsArray.compactMap { try? parseWorkout(from: $0) }
+        print("Found workoutArrays \(workoutsArray)")
+
+        var results: [Workout] = []
+
+        for item in workoutsArray {
+            guard let workoutId = item["workoutId"] as? String else { continue }
+            let workout = try await fetchWorkout(workoutId: workoutId)
+            results.append(workout)
+        }
+        return results
     }
     
     /// Fetch user's workouts
@@ -118,6 +183,7 @@ class CloudManager{
         guard let workoutsArray = response["workouts"] as? [[String: Any]] else {
             throw CloudError.invalidResponse
         }
+        print("Found workoutArrays \(workoutsArray)")
         
         return try workoutsArray.compactMap { try? parseWorkout(from: $0) }
     }
@@ -127,7 +193,7 @@ class CloudManager{
         guard isAuthenticated else {
             throw CloudError.notAuthenticated
         }
-        
+        print("trying to get workout id \(workoutId)")
         guard let idToken = getIdToken() else {
             print("❌ No ID token found in Keychain")
             throw CloudError.notAuthenticated
@@ -147,7 +213,7 @@ class CloudManager{
             headers: headers,
             body: nil
         )
-        
+        print("fetched workout response: \(response)")
         return try parseWorkout(from: response)
     }
     
@@ -385,7 +451,13 @@ class CloudManager{
         // Parse exercises first
         var exercises: [Exercise] = []
         if let exercisesArray = dict["exercises"] as? [[String: Any]] {
-            exercises = try exercisesArray.compactMap { try? parseExercise(from: $0) }
+            do {
+                exercises = try exercisesArray.compactMap { dict in
+                    try parseExercise(from: dict)
+                }
+            } catch {
+                print("Error parsing exercises:", error)
+            }
         }
         
         // Create workout with exercises
@@ -400,22 +472,14 @@ class CloudManager{
         }
         
         // Parse sets data
-        let setsCount = dict["sets"] as? Int ?? 1
-        let repsValue = dict["reps"] as? Int ?? 10
-        let weightValue = dict["weight"] as? Double ?? 0
-        let restValue = dict["restTime"] as? Int ?? 60
         
-        // Create arrays for the sets
         var repsArray: [[Int]] = []
         var weightsArray: [[Double]] = []
         var restArray: [[Int]] = []
         
-        // Build arrays based on number of sets
-        for _ in 0..<setsCount {
-            repsArray.append([repsValue])
-            weightsArray.append([weightValue])
-            restArray.append([restValue])
-        }
+        repsArray = dict["reps"] as! [[Int]]
+        weightsArray = dict["weight"] as! [[Double]]
+        restArray = dict["restTime"] as! [[Int]]
         
         let exercise = Exercise(
             name: name,
@@ -425,7 +489,11 @@ class CloudManager{
             reps: repsArray,
             equipment: dict["equipment"] as? String ?? dict["weightUnit"] as? String
         )
-        
+        print("✅ Created exercise: \(exercise.name)")
+        print("   Reps: \(exercise.reps)")
+        print("   Weights: \(exercise.weights)")
+        print("   Rest: \(exercise.rest)")
+        exercise.updateDates = [Date()]
         return exercise
     }
     
@@ -439,7 +507,7 @@ class CloudManager{
         }
         
         // Add visibility (default to private)
-        dict["visibility"] = "private"
+        dict["visibility"] = "public"
         
         // Calculate estimated duration based on exercises
         if let exercises = workout.exercises {
@@ -470,19 +538,13 @@ class CloudManager{
         dict["sets"] = setsCount
         
         // Get first rep count (assuming all sets have similar reps)
-        if let firstRep = exercise.reps.first?.first {
-            dict["reps"] = firstRep
-        }
+        dict["reps"] = exercise.reps
         
         // Get first weight (assuming all sets use similar weight)
-        if let firstWeight = exercise.weights.first?.first, firstWeight > 0 {
-            dict["weight"] = firstWeight
-        }
+        dict["weight"] = exercise.weights
         
         // Get rest time
-        if let firstRest = exercise.rest.first?.first {
-            dict["restTime"] = firstRest
-        }
+        dict["restTime"] = exercise.rest
         
         // Add muscle worked
         if let muscleWorked = exercise.muscleWorked {
@@ -498,6 +560,299 @@ class CloudManager{
         
         return dict
     }
+    // MARK: - Social Features
+
+    func createUserProfile(username: String, displayName: String?, bio: String?) async throws {
+        guard let url = URL(string: "\(apiBaseURL)/users") else {
+            throw CloudError.invalidURL
+        }
+        
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        
+        let body: [String: Any] = [
+            "username": username,
+            "displayName": displayName ?? username,
+            "bio": bio ?? ""
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 201 else {
+            throw CloudError.invalidResponse
+        }
+    }
+
+    func getUserProfile(userId: String) async throws -> UserProfile {
+        // CHECK: userId should be appended to the URL path
+        guard let url = URL(string: "\(apiBaseURL)/users/\(userId)") else {
+            throw CloudError.invalidURL
+        }
+        
+        print("📤 getUserProfile URL: \(url)")
+        print("📤 userId parameter: '\(userId)'")
+        
+        // Make sure userId isn't empty
+        if userId.isEmpty {
+            print("❌ ERROR: userId is empty!")
+            throw CloudError.invalidURL
+        }
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        print("📥 Response: \(response)")
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("📥 Body: \(responseString)")
+        }
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw CloudError.invalidResponse
+        }
+        let x = try JSONDecoder().decode(UserProfile.self, from: data)
+        return x
+    }
+    private func decodeJWTClaims(_ token: String) -> [String: Any]? {
+        let parts = token.components(separatedBy: ".")
+        guard parts.count == 3 else { return nil }
+        
+        var base64 = parts[1]
+        let remainder = base64.count % 4
+        if remainder > 0 {
+            base64 = base64.padding(toLength: base64.count + 4 - remainder, withPad: "=", startingAt: 0)
+        }
+        
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        
+        return json
+    }
+    func sendFriendRequest(to friendId: String) async throws {
+        guard let url = URL(string: "\(apiBaseURL)/friends/request") else {
+            throw CloudError.invalidURL
+        }
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        let body = ["friendId": friendId]
+        request.httpBody = try JSONEncoder().encode(body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw CloudError.invalidResponse
+        }
+    }
+
+    func createPost(text: String) async throws -> String {
+        guard let url = URL(string: "\(apiBaseURL)/posts") else {
+            throw CloudError.invalidURL
+        }
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        let body = ["text": text]
+        request.httpBody = try JSONEncoder().encode(body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 201 else {
+            throw CloudError.invalidResponse
+        }
+        
+        let result = try JSONDecoder().decode([String: String].self, from: data)
+        return result["postId"] ?? ""
+    }
+
+    // MARK: - Search Users
+
+    func searchUsers(query: String) async throws -> [UserProfile] {
+        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(apiBaseURL)/users?query=\(encodedQuery)") else {
+            throw CloudError.invalidURL
+        }
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        print("🔍 Searching users with query: \(query)")
+        print("📤 URL: \(url)")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        print("📥 Response: \(response)")
+        
+        // PRINT THE ACTUAL ERROR
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("📥 Response Body: \(responseString)")
+        }
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw CloudError.invalidResponse
+        }
+        
+        if httpResponse.statusCode != 200 {
+            print("❌ Status code: \(httpResponse.statusCode)")
+            throw CloudError.invalidResponse
+        }
+        
+        let result = try JSONDecoder().decode([String: [UserProfile]].self, from: data)
+        return result["users"] ?? []
+    }
+
+    // MARK: - Feed
+
+    func getFeed() async throws -> [Post] {
+        guard let url = URL(string: "\(apiBaseURL)/posts/feed") else {
+            throw CloudError.invalidURL
+        }
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw CloudError.invalidResponse
+        }
+        
+        let result = try JSONDecoder().decode([String: [Post]].self, from: data)
+        return result["posts"] ?? []
+    }
+    // Add to CloudManager.swift
+
+    func getPendingFriendRequests() async throws -> [FriendRequest] {
+        guard let url = URL(string: "\(apiBaseURL)/friends/pending") else {
+            throw CloudError.invalidURL
+        }
+        print("trying to get token")
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        print("got token")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        print("Pending FR response \(response)")
+
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw CloudError.invalidResponse
+        }
+
+        let result = try JSONDecoder().decode([String: [FriendRequest]].self, from: data)
+        return result["requests"] ?? []
+    }
+
+    func acceptFriendRequest(from friendId: String) async throws {
+        guard let url = URL(string: "\(apiBaseURL)/friends/accept") else {
+            throw CloudError.invalidURL
+        }
+        print("trying to get token")
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        print("got token")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        let body = ["friendId": friendId]
+        request.httpBody = try JSONEncoder().encode(body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        print("Accepting Response: \(response)")
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw CloudError.invalidResponse
+        }
+    }
+    func getFriends() async throws -> [Friend] {
+        guard let url = URL(string: "\(apiBaseURL)/friends") else {
+            throw CloudError.invalidURL
+        }
+        
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        
+        print("📤 Getting friends list")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        print("📥 Response: \(response)")
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("📥 Body: \(responseString)")
+        }
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw CloudError.invalidResponse
+        }
+        
+        let result = try JSONDecoder().decode([String: [Friend]].self, from: data)
+        return result["friends"] ?? []
+    }
 }
 
 // MARK: - Error Types
@@ -509,6 +864,8 @@ enum CloudError: LocalizedError {
     case authenticationFailed(String)
     case serverError(String)
     case tokenExpired
+    case unauthorized
+    case invalidToken
     
     var errorDescription: String? {
         switch self {
@@ -524,6 +881,10 @@ enum CloudError: LocalizedError {
             return "Server error: \(message)"
         case .tokenExpired:
             return "Your session has expired. Please sign in again."
+        case .unauthorized:
+            return "not authorized"
+        case .invalidToken:
+            return "Invalid Token"
         }
     }
 }

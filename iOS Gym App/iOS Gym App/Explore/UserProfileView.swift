@@ -270,6 +270,24 @@ struct UserProfileContent: Equatable {
 
     static var empty: UserProfileContent { UserProfileContent(username: "", displayName: "") }
     static var demo: UserProfileContent { UserProfileContent() }
+    
+}
+extension UserProfileContent {
+    init(from backendProfile: UserProfile) {
+        self.username = backendProfile.username
+        self.displayName = backendProfile.displayName
+        self.bio = backendProfile.bio
+        self.location = backendProfile.location ?? "Unknown Location"
+        self.coverImage = nil      // Will be loaded asynchronously
+        self.profileImage = nil    // Will be loaded asynchronously
+        self.stats = [
+            ("Workouts", "\(backendProfile.workoutCount ?? 0)"),
+            ("Followers", "\(backendProfile.followers)"),
+            ("Following", "\(backendProfile.following)")
+        ]
+        self.recentWorkouts = []
+        self.isPrivate = !backendProfile.isPublic
+    }
 }
 
 extension UserProfileContent {

@@ -19,6 +19,17 @@ struct TabHome: View {
             Tab("Cloud", systemImage: "icloud.and.arrow.down"){
                 CloudWorkoutsView()
             }
+            Tab("Feed", systemImage: "text.bubble") {
+                FeedView()
+            }
+            Tab("Add Friends", systemImage: "person.badge.plus") {
+                AddFriendsView()
+            }
+            Tab("Friends", systemImage: "person.2") {
+                NavigationStack {
+                    FriendsListView()
+                }
+            }
         }
         .tabViewBottomAccessory {
             SessionTabViewWrapper()

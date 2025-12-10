@@ -61,7 +61,7 @@ extension ReusedViews {
                 }
             }
         }
-        
+        @MainActor
         static func SaveButton(disabled: Bool, save: @escaping () -> Void) -> some View {
             Button(role: .confirm) {
                 save()

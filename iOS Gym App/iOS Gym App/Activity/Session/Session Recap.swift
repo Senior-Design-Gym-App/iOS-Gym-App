@@ -10,10 +10,57 @@ struct SessionRecap: View {
     @State private var selectedSection: DonutData?
     @AppStorage("donutDisplayType") private var displayType: DonutDisplayType = .reps
     
+    // ADD THESE
+    @State private var sessionSummary: String?
+    @State private var isGeneratingSummary = false
+    private let aiFunctions = AIFunctions()
+    
     var body: some View {
         NavigationStack {
             List {
                 SessionInfo()
+                
+                // ADD THIS SUMMARY SECTION
+                if let summary = sessionSummary {
+                    Section {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "sparkles")
+                                .foregroundStyle(.blue)
+                                .font(.title3)
+                            Text(summary)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                    } header: {
+                        Text("AI Summary")
+                    }
+                } else if !isGeneratingSummary {
+                    Section {
+                        Button {
+                            Task { await generateSummary() }
+                        } label: {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                Text("Generate AI Summary")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } else {
+                    Section {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Generating summary...")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                
                 Section {
                     ReusedViews.Charts().DataRecapPieChart(sessions: [session], type: displayType)
                     ReusedViews.Pickers.DisplayTypePicker(type: $displayType, exempt: .weight)
@@ -35,6 +82,21 @@ struct SessionRecap: View {
             }
             .navigationTitle(formatMonthDayYear(session.started))
         }
+    }
+    
+    // ADD THIS FUNCTION
+    private func generateSummary() async {
+        isGeneratingSummary = true
+        
+        do {
+            let summary = try await aiFunctions.generateSessionSummary(for: session)
+            sessionSummary = summary
+        } catch {
+            print("❌ Failed to generate summary: \(error)")
+            sessionSummary = "Unable to generate summary at this time."
+        }
+        
+        isGeneratingSummary = false
     }
     
     private func SessionInfo() -> some View {

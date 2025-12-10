@@ -313,8 +313,15 @@ class AuthManager: ObservableObject {
             do {
                 let userInfo = try await cognitoService?.getUser(accessToken: accessToken)
                 userAttributes = userInfo ?? [:]
-                currentUser = userInfo?["email"] ?? userInfo?["username"]
+                
+                // FIX: Use "sub" for currentUser (the unique Cognito ID)
+                // Store email separately if you need it
+                currentUser = userInfo?["sub"]  // CHANGED FROM email/username
                 isAuthenticated = true
+                
+                print("✅ Initialized with user ID: \(currentUser ?? "unknown")")
+                print("📧 User email: \(userInfo?["email"] ?? "unknown")")
+                
             } catch {
                 // Token might be expired, try to refresh
                 print("⚠️ Failed to get user info, trying to refresh token...")
@@ -330,8 +337,10 @@ class AuthManager: ObservableObject {
                         
                         let userInfo = try await cognitoService?.getUser(accessToken: newTokens.accessToken)
                         userAttributes = userInfo ?? [:]
-                        currentUser = userInfo?["email"] ?? userInfo?["username"]
+                        currentUser = userInfo?["sub"]  // CHANGED
                         isAuthenticated = true
+                        
+                        print("✅ Refreshed and initialized with user ID: \(currentUser ?? "unknown")")
                     }
                 } catch {
                     // Refresh failed, clear tokens
@@ -341,6 +350,7 @@ class AuthManager: ObservableObject {
             }
         }
     }
+    
     
     func signIn(email: String, password: String) async throws {
         guard let service = cognitoService else { return }
