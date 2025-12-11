@@ -33,9 +33,7 @@ struct FeedView: View {
                 await loadFeed()
             }
             .overlay {
-                if isLoading {
-                    ProgressView()
-                } else if posts.isEmpty {
+                if posts.isEmpty {
                     ContentUnavailableView(
                         "No Posts Yet",
                         systemImage: "text.bubble",
@@ -90,24 +88,6 @@ struct PostRow: View {
             
             Text(post.text)
                 .font(.body)
-            
-            HStack(spacing: 20) {
-                Button {
-                    // TODO: Like functionality
-                } label: {
-                    Label("Like", systemImage: "heart")
-                        .font(.caption)
-                }
-                
-                Button {
-                    // TODO: Comment functionality
-                } label: {
-                    Label("Comment", systemImage: "bubble.right")
-                        .font(.caption)
-                }
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }

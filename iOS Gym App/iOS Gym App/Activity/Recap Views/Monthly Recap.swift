@@ -117,7 +117,7 @@ struct MonthlyProgressView: View {
                 } header: {
                     Text("Health Updates")
                 } footer: {
-                    Text("\(ActivityCount.health) Updates\(ActivityCount.health == 1 ? "" : "s")")
+                    Text("\(ActivityCount.health) Update\(ActivityCount.health == 1 ? "" : "s")")
                 }
                 Section {
                     NavigationLink {

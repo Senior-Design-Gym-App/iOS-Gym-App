@@ -202,10 +202,19 @@ class SessionManager {
     
     /// Sync current session state to other device
     private func syncCurrentState() {
-        guard syncWithWatch, !isReceivingUpdate else { return }
+        guard syncWithWatch, !isReceivingUpdate else {
+            if !syncWithWatch {
+                print("⚠️ Sync skipped - syncWithWatch is disabled")
+            }
+            if isReceivingUpdate {
+                print("⚠️ Sync skipped - currently receiving update")
+            }
+            return
+        }
         
         let currentExerciseState: LiveExerciseState?
         if let current = currentExercise {
+            print("📤 Syncing exercise: \(current.exercise.name)")
             currentExerciseState = LiveExerciseState(
                 exerciseId: UUID(), // TODO: Need proper exercise ID mapping
                 exerciseName: current.exercise.name,

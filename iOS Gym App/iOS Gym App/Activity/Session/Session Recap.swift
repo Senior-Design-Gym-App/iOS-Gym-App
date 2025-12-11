@@ -20,7 +20,6 @@ struct SessionRecap: View {
         NavigationStack {
             List {
                 SessionTitleInfo(deleteSession: DeleteSession, session: $session, startDate: session.started, endDate: session.completed ?? session.started)
-                SessionInfo()
                 
                 // ADD THIS SUMMARY SECTION
                 if let summary = sessionSummary {
