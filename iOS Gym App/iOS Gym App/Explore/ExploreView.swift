@@ -23,7 +23,10 @@ struct ExploreView: View {
             .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: { GlobalSearchView() }) {
+                    NavigationLink(destination: { 
+                        GlobalSearchView()
+                            .environmentObject(authManager)
+                    }) {
                         Image(systemName: "magnifyingglass")
                     }
                 }
