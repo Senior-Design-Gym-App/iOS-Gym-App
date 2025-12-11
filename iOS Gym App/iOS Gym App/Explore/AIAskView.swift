@@ -29,7 +29,8 @@ struct AIAskView: View {
     ]
     @State private var isLoading: Bool = false
     @State private var showCreateWorkout = false
-    @State private var generatedWorkoutData: (name: String, exercises: [Exercise], summary: String, tips: [String])?
+    @State private var currentWorkoutData: (name: String, exercises: [Exercise], summary: String, tips: [String])?
+    @State private var isSavingWorkout = false
     
     @Environment(\.modelContext) private var modelContext
     
@@ -92,15 +93,16 @@ struct AIAskView: View {
                     VStack(spacing: 16) {
                         ForEach(messages) { message in
                             VStack(spacing: 8) {
-                                ChatBubble(text: message.text, isUser: message.isUser)
-                                    .id(message.id)
-                                
-                                // Action buttons for AI messages
-                                if !message.isUser, let actionType = message.actionType {
-                                    ActionButtonView(actionType: actionType, action: {
-                                        handleAction(actionType: actionType, data: message.actionData)
-                                    })
-                                }
+                                ChatBubble(
+                                    text: message.text,
+                                    isUser: message.isUser,
+                                    actionType: message.actionType,
+                                    actionData: message.actionData,
+                                    onAction: { actionType, data in
+                                        handleAction(actionType: actionType, data: data, messageId: message.id)
+                                    }
+                                )
+                                .id(message.id)
                             }
                         }
                         
@@ -197,20 +199,26 @@ struct AIAskView: View {
         .navigationTitle("Ask AI")
         .toolbarTitleDisplayMode(.inline)
         .sheet(isPresented: $showCreateWorkout) {
-            if let workoutData = generatedWorkoutData {
+            if let workoutData = currentWorkoutData {
                 CreateWorkoutFromAIView(
                     workoutName: workoutData.name,
                     exercises: workoutData.exercises,
                     summary: workoutData.summary,
                     tips: workoutData.tips,
-                    modelContext: modelContext
+                    modelContext: modelContext,
+                    onSave: {
+                        isSavingWorkout = false
+                        // Clear cache after saving
+                        currentWorkoutData = nil
+                    }
                 )
             }
         }
         .onChange(of: showCreateWorkout) { _, isShowing in
-            // Reset generated data when sheet is dismissed
+            // Reset data when sheet is dismissed
             if !isShowing {
-                generatedWorkoutData = nil
+                currentWorkoutData = nil
+                isSavingWorkout = false
             }
         }
     }
@@ -245,13 +253,24 @@ struct AIAskView: View {
                     
                     await MainActor.run {
                         let summaryText = "\(workoutData.summary)\n\nTips:\n" + workoutData.tips.map { "• \($0)" }.joined(separator: "\n")
-                        messages.append(AIMessage(
+                        
+                        // Generate a stable ID first
+                        let messageId = UUID()
+                        
+                        // Store workout data with message ID BEFORE creating message
+                        workoutDataCache[messageId] = workoutData
+                        
+                        // Create message with the pre-generated ID
+                        var newMessage = AIMessage(
                             text: summaryText,
                             isUser: false,
                             actionType: .createWorkout,
                             actionData: ["workoutName": workoutData.name]
-                        ))
-                        generatedWorkoutData = workoutData
+                        )
+                        newMessage.id = messageId // Set the ID explicitly
+                        
+                        messages.append(newMessage)
+                        print("✅ Stored workout data for message ID: \(messageId)")
                         isLoading = false
                     }
                 } else {
@@ -265,11 +284,22 @@ struct AIAskView: View {
                                          (responseLower.contains("create") || responseLower.contains("build") || responseLower.contains("generate"))
                     
                     await MainActor.run {
-                        messages.append(AIMessage(
+                        // Generate a stable ID first
+                        let messageId = UUID()
+                        
+                        // Store the original user message with this AI message ID for later workout generation
+                        if suggestsWorkout {
+                            userPromptCache[messageId] = userMessage
+                        }
+                        
+                        var newMessage = AIMessage(
                             text: response,
                             isUser: false,
                             actionType: suggestsWorkout ? .createWorkout : nil
-                        ))
+                        )
+                        newMessage.id = messageId // Set the ID explicitly
+                        
+                        messages.append(newMessage)
                         isLoading = false
                     }
                 }
@@ -284,23 +314,79 @@ struct AIAskView: View {
         }
     }
     
-    private func handleAction(actionType: AIMessage.ActionType, data: [String: Any]?) {
+    // Cache to store workout data by message ID
+    @State private var workoutDataCache: [UUID: (name: String, exercises: [Exercise], summary: String, tips: [String])] = [:]
+    // Cache to store original user prompts for workout generation
+    @State private var userPromptCache: [UUID: String] = [:]
+    
+    private func handleAction(actionType: AIMessage.ActionType, data: [String: Any]?, messageId: UUID) {
+        // Prevent multiple rapid clicks
+        guard !isSavingWorkout, !showCreateWorkout else { 
+            print("⚠️ Action blocked: isSavingWorkout=\(isSavingWorkout), showCreateWorkout=\(showCreateWorkout)")
+            return 
+        }
+        
         switch actionType {
         case .createWorkout:
-            // If we have generated workout data, show the sheet
-            if generatedWorkoutData != nil {
+            print("🔍 Looking for workout data with message ID: \(messageId)")
+            print("📦 Cache contains \(workoutDataCache.count) entries")
+            print("📦 Cache keys: \(workoutDataCache.keys.map { $0.uuidString })")
+            
+            // Retrieve workout data from cache using message ID
+            if let workoutData = workoutDataCache[messageId] {
+                print("✅ Found workout data: \(workoutData.name) with \(workoutData.exercises.count) exercises")
+                currentWorkoutData = workoutData
+                isSavingWorkout = true // Set flag to prevent duplicate clicks
                 showCreateWorkout = true
             } else {
-                // Navigate to create workout view
-                // This would require navigation, but for now we'll show a sheet
-                showCreateWorkout = true
+                print("⚠️ Workout data not found in cache, generating workout now...")
+                // If workout data is not in cache, generate it now
+                isSavingWorkout = true
+                isLoading = true
+                
+                Task {
+                    do {
+                        // Get the original user prompt from cache, or use a default
+                        let prompt = userPromptCache[messageId] ?? "Create a workout plan"
+                        print("📝 Generating workout with prompt: \(prompt)")
+                        
+                        let workoutData = try await ai.generateWorkout(
+                            workoutType: prompt,
+                            targetMuscles: nil,
+                            duration: nil,
+                            equipment: nil,
+                            fitnessLevel: nil,
+                            additionalNotes: nil
+                        )
+                        
+                        await MainActor.run {
+                            // Store in cache
+                            workoutDataCache[messageId] = workoutData
+                            currentWorkoutData = workoutData
+                            isLoading = false
+                            showCreateWorkout = true
+                            print("✅ Generated and stored workout data: \(workoutData.name)")
+                        }
+                    } catch {
+                        await MainActor.run {
+                            print("❌ Failed to generate workout: \(error)")
+                            isLoading = false
+                            isSavingWorkout = false
+                            // Show error message
+                            messages.append(AIMessage(
+                                text: "Sorry, I couldn't generate a workout. Please try again.",
+                                isUser: false
+                            ))
+                        }
+                    }
+                }
             }
         case .createExercise:
             // Handle create exercise
             break
         case .viewWorkouts:
-            // Handle view workouts
-            break
+            // Navigate to Workouts tab using NotificationCenter
+            NotificationCenter.default.post(name: NSNotification.Name("NavigateToWorkoutsTab"), object: nil)
         }
     }
 }
@@ -308,6 +394,9 @@ struct AIAskView: View {
 private struct ChatBubble: View {
     let text: String
     let isUser: Bool
+    var actionType: AIMessage.ActionType? = nil
+    var actionData: [String: Any]? = nil
+    var onAction: ((AIMessage.ActionType, [String: Any]?) -> Void)? = nil
     
     private let cornerRadius: CGFloat = 20
     private let userTint = Constants.mainAppTheme
@@ -403,6 +492,13 @@ private struct ChatBubble: View {
                 Spacer(minLength: 50)
             }
             .padding(.horizontal, 4)
+            
+            // Action buttons for AI messages
+            if !isUser, let actionType = actionType {
+                ActionButtonView(actionType: actionType) {
+                    onAction?(actionType, actionData)
+                }
+            }
         }
     }
 }
@@ -549,18 +645,22 @@ struct CreateWorkoutFromAIView: View {
     let summary: String
     let tips: [String]
     let modelContext: ModelContext
+    var onSave: (() -> Void)? = nil
     
     @Environment(\.dismiss) private var dismiss
     @State private var newWorkout: Workout
     @State private var showSuccessAlert = false
     @State private var savedWorkout: Workout?
+    @State private var isSaving = false
+    @State private var saveError: String?
     
-    init(workoutName: String, exercises: [Exercise], summary: String, tips: [String], modelContext: ModelContext) {
+    init(workoutName: String, exercises: [Exercise], summary: String, tips: [String], modelContext: ModelContext, onSave: (() -> Void)? = nil) {
         self.workoutName = workoutName
         self.exercises = exercises
         self.summary = summary
         self.tips = tips
         self.modelContext = modelContext
+        self.onSave = onSave
         _newWorkout = State(initialValue: Workout(name: workoutName, exercises: []))
     }
     
@@ -626,54 +726,88 @@ struct CreateWorkoutFromAIView: View {
                     Button("Save") {
                         saveWorkout()
                     }
+                    .disabled(isSaving)
                 }
             }
             .alert("Workout Saved!", isPresented: $showSuccessAlert) {
                 Button("View Workouts") {
+                    onSave?()
                     dismiss()
-                    // Navigate to workouts - this will be handled by the parent
+                    // Post notification to navigate to Workouts tab
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        NotificationCenter.default.post(name: NSNotification.Name("NavigateToWorkoutsTab"), object: nil)
+                    }
                 }
                 Button("OK", role: .cancel) {
                     dismiss()
+                    onSave?()
                 }
             } message: {
                 Text("'\(workoutName)' has been saved to your workouts. You can find it in the Workouts tab.")
+            }
+            .alert("Error Saving Workout", isPresented: .constant(saveError != nil)) {
+                Button("OK") {
+                    saveError = nil
+                }
+            } message: {
+                if let error = saveError {
+                    Text(error)
+                }
             }
         }
     }
     
     private func saveWorkout() {
-        // Insert exercises into context first
+        guard !isSaving else { return } // Prevent duplicate saves
+        isSaving = true
+        saveError = nil
+        
+        // Collect exercises to add to workout
+        var exercisesToAdd: [Exercise] = []
+        
+        // Insert exercises into context first (only if they don't already exist)
         for exercise in exercises {
-            modelContext.insert(exercise)
+            // Check if exercise already exists in context to avoid duplicates
+            let fetchDescriptor = FetchDescriptor<Exercise>(
+                predicate: #Predicate { $0.name == exercise.name }
+            )
+            if let existingExercise = try? modelContext.fetch(fetchDescriptor).first {
+                // Use existing exercise
+                exercisesToAdd.append(existingExercise)
+            } else {
+                // Insert new exercise
+                modelContext.insert(exercise)
+                exercisesToAdd.append(exercise)
+            }
         }
         
-        // Update workout
-        newWorkout.name = workoutName
-        newWorkout.exercises = exercises
-        newWorkout.modified = Date()
-        newWorkout.created = Date()
+        // Create a new workout instance with the exercises
+        let workoutToSave = Workout(name: workoutName, exercises: exercisesToAdd)
+        workoutToSave.modified = Date()
+        workoutToSave.created = Date()
         
         // Insert workout into context
-        modelContext.insert(newWorkout)
+        modelContext.insert(workoutToSave)
         
         // Save context to get persistent identifiers
         do {
             try modelContext.save()
             
             // Now encode the order after saving (so we have persistent IDs)
-            if let savedExercises = newWorkout.exercises {
+            if let savedExercises = workoutToSave.exercises, !savedExercises.isEmpty {
                 let newIDs = savedExercises.map { $0.persistentModelID }
-                newWorkout.encodeIDs(ids: newIDs)
+                workoutToSave.encodeIDs(ids: newIDs)
                 try modelContext.save() // Save again with encoded order
             }
             
-            savedWorkout = newWorkout
-            print("✅ Saved workout: \(workoutName) with \(exercises.count) exercises")
+            savedWorkout = workoutToSave
+            print("✅ Saved workout: \(workoutName) with \(workoutToSave.exercises?.count ?? 0) exercises")
+            isSaving = false
             showSuccessAlert = true
         } catch {
             print("❌ Failed to save workout: \(error)")
-            // Show error alert
+            isSaving = false
+            saveError = "Failed to save workout: \(error.localizedDescription)"
         }
     }
 }
