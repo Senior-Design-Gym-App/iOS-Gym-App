@@ -26,37 +26,32 @@ struct DetailedWeightEntry: View {
         hkm.bodyWeightData.filter { $0.date >= earliestDate && $0.date <= latestDate }
     }
     
-    private var maxOneRepMax: Double {
-        let max = weightEntries.map { $0.value }.max()
-        guard let max else {
-            return 1
-        }
-        return max == 0 ? 1 : max
-    }
-    
     private var normalizedOneRepMaxes: [WeightEntry] {
         var normalized: [WeightEntry] = []
+        let max = GetMax(entries: weightEntries)
         
         for data in weightEntries {
-            normalized.append(WeightEntry(index: 0, value: data.value / maxOneRepMax, date: data.date))
+            normalized.append(WeightEntry(index: 0, value: data.value / max, date: data.date))
         }
         return normalized
     }
     
     private var normalizedBodyWeight: [WeightEntry] {
         var normalized: [WeightEntry] = []
+        let max = GetMax(entries: filteredBodyWeight)
         
         for data in filteredBodyWeight {
-            normalized.append(WeightEntry(index: 0, value: data.value / maxOneRepMax, date: data.date))
+            normalized.append(WeightEntry(index: 0, value: data.value / max, date: data.date))
         }
         return normalized
     }
     
     private var normalizedBodyFat: [WeightEntry] {
         var normalized: [WeightEntry] = []
+        let max = GetMax(entries: filteredBodyFat)
         
         for data in filteredBodyFat {
-            normalized.append(WeightEntry(index: 0, value: data.value / maxOneRepMax, date: data.date))
+            normalized.append(WeightEntry(index: 0, value: data.value / max, date: data.date))
         }
         return normalized
     }
@@ -77,7 +72,7 @@ struct DetailedWeightEntry: View {
                     Chart {
                         ReusedViews.Charts.PointMarks(data: normalizedOneRepMaxes, color: exercise.color)
                         ReusedViews.Charts.PointMarks(data: normalizedBodyWeight, color: Constants.healthColor)
-                        ReusedViews.Charts.PointMarks(data: normalizedBodyFat, color: Constants.healthColor)
+                        ReusedViews.Charts.PointMarks(data: normalizedBodyFat, color: Color.red)
                     }
                 } header: {
                     Text("Normalized Data")
@@ -88,6 +83,17 @@ struct DetailedWeightEntry: View {
         }
     }
     
-    
+    private func GetMax(entries: [WeightEntry]) -> Double {
+        let maxFound = entries.map { $0.value }.max()
+        if let maxFound {
+            if maxFound == 0 {
+                return 1
+            } else {
+                return maxFound
+            }
+        } else {
+            return 1
+        }
+    }
     
 }

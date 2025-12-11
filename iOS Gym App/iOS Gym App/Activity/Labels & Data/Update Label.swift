@@ -4,7 +4,10 @@ final class ActivityLabels {
         
     func UpdateDataLabel(specificUpdate: SetChangeData, allUpdates: [SetChangeData]) -> String {
         
-        let previous = allUpdates.first(where: { $0 == specificUpdate })
+        let previous = allUpdates
+            .filter { $0.changeDate < specificUpdate.changeDate }
+            .max(by: { $0.changeDate < $1.changeDate })
+        
         let current = specificUpdate
         
         if let previous {
