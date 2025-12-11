@@ -556,7 +556,7 @@ class CloudManager{
     }
     // MARK: - Social Features
 
-    func createUserProfile(username: String, displayName: String?, bio: String?) async throws {
+    func createUserProfile(username: String, displayName: String?, bio: String?, location: String? = nil) async throws {
         guard let url = URL(string: "\(apiBaseURL)/users") else {
             throw CloudError.invalidURL
         }
@@ -573,11 +573,19 @@ class CloudManager{
         request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
         
         
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "username": username,
             "displayName": displayName ?? username,
             "bio": bio ?? ""
         ]
+        
+        // Always include location if provided
+        if let location = location, !location.isEmpty {
+            body["location"] = location
+        }
+        
+        print("📤 Creating user profile - username: \(username), displayName: \(displayName ?? username), bio: \(bio ?? ""), location: \(location ?? "nil")")
+        print("📤 Create profile body: \(body)")
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
@@ -591,6 +599,7 @@ class CloudManager{
     }
 
     func getUserProfile(userId: String) async throws -> UserProfile {
+        print("📥 Fetching user profile for userId: \(userId)")
         // CHECK: userId should be appended to the URL path
         guard let url = URL(string: "\(apiBaseURL)/users/\(userId)") else {
             throw CloudError.invalidURL
@@ -623,7 +632,14 @@ class CloudManager{
               httpResponse.statusCode == 200 else {
             throw CloudError.invalidResponse
         }
+        
+        // Debug: Print response data
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("📥 Profile response: \(responseString)")
+        }
+        
         let x = try JSONDecoder().decode(UserProfile.self, from: data)
+        print("✅ Decoded profile - username: \(x.username), displayName: \(x.displayName), location: \(x.location ?? "nil")")
         return x
     }
     
@@ -651,9 +667,15 @@ class CloudManager{
             "bio": bio
         ]
         
-        if let location = location {
+        // Always include location in the request
+        // If location is provided and not empty, use it; otherwise use empty string
+        if let location = location, !location.isEmpty {
             body["location"] = location
+        } else {
+            body["location"] = ""  // Send empty string instead of omitting the field
         }
+        
+        print("📤 Updating profile - username: \(username), displayName: \(displayName), bio: \(bio), location: \(body["location"] ?? "nil")")
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
@@ -678,6 +700,7 @@ class CloudManager{
             patchRequest.httpMethod = "PATCH"
             patchRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
             patchRequest.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+            // Use the same body with location
             patchRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
             
             print("📤 Trying PATCH method on /users/me...")

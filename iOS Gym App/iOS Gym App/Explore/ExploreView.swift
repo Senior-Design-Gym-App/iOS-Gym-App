@@ -77,6 +77,13 @@ private struct ExploreGrid: View {
                 await loadCurrentUserProfile()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserProfileUpdated"))) { _ in
+            // When profile is updated, reload from cloud to get latest data
+            print("📢 Received profile update notification, reloading...")
+            Task {
+                await loadCurrentUserProfile()
+            }
+        }
     }
     
     private func loadCurrentUserProfile() async {
@@ -88,40 +95,31 @@ private struct ExploreGrid: View {
         
         isLoadingProfile = true
         
-        // First, load from local storage (UserDefaults) - this is the most recent
-        loadFromUserDefaults()
-        
-        // Get timestamp of local data
-        let localLastUpdated = UserDefaults.standard.double(forKey: "userProfileLastUpdated")
-        let hasLocalData = localLastUpdated > 0
-        
-        // Try to load from cloud
+        // Always try to load from cloud first (this is the source of truth after save)
         do {
             let userProfile = try await cloudManager.getCurrentUserProfile()
             let cloudProfile = UserProfileContent(from: userProfile)
             
-            // Only use cloud data if we don't have local data, or if local data is older
-            // (In practice, we'll prioritize local data since it's what the user just saved)
-            if !hasLocalData {
-                // No local data, use cloud data
-                currentUserProfile = cloudProfile
-                // Save cloud data to UserDefaults as backup
-                UserDefaults.standard.set(currentUserProfile.displayName, forKey: "userProfileName")
-                UserDefaults.standard.set(currentUserProfile.username, forKey: "userProfileDisplayName")
-                UserDefaults.standard.set(currentUserProfile.bio, forKey: "userProfileBio")
-                UserDefaults.standard.set(currentUserProfile.location, forKey: "userProfileLocation")
-            } else {
-                // We have local data, keep it (it's more recent)
-                // But update stats and other fields from cloud if needed
-                currentUserProfile.stats = cloudProfile.stats
-                print("ℹ️ Using local profile data (more recent than cloud)")
-            }
+            // Use cloud data as primary source
+            currentUserProfile = cloudProfile
+            
+            // Save cloud data to UserDefaults as backup
+            UserDefaults.standard.set(currentUserProfile.displayName, forKey: "userProfileName")
+            UserDefaults.standard.set(currentUserProfile.username, forKey: "userProfileDisplayName")
+            UserDefaults.standard.set(currentUserProfile.bio, forKey: "userProfileBio")
+            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "userProfileLastUpdated")
+            
+            print("✅ Loaded profile from cloud: \(cloudProfile.displayName), location: \(cloudProfile.location)")
         } catch {
             print("❌ Failed to load user profile from cloud: \(error)")
-            // If cloud load fails, we already have local data loaded, so just continue
-            if !hasLocalData {
-                // No local data and cloud failed, use demo
+            // Fallback to local storage if cloud load fails
+            loadFromUserDefaults()
+            
+            // If no local data either, use demo
+            if currentUserProfile.displayName.isEmpty && currentUserProfile.username.isEmpty {
                 currentUserProfile = .demo
+            } else {
+                print("ℹ️ Using local profile data (cloud load failed)")
             }
         }
         
@@ -149,9 +147,6 @@ private struct ExploreGrid: View {
         }
         if let savedBio = UserDefaults.standard.string(forKey: "userProfileBio") {
             currentUserProfile.bio = savedBio
-        }
-        if let savedLocation = UserDefaults.standard.string(forKey: "userProfileLocation") {
-            currentUserProfile.location = savedLocation
         }
         
         // Load images from Keychain

@@ -72,11 +72,12 @@ struct SessionCover: View {
             CreateWorkoutPostView(
                 session: session,
                 elapsedTime: sessionManager.elapsedTime,
-                defaultText: postText
+                defaultText: postText,
+                sessionManager: sessionManager
             ) {
                 // On post created, dismiss the session
-                ClearCurrentData()
-                dismiss()
+                sessionManager.endSession()
+                //dismiss()
             }
         }
     }
@@ -94,10 +95,11 @@ struct SessionCover: View {
         postText = "Completed \(session.name)! 💪\n\(exerciseCount) exercises in \(duration)"
         
         // Show post sheet instead of dismissing immediately
-        showPostSheet = true
         
         // Use SessionManager's endSession which handles cross-device sync
-        sessionManager.endSession()
+        //sessionManager.endSession()
+        showPostSheet = true
+
     }
     
     private func formatDuration(_ start: Date, _ end: Date?) -> String {
@@ -145,5 +147,7 @@ struct SessionCover: View {
     private func RenameSession(name: String) -> Void {
         session.name = name
     }
-    
+    private func CreatePost(poststring: String) async -> Void{
+        
+    }
 }

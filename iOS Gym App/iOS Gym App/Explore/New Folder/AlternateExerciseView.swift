@@ -287,6 +287,9 @@ struct AlternateExerciseView: View {
         // Update the session manager to use the new SessionData
         sessionManager.currentExercise = newSessionData
         
+        print("🔄 Updated sessionManager.currentExercise to: \(newExercise.name)")
+        print("🔄 Current exercise in manager: \(sessionManager.currentExercise?.exercise.name ?? "nil")")
+        
         // Update the session's exercises array if needed
         if let session = currentEntry.session {
             if var exercises = session.exercises {
@@ -303,6 +306,8 @@ struct AlternateExerciseView: View {
             sessionManager.rest = firstSet.rest
         }
         
+        print("🔄 About to call StartTimer with new exercise: \(newExercise.name)")
+        
         // Restart the timer with new exercise data
         sessionManager.StartTimer(exercise: newExercise, entry: newEntry)
         
@@ -314,5 +319,12 @@ struct AlternateExerciseView: View {
         print("📝 This is a one-time swap - the original workout is unchanged")
         
         try? context.save()
+        
+        // Force sync the updated exercise to the watch
+        // Use a small delay to ensure all state changes are complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak sessionManager] in
+            sessionManager?.syncExerciseQueueChanged()
+            print("⌚️ Synced alternate exercise to watch")
+        }
     }
 }

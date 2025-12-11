@@ -145,7 +145,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Main/HEART_RATE_AUTO_ADVANCE.md,
 				"Misc/Static/Launch Screen.storyboard",
 			);
 			target = E4F362A92E8C32B2000A0DEE /* iOS Gym App */;

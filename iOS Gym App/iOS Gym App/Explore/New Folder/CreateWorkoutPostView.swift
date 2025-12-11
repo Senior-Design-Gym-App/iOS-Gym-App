@@ -10,6 +10,7 @@ import SwiftUI
 
 struct CreateWorkoutPostView: View {
     let session: WorkoutSession
+    let sessionManager: SessionManager
     let elapsedTime: TimeInterval
     let defaultText: String
     let onPostCreated: () -> Void
@@ -19,13 +20,14 @@ struct CreateWorkoutPostView: View {
     @State private var isPosting = false
     @State private var showError = false
     @State private var errorMessage = ""
-    
-    init(session: WorkoutSession, elapsedTime: TimeInterval, defaultText: String, onPostCreated: @escaping () -> Void) {
+
+    init(session: WorkoutSession, elapsedTime: TimeInterval, defaultText: String, sessionManager: SessionManager, onPostCreated: @escaping () -> Void) {
         self.session = session
         self.elapsedTime = elapsedTime
         self.defaultText = defaultText
         self.onPostCreated = onPostCreated
         _postText = State(initialValue: defaultText)
+        self.sessionManager = sessionManager
     }
     
     var body: some View {

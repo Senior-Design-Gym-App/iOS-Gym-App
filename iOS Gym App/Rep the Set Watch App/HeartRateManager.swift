@@ -8,6 +8,9 @@
 import Foundation
 import HealthKit
 internal import Combine
+#if os(watchOS)
+import WatchKit
+#endif
 
 // Lightweight async semaphore to await a completion handler inside async context
 fileprivate actor AsyncSemaphore {
@@ -32,12 +35,23 @@ final class HeartRateManager {
     var currentHeartRate: Int = 0
     var isAuthorized: Bool = false
     
+    // MARK: - Auto-Advance Properties
+    
+    var isAutoAdvanceEnabled: Bool = true
+    var onAutoAdvance: (() -> Void)?  // Callback when auto-advance should trigger
+    
     // MARK: - Private Properties
     
     private let healthStore = HKHealthStore()
     private var heartRateQuery: HKQuery?
     private var workoutSession: HKWorkoutSession?
     private var workoutBuilder: HKLiveWorkoutBuilder?
+    
+    // Heart rate tracking for auto-advance
+    private var heartRateHistory: [Double] = []
+    private var peakHeartRate: Double = 0
+    private var isInSet: Bool = false
+    private let heartRateThreshold: Double = 0.85 // 85% of peak indicates recovery
     
     // MARK: - Initialization
     
@@ -179,6 +193,9 @@ final class HeartRateManager {
         self.workoutSession = nil
         self.workoutBuilder = nil
         self.currentHeartRate = 0
+        
+        // Reset auto-advance state
+        resetAutoAdvanceState()
     }
     
     // MARK: - Heart Rate Monitoring
@@ -262,5 +279,80 @@ final class HeartRateManager {
         currentHeartRate = Int(round(value))
         
         print("❤️ Heart rate updated: \(currentHeartRate) BPM")
+        
+        // Analyze for auto-advance if enabled
+        if isAutoAdvanceEnabled {
+            analyzeHeartRateForAutoAdvance(value)
+        }
+    }
+    
+    // MARK: - Auto-Advance Logic
+    
+    private func analyzeHeartRateForAutoAdvance(_ heartRate: Double) {
+        // Add to history (keep last 10 readings, roughly 10 seconds of data)
+        heartRateHistory.append(heartRate)
+        if heartRateHistory.count > 10 {
+            heartRateHistory.removeFirst()
+        }
+        
+        print("💓 HR History: \(heartRateHistory.map { Int($0) }) (count: \(heartRateHistory.count))")
+        
+        // Need at least 5 readings to detect patterns
+        guard heartRateHistory.count >= 5 else {
+            print("⏳ Waiting for more readings (\(heartRateHistory.count)/5)")
+            return
+        }
+        
+        // Detect if heart rate is increasing (person is performing a set)
+        if !isInSet {
+            let recentAverage = heartRateHistory.suffix(3).reduce(0, +) / 3.0
+            let olderAverage = heartRateHistory.prefix(3).reduce(0, +) / 3.0
+            let difference = recentAverage - olderAverage
+            
+            print("📊 Not in set - Recent avg: \(Int(recentAverage)), Older avg: \(Int(olderAverage)), Diff: \(Int(difference))")
+            
+            // Heart rate increased by at least 5 BPM - likely starting a set
+            if difference > 5 {
+                isInSet = true
+                peakHeartRate = heartRate
+                print("💓 🔥 SET DETECTED - HR increased to \(Int(heartRate)) BPM")
+            }
+        }
+        // Detect if heart rate is decreasing (person finished set and is resting)
+        else {
+            // Track peak heart rate during set
+            if heartRate > peakHeartRate {
+                peakHeartRate = heartRate
+                print("📈 New peak HR: \(Int(peakHeartRate)) BPM")
+            }
+            
+            // Check if heart rate has dropped significantly from peak
+            let recoveryThreshold = peakHeartRate * heartRateThreshold
+            let percentOfPeak = (heartRate / peakHeartRate) * 100
+            
+            print("📊 In set - Current: \(Int(heartRate)) BPM, Peak: \(Int(peakHeartRate)) BPM, Threshold: \(Int(recoveryThreshold)) BPM (\(Int(percentOfPeak))% of peak)")
+            
+            if heartRate < recoveryThreshold {
+                print("💓 ✅ RECOVERY DETECTED - HR dropped from \(Int(peakHeartRate)) to \(Int(heartRate)) BPM")
+                print("✅ Triggering auto-advance")
+                
+                // Play haptic feedback to notify user
+                #if os(watchOS)
+                WKInterfaceDevice.current().play(.success)
+                #endif
+                
+                // Reset state
+                resetAutoAdvanceState()
+                
+                // Trigger callback to advance set
+                onAutoAdvance?()
+            }
+        }
+    }
+    
+    private func resetAutoAdvanceState() {
+        isInSet = false
+        peakHeartRate = 0
+        heartRateHistory.removeAll()
     }
 }

@@ -109,11 +109,6 @@ struct AccountEditView: View {
                     TextField("Username", text: $editingProfile.username)
                         .textFieldStyle(.plain)
                 }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 4)
-                
-                TextField("Location", text: $editingProfile.location)
-                    .textFieldStyle(.plain)
                     .padding(.vertical, 12)
                     .padding(.horizontal, 4)
                 
@@ -133,10 +128,10 @@ struct AccountEditView: View {
                         ProgressView()
                             .frame(maxWidth: .infinity)
                     } else {
-                        Text("Save Changes")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
+                    Text("Save Changes")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -364,26 +359,26 @@ struct AccountEditView: View {
         UserDefaults.standard.set(editingProfile.displayName, forKey: "userProfileName")
         UserDefaults.standard.set(editingProfile.username, forKey: "userProfileDisplayName")
         UserDefaults.standard.set(editingProfile.bio, forKey: "userProfileBio")
-        UserDefaults.standard.set(editingProfile.location, forKey: "userProfileLocation")
         
         // Save timestamp to track when local data was last updated
         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "userProfileLastUpdated")
         print("✅ Saved profile data to UserDefaults")
         
         // Try to update profile on cloud with retry logic
+        // IMPORTANT: Wait for cloud save to complete before dismissing
         var cloudSaveSucceeded = false
         var lastError: Error?
         
-        // Try update first
+        // Try update first - wait for it to complete
         do {
             try await cloudManager.updateUserProfile(
                 username: editingProfile.username,
                 displayName: editingProfile.displayName,
                 bio: editingProfile.bio,
-                location: editingProfile.location.isEmpty ? nil : editingProfile.location
+                location: nil
             )
             cloudSaveSucceeded = true
-            print("✅ Profile updated on cloud")
+            print("✅ Profile updated on cloud successfully")
         } catch let error as CloudError {
             lastError = error
             // If profile doesn't exist (404), create it first
@@ -393,26 +388,11 @@ struct AccountEditView: View {
                     try await cloudManager.createUserProfile(
                         username: editingProfile.username,
                         displayName: editingProfile.displayName,
-                        bio: editingProfile.bio
+                        bio: editingProfile.bio,
+                        location: nil
                     )
-                    // Try updating again with location
-                    if !editingProfile.location.isEmpty {
-                        do {
-                            try await cloudManager.updateUserProfile(
-                                username: editingProfile.username,
-                                displayName: editingProfile.displayName,
-                                bio: editingProfile.bio,
-                                location: editingProfile.location
-                            )
-                            cloudSaveSucceeded = true
-                            print("✅ Profile created and updated on cloud")
-                        } catch {
-                            print("⚠️ Failed to update profile with location: \(error)")
-                        }
-                    } else {
-                        cloudSaveSucceeded = true
-                        print("✅ Profile created on cloud")
-                    }
+                    cloudSaveSucceeded = true
+                    print("✅ Profile created on cloud")
                 } catch {
                     print("⚠️ Failed to create profile: \(error), but saved locally")
                 }
@@ -424,7 +404,8 @@ struct AccountEditView: View {
                     try await cloudManager.createUserProfile(
                         username: editingProfile.username,
                         displayName: editingProfile.displayName,
-                        bio: editingProfile.bio
+                        bio: editingProfile.bio,
+                        location: nil
                     )
                     cloudSaveSucceeded = true
                     print("✅ Profile created on cloud after 403 error")
@@ -447,9 +428,23 @@ struct AccountEditView: View {
             profile.username = editingProfile.username
             profile.displayName = editingProfile.displayName
             profile.bio = editingProfile.bio
-            profile.location = editingProfile.location
             profile.profileImage = editingProfile.profileImage
             profile.coverImage = editingProfile.coverImage
+            
+            // If cloud save succeeded, notify other views to refresh
+            if cloudSaveSucceeded {
+                // Post notification to refresh profile views
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("UserProfileUpdated"),
+                    object: nil,
+                    userInfo: [
+                        "displayName": editingProfile.displayName,
+                        "username": editingProfile.username,
+                        "bio": editingProfile.bio
+                    ]
+                )
+                print("✅ Posted profile update notification")
+            }
             
             // Show error alert if cloud save failed
             if !cloudSaveSucceeded {
@@ -457,13 +452,18 @@ struct AccountEditView: View {
                    case .serverError(let message) = error, message.contains("403") {
                     errorMessage = "Changes saved locally, but couldn't sync to cloud (permission denied). Your data is safe."
                     showError = true
+                    // Don't dismiss if cloud save failed - let user see the error
+                    return
                 } else {
                     errorMessage = "Changes saved locally, but couldn't sync to cloud. Your data is safe."
                     showError = true
+                    // Don't dismiss if cloud save failed - let user see the error
+                    return
                 }
             }
             
-            dismiss()
+            // Only dismiss if cloud save succeeded
+        dismiss()
         }
         
         await MainActor.run {
@@ -513,9 +513,6 @@ struct AccountEditView: View {
         if let savedBio = UserDefaults.standard.string(forKey: "userProfileBio") {
             editingProfile.bio = savedBio
         }
-        if let savedLocation = UserDefaults.standard.string(forKey: "userProfileLocation") {
-            editingProfile.location = savedLocation
-        }
     }
     
     private func loadProfileFromCloud(onlyIfLocalMissing: Bool = false) async {
@@ -530,13 +527,11 @@ struct AccountEditView: View {
                     editingProfile.username = cloudProfile.username
                     editingProfile.displayName = cloudProfile.displayName
                     editingProfile.bio = cloudProfile.bio
-                    editingProfile.location = cloudProfile.location
                     
                     // Also update the binding so UserProfileView gets updated
                     profile.username = cloudProfile.username
                     profile.displayName = cloudProfile.displayName
                     profile.bio = cloudProfile.bio
-                    profile.location = cloudProfile.location
                 }
             }
         } catch {

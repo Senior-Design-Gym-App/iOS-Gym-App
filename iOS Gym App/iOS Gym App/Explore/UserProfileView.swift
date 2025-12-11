@@ -190,15 +190,6 @@ struct UserProfileView: View {
 
     private var profileCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "mappin.and.ellipse")
-                    .foregroundStyle(.secondary)
-                Text(currentProfile.location)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-
             // Follow button only shown when viewing other users' profiles
             // Removed for now - can be added back when implementing social features
 
@@ -302,7 +293,6 @@ struct UserProfileView: View {
             currentProfile.username = cloudProfile.username
             currentProfile.displayName = cloudProfile.displayName
             currentProfile.bio = cloudProfile.bio
-            currentProfile.location = cloudProfile.location
             currentProfile.stats = cloudProfile.stats
         } catch {
             print("❌ Failed to load profile from cloud: \(error)")
@@ -348,7 +338,8 @@ extension UserProfileContent {
         self.username = backendProfile.username
         self.displayName = backendProfile.displayName
         self.bio = backendProfile.bio
-        self.location = backendProfile.location ?? "Unknown Location"
+        // Location removed - no longer used
+        self.location = ""
         self.coverImage = nil      // Will be loaded asynchronously
         self.profileImage = nil    // Will be loaded asynchronously
         self.stats = [
