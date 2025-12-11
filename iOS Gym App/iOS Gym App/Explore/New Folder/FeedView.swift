@@ -67,7 +67,19 @@ struct FeedView: View {
 
 struct PostRow: View {
     let post: Post
-    
+    let formatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        return f
+    }()
+    var timeAgoA: String {
+        guard let date = formatter.date(from: post.createdAt) else { return post.createdAt }
+        let yuh = DateHandler().RelativeTime(from: date)
+        return DateHandler().RelativeTime(from: date)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -78,20 +90,21 @@ struct PostRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
-                Text(post.timeAgo)
+
+                Text(timeAgoA)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            
+
             Text(post.text)
                 .font(.body)
         }
         .padding(.vertical, 4)
     }
 }
+
 
 struct CreatePostView: View {
     @Environment(\.dismiss) private var dismiss

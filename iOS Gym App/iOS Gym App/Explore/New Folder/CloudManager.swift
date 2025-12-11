@@ -25,7 +25,24 @@ class CloudManager{
     
     /// Get current ID token from Keychain
     private func getIdToken() -> String? {
-        return KeychainHelper.standard.retrieveToken(key: "idToken")
+        let token = KeychainHelper.standard.retrieveToken(key: "idToken")
+        
+        if let token = token {
+            // Validate token format
+            let parts = token.components(separatedBy: ".")
+            if parts.count != 3 {
+                print("⚠️ Invalid token format - expected JWT with 3 parts, got \(parts.count)")
+                return nil
+            }
+            
+            // Debug: Print first 20 chars of token
+            let preview = String(token.prefix(20))
+            print("🔑 Using token starting with: \(preview)...")
+        } else {
+            print("❌ No token found in keychain")
+        }
+        
+        return token
     }
     
     // ADD THIS
@@ -104,6 +121,115 @@ class CloudManager{
     
     // MARK: - API Methods
     
+    /// Fetch public workouts from the API for a specific user
+    func fetchUserPublicWorkouts(userId: String) async throws -> [Workout] {
+        guard isAuthenticated else {
+            throw CloudError.notAuthenticated
+        }
+        
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        
+        print("🔍 Fetching public workouts for userId: \(userId)")
+        
+        // Use the public workouts endpoint
+        let endpoint = "/workouts/public"
+        let url = apiBaseURL + endpoint
+        
+        print("📤 Request URL: \(url)")
+        
+        let headers = [
+            "Authorization": "Bearer \(idToken)",
+            "Content-Type": "application/json"
+        ]
+        
+        let response = try await makeRequest(
+            url: url,
+            method: "GET",
+            headers: headers,
+            body: nil
+        )
+        
+        print("📥 Raw response: \(response)")
+        
+        guard let workoutsArray = response["workouts"] as? [[String: Any]] else {
+            print("❌ Failed to parse workouts array from response")
+            print("📥 Response keys: \(response.keys)")
+            throw CloudError.invalidResponse
+        }
+        
+        print("✅ Found \(workoutsArray.count) total public workout items")
+        
+        // Filter workouts by userId
+        let userWorkouts = workoutsArray.filter { workout in
+            if let workoutUserId = workout["userId"] as? String {
+                return workoutUserId == userId
+            }
+            return false
+        }
+        
+        print("✅ Found \(userWorkouts.count) workouts for user \(userId)")
+
+        var results: [Workout] = []
+
+        for (index, item) in userWorkouts.enumerated() {
+            print("🔍 Processing workout \(index + 1)/\(userWorkouts.count)")
+            
+            guard let workoutId = item["workoutId"] as? String else {
+                print("⚠️ Skipping item - no workoutId found")
+                continue
+            }
+            
+            print("   📥 Fetching full workout with ID: \(workoutId)")
+            
+            do {
+                let workout = try await fetchWorkout(workoutId: workoutId)
+                results.append(workout)
+                print("   ✅ Successfully fetched workout: \(workout.name)")
+            } catch {
+                print("   ❌ Failed to fetch workout \(workoutId): \(error)")
+            }
+        }
+        
+        print("✅ Returning \(results.count) workouts for user \(userId)")
+        return results
+    }
+    
+    /// Fetch user's workouts
+    func fetchMyWorkouts() async throws -> [Workout] {
+        guard isAuthenticated else {
+            throw CloudError.notAuthenticated
+        }
+        
+        guard let idToken = getIdToken() else {
+            print("❌ No ID token found in Keychain")
+            throw CloudError.notAuthenticated
+        }
+        
+        let endpoint = "/workouts"
+        let url = apiBaseURL + endpoint
+        
+        let headers = [
+            "Authorization": "Bearer \(idToken)",
+            "Content-Type": "application/json"
+        ]
+        
+        let response = try await makeRequest(
+            url: url,
+            method: "GET",
+            headers: headers,
+            body: nil
+        )
+        
+        guard let workoutsArray = response["workouts"] as? [[String: Any]] else {
+            throw CloudError.invalidResponse
+        }
+        print("Found workoutArrays \(workoutsArray)")
+        
+        return try workoutsArray.compactMap { try? parseWorkout(from: $0) }
+    }
     /// Fetch public workouts from the API
     func fetchPublicWorkouts(tags: [String]? = nil) async throws -> [Workout] {
         guard isAuthenticated else {
@@ -154,8 +280,8 @@ class CloudManager{
         return results
     }
     
-    /// Fetch user's workouts
-    func fetchMyWorkouts() async throws -> [Workout] {
+    /// Get count and recent public workouts for a specific user by filtering public workouts
+    func getPublicWorkoutsInfo(for userId: String) async throws -> (count: Int, recentWorkouts: [Workout]) {
         guard isAuthenticated else {
             throw CloudError.notAuthenticated
         }
@@ -165,8 +291,13 @@ class CloudManager{
             throw CloudError.notAuthenticated
         }
         
-        let endpoint = "/workouts"
+        print("🔍 Getting public workouts info for userId: \(userId)")
+        
+        // Use the public workouts endpoint
+        let endpoint = "/workouts/public"
         let url = apiBaseURL + endpoint
+        
+        print("📤 Request URL: \(url)")
         
         let headers = [
             "Authorization": "Bearer \(idToken)",
@@ -180,12 +311,66 @@ class CloudManager{
             body: nil
         )
         
+        print("📥 Raw response: \(response)")
+        
         guard let workoutsArray = response["workouts"] as? [[String: Any]] else {
+            print("❌ Failed to parse workouts array")
+            print("📥 Response keys: \(response.keys)")
             throw CloudError.invalidResponse
         }
-        print("Found workoutArrays \(workoutsArray)")
         
-        return try workoutsArray.compactMap { try? parseWorkout(from: $0) }
+        print("✅ Found \(workoutsArray.count) total public workout items")
+
+        // Filter workouts by userId
+        let userWorkouts = workoutsArray.filter { workout in
+            if let workoutUserId = workout["createdBy"] as? String {
+                print("🔍 Workout userId: \(workoutUserId), target userId: \(userId), match: \(workoutUserId == userId)")
+                return workoutUserId == userId
+            }
+            print("⚠️ Workout missing userId field: \(workout)")
+            return false
+        }
+        
+        print("✅ Found \(userWorkouts.count) workouts for user \(userId)")
+        
+        // Sort by date (most recent first) if createdAt or updatedAt exists
+        let sortedWorkouts = userWorkouts.sorted { workout1, workout2 in
+            let date1 = (workout1["updatedAt"] as? String) ?? (workout1["createdAt"] as? String) ?? ""
+            let date2 = (workout2["updatedAt"] as? String) ?? (workout2["createdAt"] as? String) ?? ""
+            return date1 > date2
+        }
+        
+        // Get the first 3 workout IDs
+        let recentWorkoutItems = Array(sortedWorkouts.prefix(3))
+        print("📋 Getting details for \(recentWorkoutItems.count) recent workouts")
+        
+        // Fetch full workout details for the recent workouts
+        var recentWorkouts: [Workout] = []
+        for (index, item) in recentWorkoutItems.enumerated() {
+            guard let workoutId = item["workoutId"] as? String else {
+                print("⚠️ Workout \(index) missing workoutId")
+                continue
+            }
+            
+            print("📥 Fetching workout \(index + 1): \(workoutId)")
+            
+            do {
+                let workout = try await fetchWorkout(workoutId: workoutId)
+                recentWorkouts.append(workout)
+                print("   ✅ Fetched: \(workout.name)")
+            } catch {
+                print("   ❌ Failed to fetch workout \(workoutId): \(error)")
+            }
+        }
+        
+        print("✅ Returning count: \(userWorkouts.count), recent workouts: \(recentWorkouts.count)")
+        return (count: userWorkouts.count, recentWorkouts: recentWorkouts)
+    }
+    
+    /// Get count of public workouts for a specific user (without loading full workout details)
+    func getPublicWorkoutCount(for userId: String) async throws -> Int {
+        let info = try await getPublicWorkoutsInfo(for: userId)
+        return info.count
     }
     
     /// Get a specific workout by ID
@@ -217,6 +402,7 @@ class CloudManager{
         return try parseWorkout(from: response)
     }
     
+
     /// Create a new workout
     func createWorkout(_ workout: Workout) async throws -> String {
         guard isAuthenticated else {
@@ -306,6 +492,13 @@ class CloudManager{
             headers: headers,
             body: nil
         )
+        
+        print("✅ Workout deleted")
+        
+        // Notify UI to refresh profile stats
+        await MainActor.run {
+            NotificationCenter.default.post(name: .profileStatsUpdated, object: nil)
+        }
     }
     
     /// Publish a workout (make it public)
@@ -333,6 +526,13 @@ class CloudManager{
             headers: headers,
             body: nil
         )
+        
+        print("✅ Workout published")
+        
+        // Notify UI to refresh profile stats
+        await MainActor.run {
+            NotificationCenter.default.post(name: .profileStatsUpdated, object: nil)
+        }
     }
     
     /// Copy a public workout to user's account
@@ -377,7 +577,29 @@ class CloudManager{
     func getUserEmail() -> String? {
         return authManager?.currentUser
     }
-    
+    func getUpdatedProfileStats() async throws -> (workoutCount: Int, publicWorkoutCount: Int, friendCount: Int) {
+        // Get current user ID
+        let userId = try await getCurrentUserId()
+        
+        // Fetch profile which should have the most up-to-date counts from backend
+        let profile = try await getCurrentUserProfile()
+        
+        // Get friend count from friends list
+        let friends = try await getFriends()
+        
+        // Get accurate public workout count using the new function
+        let publicWorkoutCount = try await getPublicWorkoutCount(for: userId)
+        
+        // Backend should track workout counts, so use profile data for total count
+        let workoutCount = profile.workoutCount ?? publicWorkoutCount
+        let friendCount = friends.count
+        
+        return (
+            workoutCount: workoutCount,
+            publicWorkoutCount: publicWorkoutCount,
+            friendCount: friendCount
+        )
+    }
     // MARK: - Helper Methods
     
     private func makeRequest(
@@ -797,10 +1019,12 @@ class CloudManager{
         guard let url = URL(string: "\(apiBaseURL)/friends/request") else {
             throw CloudError.invalidURL
         }
+        
         guard let idToken = getIdToken() else {
             print("❌ No ID token found in Keychain")
             throw CloudError.notAuthenticated
         }
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -815,6 +1039,8 @@ class CloudManager{
               httpResponse.statusCode == 200 else {
             throw CloudError.invalidResponse
         }
+        
+        print("✅ Friend request sent")
     }
 
     func createPost(text: String) async throws -> String {
@@ -943,12 +1169,11 @@ class CloudManager{
         guard let url = URL(string: "\(apiBaseURL)/friends/accept") else {
             throw CloudError.invalidURL
         }
-        //print("trying to get token")
+        
         guard let idToken = getIdToken() else {
             print("❌ No ID token found in Keychain")
             throw CloudError.notAuthenticated
         }
-        //print("got token")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -960,11 +1185,16 @@ class CloudManager{
         
         let (_, response) = try await URLSession.shared.data(for: request)
         
-        //print("Accepting Response: \(response)")
-        
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
             throw CloudError.invalidResponse
+        }
+        
+        print("✅ Friend request accepted")
+        
+        // Notify UI to refresh profile stats
+        await MainActor.run {
+            NotificationCenter.default.post(name: .profileStatsUpdated, object: nil)
         }
     }
     func getFriends() async throws -> [Friend] {
@@ -1031,4 +1261,7 @@ enum CloudError: LocalizedError {
             return "Invalid Token"
         }
     }
+}
+extension Notification.Name {
+    static let profileStatsUpdated = Notification.Name("profileStatsUpdated")
 }

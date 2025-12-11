@@ -17,6 +17,10 @@ struct UserProfileView: View {
     @State private var hasLoadedProfile = false
     @State private var showProfilePreview = false
     @State private var showCoverPreview = false
+    @State private var recentWorkouts: [Workout] = []
+    @State private var isLoadingWorkouts = false
+    @State private var selectedWorkout: Workout? = nil
+    @State private var showWorkoutDetail = false
     
     private let bannerHeight: CGFloat = 140
     private let avatarSize: CGFloat = Constants.mediumIconSize
@@ -55,11 +59,14 @@ struct UserProfileView: View {
         .onAppear(perform: loadProfileIfNeeded)
         .onChange(of: profile, initial: false) { _, newValue in
             currentProfile = newValue
-            // If viewing own profile, reload from cloud to get latest data
-            if isOwnProfile && authManager.isAuthenticated {
-                Task {
-                    await loadOwnProfileFromCloud()
-                }
+            // Reload from cloud when profile changes
+            Task {
+                await loadProfileFromCloud()
+            }
+        }
+        .sheet(item: $selectedWorkout) { workout in
+            NavigationStack {
+                WorkoutDetailView(workout: workout)
             }
         }
         .fullScreenCover(isPresented: $showProfilePreview) {
@@ -190,9 +197,6 @@ struct UserProfileView: View {
 
     private var profileCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Follow button only shown when viewing other users' profiles
-            // Removed for now - can be added back when implementing social features
-
             HStack(spacing: 12) {
                 ForEach(currentProfile.stats, id: \.0) { label, value in
                     VStack {
@@ -225,29 +229,84 @@ struct UserProfileView: View {
 
     private var recent: some View {
         VStack(alignment: .leading, spacing: Constants.customLabelPadding * 2) {
-            Text("Recent Workouts")
+            Text(isOwnProfile ? "Recent Workouts" : "Public Workouts")
                 .font(.headline)
-            ForEach(currentProfile.recentWorkouts, id: \.self) { workout in
-                HStack(spacing: Constants.customLabelPadding * 2) {
-                    RoundedRectangle(cornerRadius: statCardCornerRadius, style: .continuous)
-                        .fill(Color(.systemGray6))
-                        .frame(width: 56, height: 56)
-                        .overlay { Image(systemName: "dumbbell").foregroundStyle(.primary) }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(workout)
-                            .font(.body.weight(.semibold))
-                        Text("Tap to view details")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            
+            if isLoadingWorkouts {
+                HStack {
                     Spacer()
-                    Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                    ProgressView()
+                    Spacer()
                 }
-                .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: recentCardCornerRadius, style: .continuous)
-                    .fill(Color(.systemGray6))
-            )
+                .frame(maxWidth: .infinity)
+                .padding()
+            } else if recentWorkouts.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.secondary)
+                    Text(isOwnProfile ? "No recent workouts" : "No public workouts")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding()
+            } else {
+                ForEach(recentWorkouts, id: \.id) { workout in
+                    Button {
+                        selectedWorkout = workout
+                    } label: {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: Constants.customLabelPadding * 2) {
+                                // Use workout color if available
+                                RoundedRectangle(cornerRadius: statCardCornerRadius, style: .continuous)
+                                    .fill(workout.color)
+                                    .frame(width: 56, height: 56)
+                                    .overlay {
+                                        Image(systemName: "dumbbell")
+                                            .foregroundStyle(.white)
+                                    }
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(workout.name)
+                                        .font(.body.weight(.semibold))
+                                        .foregroundStyle(.primary)
+                                    
+                                    if let exercises = workout.exercises, !exercises.isEmpty {
+                                        Text("\(exercises.count) exercise\(exercises.count == 1 ? "" : "s")")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            // Muscle group tags
+                            if !workout.tags.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 6) {
+                                        ForEach(workout.tags, id: \.self) { tag in
+                                            Text(tag.rawValue)
+                                                .font(.caption2)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(tag.colorPalette.opacity(0.2))
+                                                .foregroundStyle(tag.colorPalette)
+                                                .clipShape(Capsule())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: recentCardCornerRadius, style: .continuous)
+                                .fill(Color(.systemGray6))
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
@@ -256,36 +315,108 @@ struct UserProfileView: View {
         guard !hasLoadedProfile else { return }
         currentProfile = profile
         
-        // If viewing own profile and authenticated, try to load from cloud
-        if isOwnProfile && authManager.isAuthenticated {
-            Task {
-                await loadOwnProfileFromCloud()
-            }
+        // Load profile from cloud
+        Task {
+            await loadProfileFromCloud()
         }
         
         hasLoadedProfile = true
     }
     
-    private func loadOwnProfileFromCloud() async {
+    private func loadProfileFromCloud() async {
+        print("🔍 loadProfileFromCloud called")
+        
         let cloudManager = CloudManager.shared
         cloudManager.setAuthManager(authManager)
         
+        isLoadingWorkouts = true
+        
         do {
-            let userProfile = try await cloudManager.getCurrentUserProfile()
-            let cloudProfile = UserProfileContent(from: userProfile)
+            print("🔍 Determining which profile to load...")
+            print("   isOwnProfile: \(isOwnProfile)")
+            print("   userId parameter: \(userId ?? "nil")")
             
-            // Load images from Keychain
-            if let profileImageData = KeychainHelper.standard.retrieveData(key: "userProfileImage"),
-               let image = UIImage(data: profileImageData) {
-                currentProfile.profileImage = image
+            // Determine which profile to load
+            let userProfile: UserProfile
+            let profileUserId: String
+            
+            if isOwnProfile {
+                // Load own profile
+                print("📤 Loading own profile...")
+                userProfile = try await cloudManager.getCurrentUserProfile()
+                profileUserId = try await cloudManager.getCurrentUserId()
+                print("✅ Loaded own profile - userId: \(profileUserId)")
+            } else if let userId = userId {
+                // Load friend's profile by userId
+                print("📤 Loading friend's profile for userId: \(userId)")
+                userProfile = try await cloudManager.getUserProfile(userId: userId)
+                profileUserId = userId
+                print("✅ Loaded friend's profile - userId: \(profileUserId)")
             } else {
-                currentProfile.profileImage = cloudProfile.profileImage
+                print("❌ No userId provided for friend profile")
+                isLoadingWorkouts = false
+                return
             }
             
-            if let coverImageData = KeychainHelper.standard.retrieveData(key: "userCoverImage"),
-               let image = UIImage(data: coverImageData) {
-                currentProfile.coverImage = image
+            print("📊 Profile info:")
+            print("   Username: \(userProfile.username)")
+            print("   Display name: \(userProfile.displayName)")
+            
+            // Get accurate public workout count and recent workouts in one call
+            print("📤 Fetching public workouts info...")
+            let workoutsInfo = try await cloudManager.getPublicWorkoutsInfo(for: profileUserId)
+            let publicWorkoutCount = workoutsInfo.count
+            let fetchedRecentWorkouts = workoutsInfo.recentWorkouts
+            
+            print("✅ Public workout count: \(publicWorkoutCount)")
+            print("✅ Recent workouts fetched: \(fetchedRecentWorkouts.count)")
+            
+            // Get friend count
+            print("📤 Fetching friends list...")
+            let friends = try await cloudManager.getFriends()
+            let friendCount = friends.count
+            print("✅ Friend count: \(friendCount)")
+            
+            // Create profile content with accurate stats
+            var cloudProfile = UserProfileContent(from: userProfile)
+            
+            // Update stats with accurate counts
+            if isOwnProfile {
+                // For own profile, show total workouts and public workouts
+                cloudProfile.stats = [
+                    ("Workouts", "\(publicWorkoutCount)"),
+                    ("Public", "\(publicWorkoutCount)"),
+                    ("Friends", "\(friendCount)")
+                ]
+                print("📊 Own profile stats updated: \(cloudProfile.stats)")
             } else {
+                // For other users, only show public workouts
+                cloudProfile.stats = [
+                    ("Workouts", "\(publicWorkoutCount)"),
+                    ("Followers", "\(userProfile.followers)"),
+                    ("Following", "\(userProfile.following)")
+                ]
+                print("📊 Friend profile stats updated: \(cloudProfile.stats)")
+            }
+            
+            // Load images from Keychain (only for own profile)
+            if isOwnProfile {
+                if let profileImageData = KeychainHelper.standard.retrieveData(key: "userProfileImage"),
+                   let image = UIImage(data: profileImageData) {
+                    currentProfile.profileImage = image
+                } else {
+                    currentProfile.profileImage = cloudProfile.profileImage
+                }
+                
+                if let coverImageData = KeychainHelper.standard.retrieveData(key: "userCoverImage"),
+                   let image = UIImage(data: coverImageData) {
+                    currentProfile.coverImage = image
+                } else {
+                    currentProfile.coverImage = cloudProfile.coverImage
+                }
+            } else {
+                // For friends, use cloud profile images
+                currentProfile.profileImage = cloudProfile.profileImage
                 currentProfile.coverImage = cloudProfile.coverImage
             }
             
@@ -294,9 +425,64 @@ struct UserProfileView: View {
             currentProfile.displayName = cloudProfile.displayName
             currentProfile.bio = cloudProfile.bio
             currentProfile.stats = cloudProfile.stats
+            
+            print("✅ Profile updated, setting workouts...")
+            
+            // Set the recent workouts we already fetched
+            if isOwnProfile {
+                // For own profile, still fetch using fetchMyWorkouts to get all workouts
+                await loadRecentWorkouts(cloudManager: cloudManager, profileUserId: profileUserId)
+            } else {
+                // For friend's profile, use the workouts we already fetched
+                recentWorkouts = fetchedRecentWorkouts
+                print("✅ Set \(recentWorkouts.count) recent workouts for friend profile")
+                for (index, workout) in recentWorkouts.enumerated() {
+                    print("   Workout \(index + 1): \(workout.name)")
+                }
+                isLoadingWorkouts = false
+            }
+            
         } catch {
             print("❌ Failed to load profile from cloud: \(error)")
+            isLoadingWorkouts = false
         }
+    }
+    
+    private func loadRecentWorkouts(cloudManager: CloudManager, profileUserId: String) async {
+        print("🔍 loadRecentWorkouts called")
+        print("   isOwnProfile: \(isOwnProfile)")
+        print("   profileUserId: \(profileUserId)")
+        
+        do {
+            let workouts: [Workout]
+            
+            if isOwnProfile {
+                // Load own workouts (both public and private)
+                print("📤 Fetching own workouts...")
+                workouts = try await cloudManager.fetchMyWorkouts()
+                print("✅ Fetched \(workouts.count) own workouts")
+            } else {
+                // Load friend's public workouts only using the profileUserId
+                print("📤 Fetching public workouts for user: \(profileUserId)")
+                workouts = try await cloudManager.fetchUserPublicWorkouts(userId: profileUserId)
+                print("✅ Fetched \(workouts.count) public workouts")
+            }
+            
+            // Get the 3 most recent workouts
+            recentWorkouts = Array(workouts.prefix(3))
+            print("✅ Loaded \(recentWorkouts.count) recent workouts for user \(profileUserId)")
+            
+            // Print workout names for debugging
+            for (index, workout) in recentWorkouts.enumerated() {
+                print("   Workout \(index + 1): \(workout.name)")
+            }
+            
+        } catch {
+            print("❌ Failed to load recent workouts: \(error)")
+            recentWorkouts = []
+        }
+        
+        isLoadingWorkouts = false
     }
     
     // Check if viewing own profile
@@ -315,6 +501,129 @@ struct UserProfileView: View {
                currentProfile.displayName == currentDisplayName ||
                currentProfile.username == currentDisplayName ||
                currentProfile.displayName == currentUsername
+    }
+}
+
+// MARK: - Workout Detail View
+struct WorkoutDetailView: View {
+    let workout: Workout
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Circle()
+                            .fill(workout.color)
+                            .frame(width: 32, height: 32)
+                            .overlay {
+                                Image(systemName: "dumbbell")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(.white)
+                            }
+                        Text(workout.name)
+                            .font(.title2.bold())
+                    }
+                    
+                    if let exercises = workout.exercises {
+                        Text("\(exercises.count) exercise\(exercises.count == 1 ? "" : "s")")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Muscle group tags
+                    if !workout.tags.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(workout.tags, id: \.self) { tag in
+                                    Text(tag.rawValue)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(tag.colorPalette.opacity(0.2))
+                                        .foregroundStyle(tag.colorPalette)
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            
+            Section("Exercises") {
+                if let exercises = workout.exercises {
+                    ForEach(Array(exercises.enumerated()), id: \.offset) { index, exercise in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("\(index + 1).")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20, alignment: .leading)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(exercise.name)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    
+                                    HStack(spacing: 12) {
+                                        if let muscle = exercise.muscleWorked {
+                                            Label(muscle, systemImage: "figure.arms.open")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        
+                                        if let equipment = exercise.equipment {
+                                            Label(equipment, systemImage: "dumbbell")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Show set data from most recent session
+                            let setData = exercise.recentSetData.setData
+                            if !setData.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 4) {
+                                        ForEach(Array(setData.enumerated()), id: \.offset) { setIndex, set in
+                                            VStack(spacing: 2) {
+                                                Text("Set \(setIndex + 1)")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                                
+                                                Text("\(set.reps) × \(Int(set.weight))\(exercise.equipment ?? "lbs")")
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                                
+                                                Text("\(set.rest)s rest")
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                            .padding(6)
+                                            .background(Color(.systemGray6))
+                                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Workout Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
     }
 }
 
@@ -391,4 +700,3 @@ extension UserProfileContent {
         }
     }
 }
-
