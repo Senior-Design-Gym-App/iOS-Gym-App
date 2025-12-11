@@ -141,6 +141,19 @@ final class WorkoutSessionModel: ObservableObject {
             setTimer?.invalidate()
         }
         
+        // Update workout name if it changed (alternate workout switch)
+        if let remoteWorkoutName = update.workoutName, remoteWorkoutName != workout.name {
+            print("⌚️ Workout name changed: '\(workout.name)' → '\(remoteWorkoutName)'")
+            // Create a new WorkoutTransfer with updated name but same exercises
+            workout = WorkoutTransfer(
+                id: workout.id,
+                name: remoteWorkoutName,
+                exercises: workout.exercises,
+                splitName: workout.splitName
+            )
+            print("⌚️ Updated workout name to: '\(workout.name)'")
+        }
+        
         // Sync workout start time if available; align local timer to phone
         if let remoteStartTime = update.workoutStartTime {
             let previousStart = workoutStartTime
@@ -164,14 +177,57 @@ final class WorkoutSessionModel: ObservableObject {
             }
         }
         
-        guard let remoteExercise = update.currentExercise else { return }
+        guard let remoteExercise = update.currentExercise else { 
+            print("⌚️ No remote exercise in update")
+            return 
+        }
+        
+        print("⌚️ Remote exercise name: '\(remoteExercise.exerciseName)'")
+        print("⌚️ Current exercise index: \(currentExerciseIndex)")
+        print("⌚️ Current exercise name: '\(workout.exercises[currentExerciseIndex].name)'")
+        print("⌚️ Available exercises: \(workout.exercises.map { $0.name })")
         
         // Find the exercise index by name
         if let exerciseIndex = workout.exercises.firstIndex(where: { $0.name == remoteExercise.exerciseName }) {
+            print("⌚️ Found matching exercise at index \(exerciseIndex)")
             if exerciseIndex != currentExerciseIndex {
+                print("⌚️ ⚡️ UPDATING exercise index from \(currentExerciseIndex) to \(exerciseIndex)")
                 currentExerciseIndex = exerciseIndex
-                print("⌚️ Synced exercise index to \(exerciseIndex)")
+                print("⌚️ ✅ Exercise index updated successfully to \(currentExerciseIndex)")
+            } else {
+                print("⌚️ Exercise index already correct (\(exerciseIndex))")
             }
+        } else {
+            print("⌚️ ❌ Exercise '\(remoteExercise.exerciseName)' not found - likely an alternate exercise")
+            print("⌚️ 🔄 Replacing exercise at index \(currentExerciseIndex) with alternate")
+            
+            // Create a new exercise transfer with the alternate exercise name
+            let currentExercise = workout.exercises[currentExerciseIndex]
+            let alternateExercise = ExerciseTransfer(
+                id: currentExercise.id,  // Keep same ID to maintain tracking
+                name: remoteExercise.exerciseName,  // Use the new name
+                muscleWorked: currentExercise.muscleWorked,  // Keep original muscle group
+                equipment: currentExercise.equipment,  // Keep original equipment
+                targetSets: remoteExercise.totalSets,  // Use remote target sets
+                targetReps: remoteExercise.currentReps,  // Use remote target reps
+                targetWeight: remoteExercise.currentWeight,  // Use remote weight
+                restTimes: currentExercise.restTimes  // Keep original rest times
+            )
+            
+            // Replace the exercise in the workout
+            var updatedExercises = workout.exercises
+            updatedExercises[currentExerciseIndex] = alternateExercise
+            
+            // Create new workout with updated exercises
+            workout = WorkoutTransfer(
+                id: workout.id,
+                name: workout.name,
+                exercises: updatedExercises,
+                splitName: workout.splitName
+            )
+            
+            print("⌚️ ✅ Successfully replaced exercise with alternate: '\(remoteExercise.exerciseName)'")
+            print("⌚️ Updated workout exercises: \(workout.exercises.map { $0.name })")
         }
         
         // Update current set
@@ -310,11 +366,12 @@ final class WorkoutSessionModel: ObservableObject {
             currentExercise: exerciseState,
             upcomingExerciseIds: [],
             completedExerciseIds: [],
-            workoutStartTime: workoutStartTime  // Include start time for sync
+            workoutStartTime: workoutStartTime,  // Include start time for sync
+            workoutName: workout.name  // Include workout name for alternate workout switches
         )
         
         WatchConnectivityManager.shared.sendLiveSessionUpdate(update)
-        print("⌚️ Sent sync update to iPhone (workout started: \(workoutStartTime?.formatted() ?? "nil"))")
+        print("⌚️ Sent sync update to iPhone (workout: '\(workout.name)', started: \(workoutStartTime?.formatted() ?? "nil"))")
     }
     
     private func sendAction(_ action: SessionAction) {
@@ -1084,18 +1141,8 @@ struct WorkoutSessionView: View {
                 // Check if we're not at the last set
                 let currentExercise = model.workout.exercises[model.currentExerciseIndex]
                 if model.currentSet < currentExercise.targetSets {
-                    print("💓 Auto-advance triggered - logging set and moving to next")
-                    
-                    // Log the current set first (just like the manual Next Set button)
-                    model.logSet(reps: model.repsInput, weight: model.weightInput)
-                    
-                    // Then advance to next set
-                    let outcome = model.nextSet()
-                    
-                    if case .reachedEnd = outcome {
-                        // At last set of last exercise - optionally show completion
-                        print("💓 Auto-advance: Reached end of workout")
-                    }
+                    print("💓 Auto-advance triggered - moving to next set")
+                    model.nextSet()
                 } else {
                     print("💓 Auto-advance triggered but already at last set")
                 }

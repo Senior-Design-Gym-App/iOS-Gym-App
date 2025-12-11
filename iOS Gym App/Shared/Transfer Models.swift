@@ -123,6 +123,7 @@ struct LiveSessionUpdate: Codable {
     let timestamp: Date
     let workoutStartTime: Date?  // When the workout actually started
     let upcomingExerciseNames: [String]  // Names of upcoming exercises for display
+    let workoutName: String?  // Name of the current workout (for alternate workout switches)
     
     init(sessionId: UUID,
          currentExercise: LiveExerciseState?,
@@ -130,7 +131,8 @@ struct LiveSessionUpdate: Codable {
          completedExerciseIds: [UUID],
          timestamp: Date = Date(),
          workoutStartTime: Date? = nil,
-         upcomingExerciseNames: [String] = []) {
+         upcomingExerciseNames: [String] = [],
+         workoutName: String? = nil) {
         self.sessionId = sessionId
         self.currentExercise = currentExercise
         self.upcomingExerciseIds = upcomingExerciseIds
@@ -138,6 +140,7 @@ struct LiveSessionUpdate: Codable {
         self.timestamp = timestamp
         self.workoutStartTime = workoutStartTime
         self.upcomingExerciseNames = upcomingExerciseNames
+        self.workoutName = workoutName
     }
 }
 

@@ -240,13 +240,14 @@ class SessionManager {
             upcomingExerciseIds: [], // TODO: Map exercises to IDs
             completedExerciseIds: [],  // TODO: Map completed exercises
             workoutStartTime: workoutStartTime,  // Include workout start time
-            upcomingExerciseNames: upcomingNames  // Send exercise names for Watch display
+            upcomingExerciseNames: upcomingNames,  // Send exercise names for Watch display
+            workoutName: session?.workout?.name  // Include workout name for alternate workout switches
         )
         
         let connectivityManager = WatchConnectivityManager.shared
         connectivityManager.sendLiveSessionUpdate(update)
         
-        print("📤 Synced state to Watch - Current: \(currentExerciseState?.exerciseName ?? "none"), Upcoming: \(upcomingNames.joined(separator: ", "))")
+        print("📤 Synced state to Watch - Workout: '\(session?.workout?.name ?? "none")', Current: \(currentExerciseState?.exerciseName ?? "none"), Upcoming: \(upcomingNames.joined(separator: ", "))")
     }
     
     /// Handle session update from other device

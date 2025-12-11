@@ -56,7 +56,7 @@ class WatchSessionManager {
     @ObservationIgnored private var isInSet: Bool = false
     @ObservationIgnored private let heartRateThreshold: Double = 0.85 // 85% of peak indicates recovery
     
-    var isReceivingUpdate = false
+    @ObservationIgnored var isReceivingUpdate = false
     
     init() {
         print("⌚️ WatchSessionManager init called")
@@ -243,6 +243,14 @@ class WatchSessionManager {
             return
         }
         
+        // Ensure we're on main thread for UI updates
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.handleRemoteSessionUpdate(update)
+            }
+            return
+        }
+        
         isReceivingUpdate = true
         defer { isReceivingUpdate = false }
         
@@ -259,36 +267,42 @@ class WatchSessionManager {
             return
         }
         
-        // Update current exercise state
+        // Update current exercise state with explicit animation to ensure UI refreshes
         if let remoteExercise = update.currentExercise {
             print("⌚️ Updating exercise from '\(currentExerciseName)' to '\(remoteExercise.exerciseName)'")
-            currentExerciseName = remoteExercise.exerciseName
-            currentSet = remoteExercise.currentSet
-            totalSets = remoteExercise.totalSets
-            currentReps = remoteExercise.currentReps
-            currentWeight = remoteExercise.currentWeight
             
-            // Sync rest timer from iPhone
-            restTime = remoteExercise.restTime
-            elapsedTime = remoteExercise.elapsedTime
-            
-            completedReps = remoteExercise.completedReps
-            completedWeights = remoteExercise.completedWeights
+            // Use withAnimation to ensure SwiftUI detects and animates the change
+            withAnimation {
+                currentExerciseName = remoteExercise.exerciseName
+                currentSet = remoteExercise.currentSet
+                totalSets = remoteExercise.totalSets
+                currentReps = remoteExercise.currentReps
+                currentWeight = remoteExercise.currentWeight
+                
+                // Sync rest timer from iPhone
+                restTime = remoteExercise.restTime
+                elapsedTime = remoteExercise.elapsedTime
+                
+                completedReps = remoteExercise.completedReps
+                completedWeights = remoteExercise.completedWeights
+            }
             
             print("⌚️ Updated to: \(currentExerciseName)")
             print("⌚️ Synced: Rest \(restTime)s, Elapsed \(elapsedTime)s")
         }
         
         // IMPORTANT: Update the exercise queue from iPhone
-        upcomingExerciseNames = update.upcomingExerciseNames
-        
-        // Set the next exercise name for UI display
-        if let first = upcomingExerciseNames.first {
-            nextExerciseName = first
-            print("⌚️ Next exercise: \(nextExerciseName)")
-        } else {
-            nextExerciseName = ""
-            print("⌚️ No more exercises in queue")
+        withAnimation {
+            upcomingExerciseNames = update.upcomingExerciseNames
+            
+            // Set the next exercise name for UI display
+            if let first = upcomingExerciseNames.first {
+                nextExerciseName = first
+                print("⌚️ Next exercise: \(nextExerciseName)")
+            } else {
+                nextExerciseName = ""
+                print("⌚️ No more exercises in queue")
+            }
         }
         
         print("⌚️ Updated queue with \(upcomingExerciseNames.count) upcoming exercises: \(upcomingExerciseNames.joined(separator: ", "))")
