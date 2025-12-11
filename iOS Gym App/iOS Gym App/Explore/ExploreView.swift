@@ -34,7 +34,7 @@ struct ExploreView: View {
 
 private struct ExploreGrid: View {
     @EnvironmentObject var authManager: AuthManager
-    @State private var currentUserProfile: UserProfileContent = .demo
+    @State private var currentUserProfile: UserProfileContent = .empty
     @State private var isLoadingProfile = false
     private let cardSpacing = Constants.customLabelPadding * 2
     
@@ -109,17 +109,18 @@ private struct ExploreGrid: View {
             UserDefaults.standard.set(currentUserProfile.bio, forKey: "userProfileBio")
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "userProfileLastUpdated")
             
-            print("✅ Loaded profile from cloud: \(cloudProfile.displayName), location: \(cloudProfile.location)")
+            print("✅ Loaded profile from cloud: \(cloudProfile.displayName), username: \(cloudProfile.username), bio: \(cloudProfile.bio)")
         } catch {
             print("❌ Failed to load user profile from cloud: \(error)")
             // Fallback to local storage if cloud load fails
             loadFromUserDefaults()
             
-            // If no local data either, use demo
+            // If no local data either, keep empty (don't use demo for authenticated users)
             if currentUserProfile.displayName.isEmpty && currentUserProfile.username.isEmpty {
-                currentUserProfile = .demo
+                print("⚠️ No profile data found (cloud and local both empty)")
+                currentUserProfile = .empty
             } else {
-                print("ℹ️ Using local profile data (cloud load failed)")
+                print("ℹ️ Using local profile data (cloud load failed): \(currentUserProfile.displayName)")
             }
         }
         
@@ -138,6 +139,9 @@ private struct ExploreGrid: View {
     }
     
     private func loadFromUserDefaults() {
+        // Start with empty profile
+        currentUserProfile = .empty
+        
         // Load from UserDefaults backup (local storage - most recent)
         if let savedName = UserDefaults.standard.string(forKey: "userProfileName"), !savedName.isEmpty {
             currentUserProfile.displayName = savedName
@@ -160,10 +164,8 @@ private struct ExploreGrid: View {
             currentUserProfile.coverImage = image
         }
         
-        // Only use demo if no saved data exists
-        if currentUserProfile.displayName.isEmpty && currentUserProfile.username.isEmpty {
-            currentUserProfile = .demo
-        }
+        // Don't use demo for authenticated users - keep empty if no data
+        // Demo is only for unauthenticated state
     }
 }
 

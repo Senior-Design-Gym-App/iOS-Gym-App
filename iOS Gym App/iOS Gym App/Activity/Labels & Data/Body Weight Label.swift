@@ -5,23 +5,20 @@ extension ActivityLabels {
     static func BodyWeightLabel(current: WeightEntry, all: [WeightEntry], weightLabel: String) -> String {
         // Find previous entry (excluding current)
         let previous = all
-            .filter { $0.index != current.index }
-            .sorted { $0.index > $1.index }
+            .filter { $0.date < current.date }
+            .sorted { $0.date > $1.date }
             .first
-        
-        let currentValue = current.value.oneDecimal
-        
+                
         // If no previous entry exists
         guard let previous = previous else {
             let combinations: [String] = [
-                "Body weight: \(currentValue) \(weightLabel)",
-                "Starting weight: \(currentValue) \(weightLabel)",
-                "Initial weigh-in: \(currentValue) \(weightLabel)",
-                "First measurement: \(currentValue) \(weightLabel)",
-                "Baseline: \(currentValue) \(weightLabel)",
-                "Tracked at \(currentValue) \(weightLabel)",
-                "Weight recorded: \(currentValue) \(weightLabel)",
-                "Weighed in at \(currentValue) \(weightLabel)"
+                "First measurement",
+                "Starting weight",
+                "Initial weigh-in",
+                "Baseline measurement",
+                "First entry",
+                "Starting point",
+                "Initial tracking"
             ]
             return combinations.randomElement()!
         }
@@ -35,55 +32,42 @@ extension ActivityLabels {
         if difference < 0 {
             // Weight decreased
             combinations.append(contentsOf: [
-                "Weight down to \(currentValue) \(weightLabel)",
-                "Dropped to \(currentValue) \(weightLabel)",
+                "Down \(diffString) \(weightLabel)",
                 "Lost \(diffString) \(weightLabel)",
-                "Down \(diffString) \(weightLabel): now \(currentValue)",
-                "Weighed in at \(currentValue) \(weightLabel)",
-                "Cut to \(currentValue) \(weightLabel)",
-                "Decreased \(diffString) \(weightLabel)",
-                "Weight: \(previousValue) → \(currentValue) \(weightLabel)",
                 "-\(diffString) \(weightLabel)",
+                "Decreased \(diffString) \(weightLabel)",
+                "From \(previousValue) \(weightLabel)",
                 "Shed \(diffString) \(weightLabel)",
-                "Now at \(currentValue) \(weightLabel) (down \(diffString))",
-                "Lighter at \(currentValue) \(weightLabel)",
-                "Progress: \(currentValue) \(weightLabel) (-\(diffString))",
+                "Down from \(previousValue) \(weightLabel)",
                 "Trimmed \(diffString) \(weightLabel)",
-                "Leaned down to \(currentValue) \(weightLabel)",
+                "Progress: -\(diffString) \(weightLabel)",
                 "Weight loss: \(diffString) \(weightLabel)",
-                "Slimmed to \(currentValue) \(weightLabel)"
+                "Dropped \(diffString) \(weightLabel)"
             ])
         } else if difference > 0 {
             // Weight increased
             combinations.append(contentsOf: [
-                "Weight up to \(currentValue) \(weightLabel)",
-                "Increased to \(currentValue) \(weightLabel)",
+                "Up \(diffString) \(weightLabel)",
                 "Gained \(diffString) \(weightLabel)",
-                "Up \(diffString) \(weightLabel): now \(currentValue)",
-                "Weighed in at \(currentValue) \(weightLabel)",
-                "Weight: \(previousValue) → \(currentValue) \(weightLabel)",
                 "+\(diffString) \(weightLabel)",
-                "Now at \(currentValue) \(weightLabel) (up \(diffString))",
-                "Bulked to \(currentValue) \(weightLabel)",
+                "Increased \(diffString) \(weightLabel)",
+                "From \(previousValue) \(weightLabel)",
+                "Up from \(previousValue) \(weightLabel)",
                 "Added \(diffString) \(weightLabel)",
-                "Heavier at \(currentValue) \(weightLabel)",
-                "Progress: \(currentValue) \(weightLabel) (+\(diffString))",
+                "Progress: +\(diffString) \(weightLabel)",
                 "Weight gain: \(diffString) \(weightLabel)",
-                "Grew to \(currentValue) \(weightLabel)",
-                "Built up to \(currentValue) \(weightLabel)"
+                "Built \(diffString) \(weightLabel)"
             ])
         } else {
             // No change
             combinations.append(contentsOf: [
-                "Weight maintained at \(currentValue) \(weightLabel)",
-                "Stable at \(currentValue) \(weightLabel)",
-                "Holding at \(currentValue) \(weightLabel)",
-                "Unchanged: \(currentValue) \(weightLabel)",
-                "Consistent at \(currentValue) \(weightLabel)",
-                "Still at \(currentValue) \(weightLabel)",
-                "Maintained \(currentValue) \(weightLabel)",
-                "No change: \(currentValue) \(weightLabel)",
-                "Steady at \(currentValue) \(weightLabel)"
+                "No change",
+                "Maintained",
+                "Stable",
+                "Holding steady",
+                "Unchanged",
+                "Consistent",
+                "Steady"
             ])
         }
         

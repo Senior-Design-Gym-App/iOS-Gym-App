@@ -50,30 +50,20 @@ struct SessionTitleInfo: View {
     }
     
     private func SessionTitle() -> some View {
-        HStack {
-            GenerateImage(for: session.started)
-                .resizable()
-                .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
-                .foregroundStyle(session.color)
-            VStack(alignment: .leading) {
-                Text(session.name)
-                    .font(.title)
-                    .fontWeight(.semibold)
-                NavigationLink {
-                    DayActivity(dayProgress: session.started)
-                } label: {
-                    Text(formatDateRange(start: session.started, end: session.completed))
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                        .fontWeight(.light)
-                }.navigationLinkIndicatorVisibility(.hidden)
-                Spacer()
+        NavigationLink {
+            DayActivity(dayProgress: session.started)
+        } label: {
+            HStack {
+                GenerateImage(for: session.started)
+                    .resizable()
+                    .frame(width: Constants.mediumIconSize, height: Constants.mediumIconSize)
+                    .foregroundStyle(session.color)
                 SessionButtons()
             }
-            Spacer()
-        }.listRowBackground(Color.clear)
-            .padding(.bottom)
-        
+                .padding(.bottom)
+        }
+        .listRowBackground(Color.clear)
+        .navigationLinkIndicatorVisibility(.hidden)
     }
     
     private func SessionButtons() -> some View {

@@ -5,23 +5,20 @@ extension ActivityLabels {
     static func BodyFatLabel(current: WeightEntry, all: [WeightEntry]) -> String {
         // Find previous entry (excluding current)
         let previous = all
-            .filter { $0.index != current.index }
-            .sorted { $0.index > $1.index }
+            .filter { $0.date < current.date }
+            .sorted { $0.date > $1.date }
             .first
-        
-        let currentValue = current.value.oneDecimal
-        
+                
         // If no previous entry exists
         guard let previous = previous else {
             let combinations: [String] = [
-                "Body fat: \(currentValue)%",
-                "Starting body fat: \(currentValue)%",
-                "Initial reading: \(currentValue)%",
-                "Body composition: \(currentValue)%",
-                "First measurement: \(currentValue)%",
-                "Baseline: \(currentValue)% body fat",
-                "Tracked at \(currentValue)%",
-                "Body fat recorded: \(currentValue)%"
+                "First measurement",
+                "Starting body fat",
+                "Initial reading",
+                "Baseline measurement",
+                "First entry",
+                "Starting point",
+                "Initial body composition"
             ]
             return combinations.randomElement()!
         }
@@ -35,52 +32,41 @@ extension ActivityLabels {
         if difference < 0 {
             // Body fat decreased (positive progress)
             combinations.append(contentsOf: [
-                "Body fat down to \(currentValue)%",
-                "Reduced to \(currentValue)% body fat",
-                "Dropped to \(currentValue)%",
-                "Lost \(diffString)% body fat",
-                "Down \(diffString)%: now \(currentValue)%",
-                "Leaned out to \(currentValue)%",
-                "Cut to \(currentValue)% body fat",
+                "Down \(diffString)%",
+                "Lost \(diffString)%",
+                "-\(diffString)%",
                 "Decreased \(diffString)%",
-                "Shredded down to \(currentValue)%",
-                "Body fat: \(previousValue)% → \(currentValue)%",
-                "-\(diffString)% body fat",
-                "Trimmed \(diffString)% off",
-                "Now at \(currentValue)% (down \(diffString)%)",
-                "Improved to \(currentValue)%",
-                "Reached \(currentValue)% body fat",
-                "Progress: \(currentValue)% (-\(diffString)%)",
-                "Leaner at \(currentValue)%"
+                "From \(previousValue)%",
+                "Down from \(previousValue)%",
+                "Trimmed \(diffString)%",
+                "Progress: -\(diffString)%",
+                "Leaned out \(diffString)%",
+                "Dropped \(diffString)%",
+                "Reduced \(diffString)%"
             ])
         } else if difference > 0 {
             // Body fat increased
             combinations.append(contentsOf: [
-                "Body fat up to \(currentValue)%",
-                "Increased to \(currentValue)%",
-                "Rose to \(currentValue)% body fat",
-                "Gained \(diffString)% body fat",
-                "Up \(diffString)%: now \(currentValue)%",
-                "Body fat: \(previousValue)% → \(currentValue)%",
-                "+\(diffString)% body fat",
-                "Now at \(currentValue)% (up \(diffString)%)",
-                "Changed to \(currentValue)%",
+                "Up \(diffString)%",
+                "Gained \(diffString)%",
+                "+\(diffString)%",
                 "Increased \(diffString)%",
-                "Bulked to \(currentValue)%",
-                "Body composition: \(currentValue)% (+\(diffString)%)",
-                "Added \(diffString)%"
+                "From \(previousValue)%",
+                "Up from \(previousValue)%",
+                "Added \(diffString)%",
+                "Rose \(diffString)%",
+                "Changed: +\(diffString)%"
             ])
         } else {
             // No change
             combinations.append(contentsOf: [
-                "Body fat maintained at \(currentValue)%",
-                "Stable at \(currentValue)%",
-                "Holding at \(currentValue)% body fat",
-                "Unchanged: \(currentValue)%",
-                "Consistent at \(currentValue)%",
-                "Still at \(currentValue)%",
-                "Maintained \(currentValue)% body fat",
-                "No change: \(currentValue)%"
+                "No change",
+                "Maintained",
+                "Stable",
+                "Holding steady",
+                "Unchanged",
+                "Consistent",
+                "Steady"
             ])
         }
         

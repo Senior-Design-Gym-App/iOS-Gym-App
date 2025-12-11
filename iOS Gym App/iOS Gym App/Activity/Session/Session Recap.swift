@@ -81,7 +81,9 @@ struct SessionRecap: View {
                     }
                 }
             }
-            .navigationTitle(formatMonthDayYear(session.started))
+            .navigationTitle(session.name)
+            .navigationSubtitle("\(shortDate(from: session.started)), \(formatDateRange(start: session.started, end: session.completed))")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
@@ -222,4 +224,11 @@ struct SessionRecap: View {
         let imageName = "\(dayNumber).calendar"
         return Image(systemName: imageName)
     }
+    
+    private func shortDate(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d/yy"
+        return formatter.string(from: date)
+    }
+    
 }
